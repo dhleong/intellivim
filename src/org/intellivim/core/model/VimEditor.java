@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,12 +26,14 @@ import java.awt.event.MouseEvent;
  */
 public class VimEditor implements Editor {
 
-    Document doc;
+    private Document doc;
     private CaretModel caretModel;
+    private SoftWrapModel softWrapModel;
 
     public VimEditor(PsiFile originalFile, int offset) {
         doc = new VimDocument(originalFile);
-        caretModel = new VimCaretModel(offset);
+        caretModel = new VimCaretModel(doc, offset);
+        softWrapModel = new NullSoftWrapModel();
         System.out.println("After caret: " + doc.getText(new TextRange(offset, offset + 10)));
     }
 
@@ -102,7 +105,7 @@ public class VimEditor implements Editor {
     @NotNull
     @Override
     public SoftWrapModel getSoftWrapModel() {
-        return null;
+        return softWrapModel;
     }
 
     @NotNull
@@ -155,7 +158,9 @@ public class VimEditor implements Editor {
     @NotNull
     @Override
     public LogicalPosition offsetToLogicalPosition(int offset) {
-        return null;
+        int line = doc.getLineNumber(offset);
+        int col = offset - doc.getLineStartOffset(line);
+        return new LogicalPosition(line, col);
     }
 
     @NotNull

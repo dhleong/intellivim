@@ -3,6 +3,7 @@ package org.intellivim.core.model;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,10 +14,17 @@ import java.util.List;
  */
 public class VimCaretModel implements CaretModel {
 
+    private Document doc;
     private int offset;
+    private LogicalPosition logicalPosition;
 
-    public VimCaretModel(int offset) {
+    public VimCaretModel(Document doc, int offset) {
+        this.doc = doc;
         this.offset = offset;
+
+        int row = doc.getLineNumber(offset);
+        int col = offset - doc.getLineStartOffset(row);
+        moveToLogicalPosition(new LogicalPosition(row, col));
     }
 
     @Override
@@ -26,7 +34,7 @@ public class VimCaretModel implements CaretModel {
 
     @Override
     public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
-
+        logicalPosition = pos;
     }
 
     @Override
@@ -52,8 +60,8 @@ public class VimCaretModel implements CaretModel {
     @NotNull
     @Override
     public LogicalPosition getLogicalPosition() {
-        System.out.println("  >> VimCaretModel.getLogicalPosition");
-        return null;
+        System.out.println("  >> VimCaretModel.getLogicalPosition: " + logicalPosition);
+        return logicalPosition;
     }
 
     @NotNull
@@ -66,7 +74,7 @@ public class VimCaretModel implements CaretModel {
     @Override
     public int getOffset() {
         System.out.println("  >> VimCaretModel.getOffset");
-        return offset;
+        return doc.getLineStartOffset(logicalPosition.line) + logicalPosition.column;
     }
 
     @Override

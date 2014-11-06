@@ -85,6 +85,7 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
+        System.out.println("restartCompletionOnPrefixChange:" + prefixCondition);
 //        final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
 //        if (indicator != null) {
 //            indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
@@ -93,6 +94,7 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public void restartCompletionWhenNothingMatches() {
+        System.out.println("restartCompletionWhenNothingMatches");
 //        final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
 //        if (indicator != null) {
 //            indicator.getLookup().setStartCompletionWhenNothingMatches(true);

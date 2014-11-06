@@ -1,5 +1,6 @@
 package org.intellivim.core.command.complete;
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -17,9 +18,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Consumer;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.model.VimLookup;
@@ -61,6 +64,15 @@ public class CompleteCommand {
         for (LookupElement el : results) {
             System.out.println("result: " + el);
         }
+
+//        PsiElement el = params.getPosition();
+//        if (el.getParent() instanceof PsiReference) {
+//            System.out.println("Parent: " + el.getParent());
+//            PsiReference ref = (PsiReference) el.getParent();
+//            for (Object o : ref.getVariants()) {
+//                System.out.println("variant: " + o);
+//            }
+//        }
     }
 
     // imported from CompletionService to get around wacky UI requirements
@@ -99,6 +111,9 @@ public class CompleteCommand {
 
 //            System.out.println("Try " + contributor);
             CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+            if (contributor.getClass().getName().contains("Java")) {
+                System.out.println("Hello" + contributor);
+            }
             contributor.fillCompletionVariants(parameters, result);
             if (result.isStopped()) {
                 System.out.println("Stopped by " + contributor);
@@ -131,6 +146,10 @@ public class CompleteCommand {
 
         System.out.println("In " + originalFile + ": found: " + position + " with " + lookup);
         System.out.println(" --> inJavaContext? " + JavaCompletionContributor.isInJavaContext(position));
+
+        CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(completionType);
+        handler.invokeCompletion(project, editor);
+        System.out.println("--------------");
 
         try {
             Constructor<CompletionParameters> ctor = CompletionParameters.class.getDeclaredConstructor(
