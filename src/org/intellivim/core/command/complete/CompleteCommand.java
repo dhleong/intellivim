@@ -117,18 +117,24 @@ public class CompleteCommand {
                                             final CompletionContributor from,
                                             final Consumer<CompletionResult> consumer) {
         final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
-        final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
+//        final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
         System.out.println("Found " + contributors.size() + " contributors");
 
         for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
             final CompletionContributor contributor = contributors.get(i);
-            if (dumb && !DumbService.isDumbAware(contributor)) continue;
+//            System.out.println(contributor + " isDumbAware?" + DumbService.isDumbAware(contributor));
+//            if (dumb && !DumbService.isDumbAware(contributor)) continue;
 
-//            System.out.println("Try " + contributor);
-            CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-//            if (contributor.getClass().getName().contains("Java")) {
-//                System.out.println("Hello: " + contributor);
-//            }
+            CompletionResultSet result = createResultSet(parameters, new Consumer<CompletionResult>() {
+                @Override
+                public void consume(CompletionResult completionResult) {
+                    System.out.println("Result from: " + contributor);
+                    consumer.consume(completionResult);
+                }
+            }, contributor);
+            if (contributor.getClass().getName().endsWith("JavaCompletionContributor")) {
+                System.out.println("Hello: " + contributor);
+            }
             contributor.fillCompletionVariants(parameters, result);
             if (result.isStopped()) {
                 System.out.println("Stopped by " + contributor);
