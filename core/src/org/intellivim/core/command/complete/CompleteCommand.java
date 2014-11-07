@@ -1,6 +1,5 @@
 package org.intellivim.core.command.complete;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionData;
@@ -10,33 +9,28 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.CompletionUtilCore;
-import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
 import com.intellij.util.Consumer;
+import org.intellivim.core.SimpleResult;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.model.VimLookup;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,16 +40,18 @@ import java.util.List;
  */
 public class CompleteCommand {
 
-    public void execute(String projectPath) {
+    public Object execute(String projectPath, String filePath, int offset) {
         final Project project = ProjectUtil.getProject(projectPath);
+        if (project == null)
+            return SimpleResult.error("Couldn't find project at " + projectPath);
 
-        File file = new File(project.getBasePath() + "/src/org/intellivim/dummy/Dummy.java");
+        File file = new File(project.getBasePath() + filePath);
         System.out.println(file);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
 //        final int offset = 164;
 //        final int offset = 165;
 //        final int offset = 196;
-        final int offset = 237; // dummy.
+//        final int offset = 237; // dummy.
 //        final int offset = 326; // arrayList.
 
         final CompletionParameters params = newParams(project, virtualFile, offset);
@@ -68,26 +64,17 @@ public class CompleteCommand {
         };
 
         final LookupElement[] results = performCompletion(params, consumer);
+        ArrayList<CompletionInfo> infos = new ArrayList<CompletionInfo>(results.length);
         System.out.println("completion results: " + results.length);
         for (LookupElement el : results) {
             System.out.println("result: " + el.getPsiElement() + " / " + el + " / " + el.getClass());
 
-            if (el.getPsiElement() instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod) el.getPsiElement();
-                System.out.println(" --> " +method.getDocComment());
-                System.out.println(" - returns: " + method.getReturnType());
-                System.out.println(" - params:" + method.getParameterList());
-            }
+            CompletionInfo info = CompletionInfo.from(el);
+            if (info != null)
+                infos.add(info);
         }
 
-//        PsiElement el = params.getPosition();
-//        if (el.getParent() instanceof PsiReference) {
-//            System.out.println("Parent: " + el.getParent());
-//            PsiReference ref = (PsiReference) el.getParent();
-//            for (Object o : ref.getVariants()) {
-//                System.out.println("variant: " + o);
-//            }
-//        }
+        return SimpleResult.success(infos);
     }
 
     // imported from CompletionService to get around wacky UI requirements
@@ -97,7 +84,6 @@ public class CompleteCommand {
         getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
             @Override
             public void consume(final CompletionResult result) {
-//                System.out.println("Consume!" + result);
                 if (lookupSet.add(result.getLookupElement())) {
                     consumer.consume(result);
                 }
@@ -105,6 +91,7 @@ public class CompleteCommand {
         });
         return lookupSet.toArray(new LookupElement[lookupSet.size()]);
     }
+
     /**
      * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
      * will be run starting from the next one after that.
@@ -125,13 +112,7 @@ public class CompleteCommand {
 //            System.out.println(contributor + " isDumbAware?" + DumbService.isDumbAware(contributor));
 //            if (dumb && !DumbService.isDumbAware(contributor)) continue;
 
-            CompletionResultSet result = createResultSet(parameters, new Consumer<CompletionResult>() {
-                @Override
-                public void consume(CompletionResult completionResult) {
-                    System.out.println("Result from: " + contributor);
-                    consumer.consume(completionResult);
-                }
-            }, contributor);
+            CompletionResultSet result = createResultSet(parameters, consumer, contributor);
             if (contributor.getClass().getName().endsWith("JavaCompletionContributor")) {
                 System.out.println("Hello: " + contributor);
             }

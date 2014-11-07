@@ -22,15 +22,11 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.CaretModelImpl;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +37,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -56,7 +51,7 @@ public class VimEditor implements EditorEx {
     private SelectionModel selectionModel;
     private EditorHighlighter editorHighlighter;
 
-//    private JComponent component;
+    private JComponent component;
 
     public VimEditor(Project project, PsiFile originalFile, int offset) {
         this.project = project;
@@ -66,22 +61,22 @@ public class VimEditor implements EditorEx {
         selectionModel = new NullSelectionModel();
         editorHighlighter = new NullEditorHighlighter();
 
-//        component = new JComponent() {
-//            @Override
-//            public FontMetrics getFontMetrics(Font font) {
-//                return new FontMetrics(font) {
-//                    @Override
-//                    public int charsWidth(char[] data, int off, int len) {
-//                        return 0;
-//                    }
-//
-//                    @Override
-//                    public int stringWidth(String str) {
-//                        return 0;
-//                    }
-//                };
-//            }
-//        };
+        component = new JComponent() {
+            @Override
+            public FontMetrics getFontMetrics(Font font) {
+                return new FontMetrics(font) {
+                    @Override
+                    public int charsWidth(char[] data, int off, int len) {
+                        return 0;
+                    }
+
+                    @Override
+                    public int stringWidth(String str) {
+                        return 0;
+                    }
+                };
+            }
+        };
     }
 
     @NotNull
@@ -99,8 +94,8 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public JComponent getComponent() {
-//        return component;
-        return null;
+        return component;
+//        return null;
     }
 
     @NotNull
