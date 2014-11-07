@@ -38,7 +38,6 @@ class CompletionResultSetImpl extends CompletionResultSet {
             return;
         }
 
-        System.out.println("addElement " + element);
         CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
         if (matched != null) {
             passResult(matched);
@@ -68,7 +67,6 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public CompletionResultSet withRelevanceSorter(CompletionSorter sorter) {
-        System.out.println("withRelevanceSorter: " + sorter);
         return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(),
                 myContributor, myParameters, (CompletionSorterImpl)sorter, this);
     }
@@ -85,7 +83,7 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
-        System.out.println("restartCompletionOnPrefixChange:" + prefixCondition);
+//        System.out.println("restartCompletionOnPrefixChange:" + prefixCondition);
 //        final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
 //        if (indicator != null) {
 //            indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
@@ -94,7 +92,7 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public void restartCompletionWhenNothingMatches() {
-        System.out.println("restartCompletionWhenNothingMatches");
+//        System.out.println("restartCompletionWhenNothingMatches");
 //        final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
 //        if (indicator != null) {
 //            indicator.getLookup().setStartCompletionWhenNothingMatches(true);

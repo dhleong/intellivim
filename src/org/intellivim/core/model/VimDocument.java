@@ -1,5 +1,6 @@
 package org.intellivim.core.model;
 
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by dhleong on 11/6/14.
  */
-public class VimDocument extends DocumentImpl {
+public class VimDocument extends DocumentImpl implements DocumentEx {
     private PsiFile psiFile;
 
     public VimDocument(PsiFile psiFile) {

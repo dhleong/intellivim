@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
@@ -20,6 +21,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Lots of stuff imported from ProjectManagerImpl to
@@ -29,7 +35,7 @@ import java.io.IOException;
  */
 public class ProjectUtil {
     public static Project getProject(String projectPath) {
-        ProjectManager mgr = ProjectManager.getInstance();
+        ProjectManagerEx mgr = ProjectManagerEx.getInstanceEx();
 
         // check for an open one first
         for (Project p : mgr.getOpenProjects()) {
@@ -38,13 +44,13 @@ public class ProjectUtil {
                 return p;
         }
 
-        ProjectManagerImpl impl = (ProjectManagerImpl) mgr;
 
         try {
-            Project project = impl.convertAndLoadProject(projectPath);
+            Project project = mgr.convertAndLoadProject(projectPath);
             DirectoryIndex index = DirectoryIndex.getInstance(project);
             waitForFileWatcher(project, index);
             waitForStartup(project);
+//            markProjectOpened(mgr, project);
             return project;
         } catch (IOException e) {
             e.printStackTrace();
@@ -107,4 +113,34 @@ public class ProjectUtil {
             }
         }, ProjectBundle.message("project.load.progress"), true, project);
     }
+
+    private static void markProjectOpened(ProjectManagerEx mgr, Project project) {
+        // gross reflection
+        try {
+            Field f = ProjectManagerImpl.class.getDeclaredField("myOpenProjects");
+            f.setAccessible(true);
+
+            Method cacheOpenProjects = ProjectManagerImpl.class.getDeclaredMethod("cacheOpenProjects");
+            cacheOpenProjects.setAccessible(true);
+
+            List<Project> myOpenProjects = (List<Project>) f.get(mgr);
+            synchronized (myOpenProjects) {
+                if (myOpenProjects.contains(project))
+                    return; // done
+
+                myOpenProjects.add(project);
+                cacheOpenProjects.invoke(mgr);
+            }
+
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

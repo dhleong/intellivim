@@ -1,6 +1,7 @@
 package org.intellivim.core.command.complete;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -9,20 +10,26 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
 import com.intellij.util.Consumer;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.model.VimLookup;
@@ -45,24 +52,32 @@ public class CompleteCommand {
         File file = new File(project.getBasePath() + "/src/org/intellivim/dummy/Dummy.java");
         System.out.println(file);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-        final int offset = 165;
+//        final int offset = 164;
+//        final int offset = 165;
 //        final int offset = 196;
-
-        System.out.println("Hello: " + project + " / " + virtualFile);
+        final int offset = 237; // dummy.
+//        final int offset = 326; // arrayList.
 
         final CompletionParameters params = newParams(project, virtualFile, offset);
         final Consumer<CompletionResult> consumer = new Consumer<CompletionResult>() {
 
             @Override
             public void consume(CompletionResult completionResult) {
-                System.out.println("result: " + completionResult);
+//                System.out.println("result: " + completionResult);
             }
         };
 
         final LookupElement[] results = performCompletion(params, consumer);
         System.out.println("completion results: " + results.length);
         for (LookupElement el : results) {
-            System.out.println("result: " + el);
+            System.out.println("result: " + el.getPsiElement() + " / " + el + " / " + el.getClass());
+
+            if (el.getPsiElement() instanceof PsiMethod) {
+                PsiMethod method = (PsiMethod) el.getPsiElement();
+                System.out.println(" --> " +method.getDocComment());
+                System.out.println(" - returns: " + method.getReturnType());
+                System.out.println(" - params:" + method.getParameterList());
+            }
         }
 
 //        PsiElement el = params.getPosition();
@@ -82,7 +97,7 @@ public class CompleteCommand {
         getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
             @Override
             public void consume(final CompletionResult result) {
-                System.out.println("Consume!" + result);
+//                System.out.println("Consume!" + result);
                 if (lookupSet.add(result.getLookupElement())) {
                     consumer.consume(result);
                 }
@@ -111,9 +126,9 @@ public class CompleteCommand {
 
 //            System.out.println("Try " + contributor);
             CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-            if (contributor.getClass().getName().contains("Java")) {
-                System.out.println("Hello" + contributor);
-            }
+//            if (contributor.getClass().getName().contains("Java")) {
+//                System.out.println("Hello: " + contributor);
+//            }
             contributor.fillCompletionVariants(parameters, result);
             if (result.isStopped()) {
                 System.out.println("Stopped by " + contributor);
@@ -136,20 +151,37 @@ public class CompleteCommand {
 
     private CompletionParameters newParams(Project project, VirtualFile file, int offset) {
         PsiFile originalFile = PsiManager.getInstance(project).findFile(file);
-        PsiElement position = originalFile.findElementAt(offset);
+
+        PsiFile fileCopy = originalFile;
+        // dup and insert dummy
+//        PsiElement copy = originalFile.copy();
+//        PsiFile fileCopy = copy.getContainingFile();
+//        PsiElement position = new PsiIdentifierImpl(CompletionUtilCore.DUMMY_IDENTIFIER);
+//        PsiElement anchor = copy.findElementAt(offset);
+//        anchor.getParent().addBefore(position, anchor);
+
+        PsiElement position = fileCopy.findElementAt(offset);
         CompletionType completionType = CompletionType.BASIC;
 
-        Editor editor = new VimEditor(originalFile, offset);
+        Editor editor = new VimEditor(project, fileCopy, offset);
         Lookup lookup = new VimLookup(project, editor);
 
         int invocationCount = 0;
 
-        System.out.println("In " + originalFile + ": found: " + position + " with " + lookup);
-        System.out.println(" --> inJavaContext? " + JavaCompletionContributor.isInJavaContext(position));
+        OffsetMap offsetMap = new OffsetMap(editor.getDocument());
+        CompletionContext context = new CompletionContext(originalFile, offsetMap);
+        position.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
 
-        CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(completionType);
-        handler.invokeCompletion(project, editor);
-        System.out.println("--------------");
+        System.out.println("In " + originalFile + ": found: " + position + " with " + lookup);
+        System.out.println("After caret:["
+                + editor.getDocument().getText(new TextRange(offset, offset + 10))
+                + "]");
+
+//        System.out.println("Project initialized: " + project.isInitialized()
+//                + "; open? " + project.isOpen());
+//        CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(completionType);
+//        handler.invokeCompletion(project, editor);
+//        System.out.println("--------------");
 
         try {
             Constructor<CompletionParameters> ctor = CompletionParameters.class.getDeclaredConstructor(

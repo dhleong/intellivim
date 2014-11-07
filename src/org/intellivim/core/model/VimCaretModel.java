@@ -60,20 +60,19 @@ public class VimCaretModel implements CaretModel {
     @NotNull
     @Override
     public LogicalPosition getLogicalPosition() {
-        System.out.println("  >> VimCaretModel.getLogicalPosition: " + logicalPosition);
+//        System.out.println("  >> VimCaretModel.getLogicalPosition: " + logicalPosition);
         return logicalPosition;
     }
 
     @NotNull
     @Override
     public VisualPosition getVisualPosition() {
-        System.out.println("  >> VimCaretModel.getVisualPosition");
         return null;
     }
 
     @Override
     public int getOffset() {
-        System.out.println("  >> VimCaretModel.getOffset");
+//        System.out.println("  >> VimCaretModel.getOffset");
         return doc.getLineStartOffset(logicalPosition.line) + logicalPosition.column;
     }
 
