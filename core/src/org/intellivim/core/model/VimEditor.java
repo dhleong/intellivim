@@ -605,13 +605,10 @@ public class VimEditor implements EditorEx {
     @Nullable
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-        System.out.println(">> VimEditor.getUserData " + key);
         return null;
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-
-        System.out.println(">> VimEditor.putUserData");
     }
 }

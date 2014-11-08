@@ -39,7 +39,7 @@ public class ProjectUtil {
 
         // check for an open one first
         for (Project p : mgr.getOpenProjects()) {
-            System.out.println("Check: " + p);
+            System.out.println("Check: " + p.getProjectFilePath());
             if (p.getProjectFilePath().equals(projectPath))
                 return p;
         }

@@ -2,6 +2,7 @@ package org.intellivim.core.command.complete;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.javadoc.PsiDocComment;
 
 /**
  * Created by dhleong on 11/7/14.
@@ -28,12 +29,20 @@ public class CompletionInfo {
             return new CompletionInfo(TYPE_METHOD,
                     el.getLookupString(),
                     buildParamsString(method) + "-> " + method.getReturnType().toString(),
-                    method.getDocComment().getText());
+                    buildDocComment(method));
         }
 
         System.out.println("Unexpected completion: " + el
                 + " with element type " + el.getPsiElement().getClass());
         return null;
+    }
+
+    private static String buildDocComment(PsiMethod method) {
+        PsiDocComment docComment = method.getDocComment();
+        if (docComment == null)
+            return ""; // never be null?
+
+        return docComment.getText();
     }
 
     private static String buildParamsString(PsiMethod method) {
