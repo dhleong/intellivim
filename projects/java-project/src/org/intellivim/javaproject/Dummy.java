@@ -14,6 +14,7 @@ public class Dummy {
         list.add("hi");
     }
 
+    /** I promise it's not boring */
     public void notBoring(int number) {
     }
 

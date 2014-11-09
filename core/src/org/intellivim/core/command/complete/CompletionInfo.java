@@ -2,6 +2,9 @@ package org.intellivim.core.command.complete;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.PsiDocComment;
 
 /**
@@ -23,20 +26,6 @@ public class CompletionInfo {
         this.doc = doc;
     }
 
-    public static CompletionInfo from(LookupElement el) {
-        if (el.getPsiElement() instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod) el.getPsiElement();
-            return new CompletionInfo(TYPE_METHOD,
-                    el.getLookupString(),
-                    buildParamsString(method) + "-> " + method.getReturnType().toString(),
-                    buildDocComment(method));
-        }
-
-        System.out.println("Unexpected completion: " + el
-                + " with element type " + el.getPsiElement().getClass());
-        return null;
-    }
-
     private static String buildDocComment(PsiMethod method) {
         PsiDocComment docComment = method.getDocComment();
         if (docComment == null)
@@ -46,6 +35,44 @@ public class CompletionInfo {
     }
 
     private static String buildParamsString(PsiMethod method) {
-        return method.getParameterList().toString(); // will it blend?
+        StringBuilder builder = new StringBuilder(128);
+        builder.append('(');
+
+        boolean first = true;
+        PsiParameterList parameterList = method.getParameterList();
+        for (PsiParameter param : parameterList.getParameters()) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(", ");
+            }
+
+            builder.append(getType(param.getType()))
+                   .append(' ')
+                   .append(param.getName());
+        }
+
+        builder.append(')');
+        return builder.toString();
+    }
+
+    private static String getType(PsiType type) {
+        return type.getPresentableText();
+    }
+
+    public static CompletionInfo from(LookupElement el) {
+        if (el.getPsiElement() instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod) el.getPsiElement();
+            return new CompletionInfo(TYPE_METHOD,
+                    el.getLookupString(),
+                    buildParamsString(method) + "-> " + getType(method.getReturnType()),
+                    buildDocComment(method));
+        }
+
+        // FIXME other info types
+
+        System.out.println("Unexpected completion: " + el
+                + " with element type " + el.getPsiElement().getClass());
+        return null;
     }
 }
