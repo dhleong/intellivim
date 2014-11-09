@@ -1,4 +1,4 @@
-package org.intellivim.core;
+package org.intellivim;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightProjectDescriptor;

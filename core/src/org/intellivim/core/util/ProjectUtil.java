@@ -56,6 +56,9 @@ public class ProjectUtil {
 
 
         try {
+            if (!new File(projectPath).exists())
+                return null;
+
             Project project = mgr.convertAndLoadProject(projectPath);
             DirectoryIndex index = DirectoryIndex.getInstance(project);
             waitForFileWatcher(project, index);

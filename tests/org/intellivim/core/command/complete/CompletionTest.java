@@ -1,13 +1,7 @@
 package org.intellivim.core.command.complete;
 
-import com.google.common.base.Joiner;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import org.intellivim.core.BaseTestCase;
-import org.intellivim.core.SimpleResult;
+import org.intellivim.BaseTestCase;
+import org.intellivim.SimpleResult;
 
 import java.util.List;
 

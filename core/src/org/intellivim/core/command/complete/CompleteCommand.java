@@ -13,8 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
-import org.intellivim.core.Result;
-import org.intellivim.core.SimpleResult;
+import org.intellivim.Command;
+import org.intellivim.ICommand;
+import org.intellivim.Required;
+import org.intellivim.Result;
+import org.intellivim.SimpleResult;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
@@ -25,11 +28,21 @@ import java.util.List;
 /**
  * Created by dhleong on 11/3/14.
  */
-public class CompleteCommand {
+@Command("complete")
+public class CompleteCommand implements ICommand {
 
-    public Result execute(String projectPath, String filePath, int offset) {
-        final Project project = ProjectUtil.getProject(projectPath);
-        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, filePath);
+    @Required Project project;
+    @Required String file;
+    @Required int offset;
+
+    public CompleteCommand(String projectPath, String filePath, int offset) {
+        project = ProjectUtil.getProject(projectPath);
+        file = filePath;
+        this.offset = offset;
+    }
+
+    public Result execute() {
+        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
 
         final CompletionParameters params = CompletionParametersUtil.from(project, virtualFile, offset);
         final LookupElement[] results = performCompletion(params, null);
