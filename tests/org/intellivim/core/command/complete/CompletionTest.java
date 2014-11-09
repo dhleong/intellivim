@@ -15,7 +15,8 @@ public class CompletionTest extends BaseTestCase {
         String filePath = "src/org/intellivim/javaproject/Dummy.java";
         int offset = 243;
 
-        SimpleResult result = (SimpleResult) new CompleteCommand().execute(projPath, filePath, offset);
+        SimpleResult result = (SimpleResult) new CompleteCommand(
+                projPath, filePath, offset).execute();
         assertSuccess(result);
 
         List<CompletionInfo> infoList = (List<CompletionInfo>) result.result;

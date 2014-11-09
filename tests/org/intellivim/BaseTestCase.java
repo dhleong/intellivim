@@ -15,7 +15,7 @@ import java.io.File;
 /**
  * Created by dhleong on 11/7/14.
  */
-public class BaseTestCase extends UsefulTestCase {
+public abstract class BaseTestCase extends UsefulTestCase {
     private static final String ULTIMATE_MARKER_CLASS = "com.intellij.psi.css.CssFile";
 
     protected static final String JAVA_PROJECT = "java-project";
