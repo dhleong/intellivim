@@ -3,7 +3,7 @@ package org.intellivim.core;
 /**
  * Created by dhleong on 11/7/14.
  */
-public class SimpleResult {
+public class SimpleResult implements Result {
     public final String error;
     public final Object result;
 
@@ -12,6 +12,7 @@ public class SimpleResult {
         this.result = result;
     }
 
+    @Override
     public boolean isSuccess() {
         return error == null;
     }
@@ -26,5 +27,9 @@ public class SimpleResult {
 
     public static SimpleResult success(Object result) {
         return new SimpleResult(null, result);
+    }
+
+    public static SimpleResult success() {
+        return new SimpleResult(null, null);
     }
 }

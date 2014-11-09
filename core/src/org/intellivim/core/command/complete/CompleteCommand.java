@@ -10,14 +10,13 @@ import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
+import org.intellivim.core.Result;
 import org.intellivim.core.SimpleResult;
 import org.intellivim.core.util.ProjectUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -28,13 +27,9 @@ import java.util.List;
  */
 public class CompleteCommand {
 
-    public Object execute(String projectPath, String filePath, int offset) {
+    public Result execute(String projectPath, String filePath, int offset) {
         final Project project = ProjectUtil.getProject(projectPath);
-        if (project == null)
-            return SimpleResult.error("Couldn't find project at " + projectPath);
-
-        File file = new File(project.getBasePath(), filePath);
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, filePath);
 
         final CompletionParameters params = CompletionParametersUtil.from(project, virtualFile, offset);
         final LookupElement[] results = performCompletion(params, null);

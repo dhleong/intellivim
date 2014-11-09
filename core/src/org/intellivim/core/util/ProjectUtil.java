@@ -8,23 +8,23 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +34,16 @@ import java.util.List;
  * Created by dhleong on 11/5/14.
  */
 public class ProjectUtil {
+
+    public static Project ensureProject(String projectPath) {
+
+        final Project project = getProject(projectPath);
+        if (project == null)
+            throw new RuntimeException("Couldn't find project at " + projectPath);
+
+        return project;
+    }
+
     public static Project getProject(String projectPath) {
         ProjectManagerEx mgr = ProjectManagerEx.getInstanceEx();
 
@@ -57,6 +67,11 @@ public class ProjectUtil {
         }
 
         return null;
+    }
+
+    public static VirtualFile getVirtualFile(Project project, String filePath) {
+        File file = new File(project.getBasePath(), filePath);
+        return LocalFileSystem.getInstance().findFileByIoFile(file);
     }
 
     private static void waitForFileWatcher(@NotNull Project project, final DirectoryIndex index) {
