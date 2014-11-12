@@ -100,6 +100,9 @@ public class IVGson {
                     T result = (T) gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
                             TypeToken.get(commandClass)).fromJsonTree(obj);
 
+                    // TODO it'd be great if we could @Inject types like VirtualFile
+                    //  which depend on the Project, for example
+
                     final Set<Field> requiredFields = ReflectionUtils
                             .getAllFields(commandClass, withAnnotation(Required.class));
                     for (Field f : requiredFields) {
@@ -130,12 +133,11 @@ public class IVGson {
         public Project read(JsonReader jsonReader) throws IOException {
             if (jsonReader.peek() == JsonToken.STRING) {
                 String path = jsonReader.nextString();
-                Project proj = ProjectUtil.ensureProject(path);
-                System.out.println(path + " ! " + proj + " @ " + proj.getProjectFilePath());
-                return proj;
+                return ProjectUtil.ensureProject(path);
             }
 
             throw new IllegalArgumentException("Project argument should be a string");
         }
     }
+
 }

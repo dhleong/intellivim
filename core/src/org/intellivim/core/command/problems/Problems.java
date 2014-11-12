@@ -21,8 +21,23 @@ import java.util.ArrayList;
  */
 public class Problems extends ArrayList<Problem> {
 
+    public QuickFixDescriptor locateQuickFix(String fixId) {
+        String problemId = fixId.substring(0, fixId.indexOf(Problem.FIX_ID_SEPARATOR));
+        try {
+            int index = Integer.parseInt(problemId);
+            Problem problem = get(index);
+            return problem.locateQuickFix(fixId);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid quickfix id");
+        } catch (IndexOutOfBoundsException e) {
+            throw new IllegalArgumentException("Invalid problem id");
+        }
+    }
+
     public static Problems collectFrom(Project project, String filePath) {
-        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, filePath);
+        return collectFrom(project, ProjectUtil.getVirtualFile(project, filePath));
+    }
+    public static Problems collectFrom(Project project, VirtualFile virtualFile) {
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
         final VimEditor editor = new VimEditor(project, psiFile, 0);
         final DocumentEx doc = editor.getDocument();
@@ -31,7 +46,7 @@ public class Problems extends ArrayList<Problem> {
         HighlightInfoProcessor highlightInfoProcessor = new HighlightInfoProcessor() {
             @Override
             public void infoIsAvailable(HighlightingSession highlightingSession, HighlightInfo info) {
-                final Problem problem = Problem.from(doc, info);
+                final Problem problem = Problem.from(problems.size(), doc, info);
                 if (problem == null)
                     return;
 
@@ -47,4 +62,5 @@ public class Problems extends ArrayList<Problem> {
 
         return problems;
     }
+
 }
