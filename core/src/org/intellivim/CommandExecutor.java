@@ -26,15 +26,15 @@ public class CommandExecutor {
     }
 
     public Result execute(final Reader json) {
-        try {
-            final Result[] result = new Result[1];
+        final Result[] result = new Result[1];
 
-            // we must execute on the event dispatcher thread
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        // we must execute on the event dispatcher thread
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
-                @Override
-                public void run() {
+            @Override
+            public void run() {
 
+                try {
                     final ICommand command = gson.fromJson(json, ICommand.class);
                     if (command == null) {
                         result[0] = SimpleResult.error("Invalid command");
@@ -42,17 +42,21 @@ public class CommandExecutor {
                     }
 
                     result[0] = command.execute();
-                }
-            }, ModalityState.any());
 
-            return result[0];
-        } catch (JsonSyntaxException e) {
-            Throwable cause = e.getCause();
-            final Throwable actual = cause == null ? cause : e;
-            return handleError(actual);
-        } catch (Throwable e) {
-            return handleError(e);
-        }
+                } catch (JsonSyntaxException e) {
+                    Throwable cause = e.getCause();
+                    final Throwable actual = cause == null ? cause : e;
+                    result[0] = handleError(actual);
+                } catch (Throwable e) {
+                    result[0] = handleError(e);
+                }
+            }
+        }, ModalityState.any());
+
+        if (result[0] == null)
+            return SimpleResult.error("Unexpected error executing command");
+
+        return result[0];
     }
 
     private static Result handleError(Throwable e) {
