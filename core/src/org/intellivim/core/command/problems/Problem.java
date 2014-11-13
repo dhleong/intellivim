@@ -21,7 +21,9 @@ public class Problem {
     private final int col;
     private final HighlightSeverity severity;
     private final String description;
-    private final List<QuickFixDescriptor> fixes;
+
+    /** it is too slow if we include all these */
+    private transient final List<QuickFixDescriptor> fixes;
 
     private Problem(int id, int line, int col, HighlightSeverity severity,
             String description,
@@ -32,6 +34,10 @@ public class Problem {
         this.severity = severity;
         this.description = description;
         this.fixes = fixes;
+    }
+
+    public List<QuickFixDescriptor> getFixes() {
+        return fixes;
     }
 
     public static Problem from(int id, Document doc, HighlightInfo info) {
