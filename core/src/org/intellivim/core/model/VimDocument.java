@@ -1,7 +1,9 @@
 package org.intellivim.core.model;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class VimDocument extends DocumentImpl implements DocumentEx {
     private PsiFile psiFile;
 
-    public VimDocument(PsiFile psiFile) {
+    VimDocument(PsiFile psiFile) {
         this(psiFile, psiFile.getViewProvider().getContents());
     }
 
@@ -24,9 +26,18 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
         if ("HARD_REFERENCE_TO_PSI".equals(key.toString())) {
-
             return (T) psiFile;
         }
         return super.getUserData(key);
+    }
+
+    public static VimDocument getInstance(PsiFile originalFile) {
+        final Document doc = FileDocumentManager.getInstance()
+                .getCachedDocument(originalFile.getVirtualFile());
+        if (doc instanceof VimDocument) {
+            return (VimDocument) doc;
+        }
+
+        return new VimDocument(originalFile);
     }
 }

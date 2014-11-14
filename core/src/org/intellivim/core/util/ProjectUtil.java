@@ -2,6 +2,8 @@ package org.intellivim.core.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -12,16 +14,22 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellivim.core.model.VimDocument;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +42,8 @@ import java.util.List;
  * Created by dhleong on 11/5/14.
  */
 public class ProjectUtil {
+
+    static final Key<Reference<Document>> DOCUMENT_KEY = FileDocumentManagerImpl.DOCUMENT_KEY;
 
     public static Project ensureProject(String projectPath) {
 
@@ -54,7 +64,6 @@ public class ProjectUtil {
                 return p;
         }
 
-
         try {
             if (!new File(projectPath).exists())
                 return null;
@@ -73,8 +82,15 @@ public class ProjectUtil {
     }
 
     public static VirtualFile getVirtualFile(Project project, String filePath) {
-        File file = new File(project.getBasePath(), filePath);
-        return LocalFileSystem.getInstance().findFileByIoFile(file);
+        final File file = new File(project.getBasePath(), filePath);
+        final VirtualFile virtual = LocalFileSystem.getInstance().findFileByIoFile(file);
+        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtual);
+
+        // we do this eagerly so FileDocumentManger#getCachedDocument will
+        //  return the exact same instance that we want to use
+        final VimDocument doc = VimDocument.getInstance(psiFile);
+        virtual.putUserData(DOCUMENT_KEY, new WeakReference<Document>(doc));
+        return virtual;
     }
 
     private static void waitForFileWatcher(@NotNull Project project, final DirectoryIndex index) {

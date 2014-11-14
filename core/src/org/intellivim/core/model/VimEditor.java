@@ -7,7 +7,13 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.IndentsModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -26,7 +32,7 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +48,7 @@ import java.beans.PropertyChangeListener;
 /**
  * Created by dhleong on 11/4/14.
  */
-public class VimEditor implements EditorEx {
+public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     private Project project;
     private DocumentEx doc;
@@ -50,16 +56,26 @@ public class VimEditor implements EditorEx {
     private SoftWrapModelEx softWrapModel;
     private SelectionModel selectionModel;
     private EditorHighlighter editorHighlighter;
+    private ScrollingModelEx scrollingModel;
+    private EditorSettings editorSettings;
+    private MarkupModelEx markupModel;
+    private IndentsModel indentsModel;
+    private FoldingModelEx foldingModel;
 
     private JComponent component;
 
     public VimEditor(Project project, PsiFile originalFile, int offset) {
         this.project = project;
-        doc = new VimDocument(originalFile);
+        doc = VimDocument.getInstance(originalFile);
         caretModel = new VimCaretModel(doc, offset);
         softWrapModel = new NullSoftWrapModel();
         selectionModel = new NullSelectionModel();
         editorHighlighter = new NullEditorHighlighter();
+        scrollingModel = new NullScrollingModel(doc);
+        editorSettings = new NullEditorSettings();
+        markupModel = new NullMarkupModel(doc);
+        indentsModel = new NullIndentsModel();
+        foldingModel = new NullFoldingModel();
 
         component = new JComponent() {
             @Override
@@ -123,7 +139,7 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public MarkupModelEx getMarkupModel() {
-        return null;
+        return markupModel;
     }
 
     @NotNull
@@ -358,13 +374,13 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public FoldingModelEx getFoldingModel() {
-        return null;
+        return foldingModel;
     }
 
     @NotNull
     @Override
     public ScrollingModelEx getScrollingModel() {
-        return null;
+        return scrollingModel;
     }
 
     @NotNull
@@ -451,8 +467,7 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public EditorSettings getSettings() {
-        System.out.println(">> VimEditor.getSettings");
-        return null;
+        return editorSettings;
     }
 
     @NotNull
@@ -469,7 +484,7 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public Point logicalPositionToXY(@NotNull LogicalPosition pos) {
-        return null;
+        return new Point(pos.line, pos.column);
     }
 
     @Override
@@ -512,7 +527,7 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-        return null;
+        return new LogicalPosition(p.x, p.y); // ?!? (needed by VisibleHighlightingPassFactory)
     }
 
     @NotNull
@@ -599,16 +614,6 @@ public class VimEditor implements EditorEx {
     @NotNull
     @Override
     public IndentsModel getIndentsModel() {
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-        return null;
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+        return indentsModel;
     }
 }
