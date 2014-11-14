@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -73,7 +74,9 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
         editorHighlighter = new NullEditorHighlighter();
         scrollingModel = new NullScrollingModel(doc);
         editorSettings = new NullEditorSettings();
-        markupModel = new NullMarkupModel(doc);
+//        markupModel = new NullMarkupModel(doc);
+        // normally I hate blind casting, but intellij does it ALL THE FREAKING TIME
+        markupModel = (MarkupModelEx) DocumentMarkupModel.forDocument(doc, project, true);
         indentsModel = new NullIndentsModel();
         foldingModel = new NullFoldingModel();
 
