@@ -25,8 +25,12 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-        if ("HARD_REFERENCE_TO_PSI".equals(key.toString())) {
+        String stringValue = key.toString();
+        if ("HARD_REFERENCE_TO_PSI".equals(stringValue)) {
             return (T) psiFile;
+        }
+        if ("FILE_KEY".equals(stringValue)) {
+            return (T) psiFile.getVirtualFile();
         }
         return super.getUserData(key);
     }

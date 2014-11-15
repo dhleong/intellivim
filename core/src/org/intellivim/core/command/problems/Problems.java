@@ -1,18 +1,16 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.HighlightingSession;
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
+import com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -65,30 +63,40 @@ public class Problems extends ArrayList<Problem> {
             }
         };
 
-        // attempt 4: use the registrar
-        TextEditorHighlightingPassRegistrarImpl registrar =
-                (TextEditorHighlightingPassRegistrarImpl)
-                    TextEditorHighlightingPassRegistrar.getInstance(project);
-        final List<TextEditorHighlightingPass> passes =
-                registrar.instantiateMainPasses(psiFile, doc, highlightInfoProcessor);
-        final ProgressIndicator indicator = new ProgressIndicatorBase() {
-            @Override
-            public void cancel() {
-                // nop!
-                System.out.println("Some dummy tried to cancel!");
-                Thread.dumpStack();
-            }
-        };
+//        // attempt 4: use the registrar
+//        TextEditorHighlightingPassRegistrarImpl registrar =
+//                (TextEditorHighlightingPassRegistrarImpl)
+//                    TextEditorHighlightingPassRegistrar.getInstance(project);
+//        final List<TextEditorHighlightingPass> passes =
+//                registrar.instantiateMainPasses(psiFile, doc, highlightInfoProcessor);
+//        final ProgressIndicator indicator = new ProgressIndicatorBase() {
+//            @Override
+//            public void cancel() {
+//                // nop!
+//                System.out.println("Some dummy tried to cancel!");
+//                Thread.dumpStack();
+//            }
+//        };
+//        for (int i=0; i < ATTEMPTS; i++) {
+//            try {
+//                attemptHighlightingPass(passes, indicator);
+//                break;
+//            } catch (ProcessCanceledException e) {
+//                // not sure why it gets canceled sometimes,
+//                //  but let's try again
+//                problems.clear(); // prevent dups
+//            }
+//        }
 
-        for (int i=0; i < ATTEMPTS; i++) {
-            try {
-                attemptHighlightingPass(passes, indicator);
-                break;
-            } catch (ProcessCanceledException e) {
-                // not sure why it gets canceled sometimes,
-                //  but let's try again
-                problems.clear(); // prevent dups
-            }
+        List<Pair<PsiFile, HighlightInfo>> pairs =
+                DefaultHighlightVisitorBasedInspection
+                        .runGeneralHighlighting(psiFile, true, true, true);
+        for (Pair<PsiFile, HighlightInfo> pair : pairs) {
+            HighlightInfo info = pair.getSecond();
+            System.out.println(pair.getFirst() + " - " + info);
+            Problem problem = Problem.from(problems.size(), doc, info);
+            if (problem != null)
+                problems.add(problem);
         }
 
         return problems;

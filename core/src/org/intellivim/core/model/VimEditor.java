@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -451,7 +452,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     }
 
     @Override
-    public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+    public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback scrollbarRepaintCallback) {
 
     }
 
