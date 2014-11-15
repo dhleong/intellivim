@@ -49,13 +49,15 @@ public class Problem {
 
         List<QuickFixDescriptor> quickFixes = new ArrayList<QuickFixDescriptor>();
         int quickFixNumber = 0;
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair
-                : info.quickFixActionRanges) {
+        if (info.quickFixActionRanges != null) {
+            for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair
+                    : info.quickFixActionRanges) {
 
-            final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber;
-            final HighlightInfo.IntentionActionDescriptor desc = pair.getFirst();
-            final TextRange range = pair.getSecond();
-            quickFixes.add(QuickFixDescriptor.from(quickFixId, desc, range));
+                final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber;
+                final HighlightInfo.IntentionActionDescriptor desc = pair.getFirst();
+                final TextRange range = pair.getSecond();
+                quickFixes.add(QuickFixDescriptor.from(quickFixId, desc, range));
+            }
         }
 
         return new Problem(id,
