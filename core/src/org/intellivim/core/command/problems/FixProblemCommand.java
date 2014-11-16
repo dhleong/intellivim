@@ -1,11 +1,10 @@
 package org.intellivim.core.command.problems;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.intellivim.Command;
-import org.intellivim.ICommand;
+import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
@@ -16,9 +15,8 @@ import org.intellivim.core.util.ProjectUtil;
  * Created by dhleong on 11/11/14.
  */
 @Command("quickfix")
-public class FixProblemCommand implements ICommand {
+public class FixProblemCommand extends ProjectCommand {
 
-    @Required Project project;
     @Required String file;
     @Required String fixId;
 

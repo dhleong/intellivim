@@ -2,12 +2,11 @@ package org.intellivim.java.command;
 
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.intellivim.Command;
-import org.intellivim.ICommand;
+import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
@@ -18,14 +17,13 @@ import org.intellivim.core.util.ProjectUtil;
  * Created by dhleong on 11/8/14.
  */
 @Command("java_import_optimize")
-public class OptimizeImportsCommand implements ICommand {
+public class OptimizeImportsCommand extends ProjectCommand {
 
-    @Required Project project;
     @Required String file;
     @Required int offset;
 
     public OptimizeImportsCommand(String projectPath, String filePath, int offset) {
-        final Project project = ProjectUtil.ensureProject(projectPath);
+        project = ProjectUtil.ensureProject(projectPath);
         file = filePath;
         this.offset = offset;
     }

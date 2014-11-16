@@ -11,6 +11,7 @@ class IVClient(object):
     """Manages interactions with IntelliVim server"""
 
     ERROR_NO_SERVER = "{'error': 'No IntelliVim server running'}"
+    ERROR_UNEXPECTED = "{'error': 'Unexpected server error'}"
     ERROR_SERVER_CONNECTION = "{'error': 'Could not connect to IntelliVim Server'}"
     ERROR_TIMEOUT = "{'error': 'Timeout contacting IntelliVim Server'}"
 
@@ -67,6 +68,8 @@ class IVClient(object):
             # probably, connection refused
             IVClient._instance = None
             return IVClient.ERROR_SERVER_CONNECTION
+        except httplib.BadStatusLine:
+            return IVClient.ERROR_UNEXPECTED
         except socket.timeout:
             return IVClient.ERROR_TIMEOUT
 

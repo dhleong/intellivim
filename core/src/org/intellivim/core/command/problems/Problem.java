@@ -60,8 +60,9 @@ public class Problem {
             }
         }
 
+        // the lines returned are 0-indexed, and we want 1-indexed
         return new Problem(id,
-                line, col,
+                line + 1, col,
                 info.getSeverity(),
                 info.getDescription(),
                 quickFixes);

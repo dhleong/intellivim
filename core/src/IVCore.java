@@ -3,15 +3,17 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.intellivim.IVGson;
 import org.intellivim.CommandExecutor;
+import org.intellivim.IVGson;
 import org.intellivim.Result;
+import org.intellivim.SimpleResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by dhleong on 11/3/14.
@@ -72,7 +74,8 @@ public class IVCore implements ApplicationComponent {
 
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            final Result result = executor.execute(httpExchange.getRequestBody());
+            final Future<Result> future = executor.execute(httpExchange.getRequestBody());
+            final Result result = collectResult(future);
             final String json = gson.toJson(result);
             final int code = result.isSuccess() ? 200 : 400;
 
@@ -83,6 +86,14 @@ public class IVCore implements ApplicationComponent {
             final OutputStreamWriter out = new OutputStreamWriter(httpExchange.getResponseBody());
             out.write(json);
             out.close();
+        }
+
+        static Result collectResult(Future<Result> future) {
+            try {
+                return future.get();
+            } catch (Exception e) {
+                return SimpleResult.error(e);
+            }
         }
     }
 }

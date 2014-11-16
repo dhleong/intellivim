@@ -2,13 +2,18 @@ package org.intellivim;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import org.intellivim.core.util.ProjectUtil;
 import org.reflections.ReflectionUtils;
@@ -21,6 +26,7 @@ import org.reflections.util.FilterBuilder;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +47,7 @@ public class IVGson {
 
         return new GsonBuilder()
                 .registerTypeAdapter(Project.class, new ProjectTypeAdapter())
+                .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
                 .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
                 .create();
     }
@@ -140,4 +147,11 @@ public class IVGson {
         }
     }
 
+    private static class SeverityTypeAdapter implements JsonSerializer<HighlightSeverity> {
+        @Override
+        public JsonElement serialize(HighlightSeverity highlightSeverity,
+                 Type type, JsonSerializationContext jsonSerializationContext) {
+            return new JsonPrimitive(highlightSeverity.getName());
+        }
+    }
 }
