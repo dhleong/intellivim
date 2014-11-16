@@ -4,7 +4,7 @@ except ImportError:
     # hopefully running in unit test!
     pass
 
-import os, platform, urllib2, json, re, time, inspect
+import os, platform, urllib2, socket, json, re, time, inspect
 
 class IVClient(object):
 
@@ -12,6 +12,7 @@ class IVClient(object):
 
     ERROR_NO_SERVER = "{'error': 'No IntelliVim server running'}"
     ERROR_SERVER_CONNECTION = "{'error': 'Could not connect to IntelliVim Server'}"
+    ERROR_TIMEOUT = "{'error': 'Timeout contacting IntelliVim Server'}"
 
     TIMEOUT = 1.5
 
@@ -66,6 +67,8 @@ class IVClient(object):
             # probably, connection refused
             IVClient._instance = None
             return IVClient.ERROR_SERVER_CONNECTION
+        except socket.timeout:
+            return IVClient.ERROR_TIMEOUT
 
     def _execute(self, command):
         """Execute a command

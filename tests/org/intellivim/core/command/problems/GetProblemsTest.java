@@ -16,6 +16,6 @@ public class GetProblemsTest extends BaseTestCase {
         assertNotNull(result.result);
 
         Problems problems = (Problems) result.result;
-        assertSize(2, problems);
+        assertSize(1, problems);
     }
 }
