@@ -63,7 +63,6 @@ public class CommandExecutor {
         }
 
         public void setResult(Result result) {
-            System.out.println("Got result!");
             this.result = result;
             semaphore.release();
         }
@@ -87,7 +86,6 @@ public class CommandExecutor {
 
             @Override
             public void run() {
-                System.out.println("Running");
 
                 try {
                     final ICommand command = gson.fromJson(json, ICommand.class);
@@ -96,7 +94,6 @@ public class CommandExecutor {
                         return;
                     }
 
-                    System.err.println("GOT COMMAND " + command);
                     execute(result, command);
 
                 } catch (JsonSyntaxException e) {
@@ -109,7 +106,6 @@ public class CommandExecutor {
             }
         }, ModalityState.any());
 
-        System.out.println("Returning");
         return result;
     }
 
@@ -117,18 +113,15 @@ public class CommandExecutor {
         if (command instanceof ProjectCommand) {
             Project project = ((ProjectCommand) command).getProject();
 
-            System.out.println("Wait until smart");
             final DumbService dumbService = DumbService.getInstance(project);
             dumbService.runWhenSmart(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("Smart!");
                     result.setResult(command.execute());
                 }
             });
         } else {
             // just invoke via the application
-            System.out.println("Invoke");
             result.setResult(command.execute());
         }
     }
@@ -141,7 +134,6 @@ public class CommandExecutor {
     /** Mostly for testing */
     public Result execute(String json) {
         try {
-            System.out.println("Executing: " + json);
             return execute(new StringReader(json)).get();
         } catch (InterruptedException e) {
             throw new RuntimeException("Unable to execute `" + json + "`", e);

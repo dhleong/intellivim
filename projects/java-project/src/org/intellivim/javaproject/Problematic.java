@@ -6,7 +6,7 @@ package org.intellivim.javaproject;
 public class Problematic {
 
     public void foo() {
-        asdf
+        Array hi;
     }
 
 }

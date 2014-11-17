@@ -14,11 +14,14 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 /**
  * Created by dhleong on 11/3/14.
  */
 public class IVCore implements ApplicationComponent {
+    private Logger logger = Logger.getLogger("IntelliVim:IVCore");
+
     private static final int PORT = 4846;
     private HttpServer server;
 
@@ -27,14 +30,14 @@ public class IVCore implements ApplicationComponent {
 
     @Override
     public void initComponent() {
-//        System.out.println("Hello");
-//        ApplicationManager.getApplication().invokeLater(this);
         try {
             // TODO bind on any port, save to a file?
             server = HttpServer.create(new InetSocketAddress(PORT), 0);
             server.setExecutor(Executors.newCachedThreadPool());
             server.createContext("/command", new CommandHandler());
             server.start();
+
+            logger.info("IntelliVim server listening on port " + server.getAddress().getPort());
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -54,19 +57,6 @@ public class IVCore implements ApplicationComponent {
     public String getComponentName() {
         return "IVCore";
     }
-
-//    @Override
-//    public void run() {
-//        final Application app = ApplicationManager.getApplication();
-//        final boolean isActive = app.isActive();
-//        if (!isActive) {
-//            app.invokeLater(this);
-//            return;
-//        }
-//
-//        // active!
-//        new CompleteCommand().execute("/Users/dhleong/IdeaProjects/DummyProject/DummyProject.iml");
-//    }
 
     static class CommandHandler implements HttpHandler {
         final Gson gson = IVGson.newInstance();

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -89,7 +88,8 @@ public class ProjectUtil {
         // we do this eagerly so FileDocumentManger#getCachedDocument will
         //  return the exact same instance that we want to use
         final VimDocument doc = VimDocument.getInstance(psiFile);
-        virtual.putUserData(DOCUMENT_KEY, new WeakReference<Document>(doc));
+        // this is handled in the factory, now
+//        virtual.putUserData(DOCUMENT_KEY, new WeakReference<Document>(doc));
         return virtual;
     }
 
