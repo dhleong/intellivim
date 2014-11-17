@@ -32,6 +32,7 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -82,7 +83,11 @@ public class ProjectUtil {
 
     public static VirtualFile getVirtualFile(Project project, String filePath) {
         final File file = new File(project.getBasePath(), filePath);
-        final VirtualFile virtual = LocalFileSystem.getInstance().findFileByIoFile(file);
+
+        // load the VirtualFile and ensure it's up to date
+        final VirtualFile virtual = LocalFileSystem.getInstance()
+                .refreshAndFindFileByIoFile(file);
+        LocalFileSystem.getInstance().refreshFiles(Arrays.asList(virtual));
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtual);
 
         // we do this eagerly so FileDocumentManger#getCachedDocument will

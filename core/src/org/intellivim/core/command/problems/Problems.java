@@ -56,6 +56,8 @@ public class Problems extends ArrayList<Problem> {
         // reload the contents
         ((PsiFileEx) psiFile).onContentReload();
 
+        System.out.println(psiFile.getNode().getText());
+
         final VimEditor editor = new VimEditor(project, psiFile, 0);
         final DocumentEx doc = editor.getDocument();
 
