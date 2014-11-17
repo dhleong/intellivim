@@ -1,7 +1,7 @@
 package org.intellivim.javaproject;
 
 /**
- * Created by dhleong on 11/8/14.
+ * Class with intentional problems for testing
  */
 public class Problematic {
 

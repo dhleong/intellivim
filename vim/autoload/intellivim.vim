@@ -48,10 +48,13 @@ endfunction
 
 function! intellivim#ShowErrorResult(result) " {{{
     if has_key(a:result, 'error')
-        " TODO intellivim#EchoError
+        " TODO intellivim#util#EchoError
         echo a:result.error
         return 1
     endif
+
+    " success!
+    return 0
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker
