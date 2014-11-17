@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -51,12 +50,6 @@ public class Problems extends ArrayList<Problem> {
 
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiFile psiFile = manager.findFile(virtualFile);
-//        manager.reloadFromDisk(psiFile);
-
-        // reload the contents
-        ((PsiFileEx) psiFile).onContentReload();
-
-        System.out.println(psiFile.getNode().getText());
 
         final VimEditor editor = new VimEditor(project, psiFile, 0);
         final DocumentEx doc = editor.getDocument();
