@@ -61,8 +61,9 @@ public class Problem {
         }
 
         // the lines returned are 0-indexed, and we want 1-indexed
+        // the offsets also start at 0, so our cols will be 0-indexed also
         return new Problem(id,
-                line + 1, col,
+                line + 1, col + 1,
                 info.getSeverity(),
                 info.getDescription(),
                 quickFixes);
