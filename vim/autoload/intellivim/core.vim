@@ -22,6 +22,7 @@ function! intellivim#core#Update() " {{{
     endfor
 
     call setloclist(0, list, 'r')
+    call intellivim#signs#Update()
 
 endfunction " }}}
 
