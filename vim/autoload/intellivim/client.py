@@ -4,7 +4,7 @@ except ImportError:
     # hopefully running in unit test!
     pass
 
-import os, platform, urllib2, socket, json, re, time, inspect
+import os, platform, urllib2, httplib, socket, json, re, time, inspect
 
 class IVClient(object):
 
