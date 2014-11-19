@@ -36,17 +36,25 @@ public class QuickFixDescriptor {
         return description;
     }
 
+    public IntentionAction getFix() {
+        return descriptor.getAction();
+    }
+
     public void execute(final Project project, final Editor editor, final PsiFile file) {
         final IntentionAction action = descriptor.getAction();
         if (action.startInWriteAction()) {
+            System.out.println("Exec");
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
 
                 @Override
                 public void run() {
+                    System.out.println("NOW!");
                     action.invoke(project, editor, file);
+                    System.out.println("Done!");
                 }
             });
         } else {
+            System.out.println("Just invoke " + action);
             action.invoke(project, editor, file);
         }
     }

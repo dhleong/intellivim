@@ -40,6 +40,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
         myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                 new LightTempDirTestFixtureImpl(true));
         myFixture.setUp();
+
     }
 
     @Override

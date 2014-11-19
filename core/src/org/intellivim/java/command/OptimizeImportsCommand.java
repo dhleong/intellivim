@@ -1,16 +1,41 @@
 package org.intellivim.java.command;
 
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
+import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.problems.Problem;
+import org.intellivim.core.command.problems.Problems;
+import org.intellivim.core.command.problems.QuickFixDescriptor;
+import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -20,12 +45,10 @@ import org.intellivim.core.util.ProjectUtil;
 public class OptimizeImportsCommand extends ProjectCommand {
 
     @Required String file;
-    @Required int offset;
 
-    public OptimizeImportsCommand(String projectPath, String filePath, int offset) {
+    public OptimizeImportsCommand(String projectPath, String filePath) {
         project = ProjectUtil.ensureProject(projectPath);
         file = filePath;
-        this.offset = offset;
     }
 
     @Override
@@ -36,9 +59,123 @@ public class OptimizeImportsCommand extends ProjectCommand {
         if (!optimizer.supports(psiFile)) {
             return SimpleResult.error(file + " is not supported by " + optimizer);
         }
+
+//        try {
+//            System.out.println("contents:\n" + new String(virtualFile.contentsToByteArray()));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+//        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+//        PsiImportList importList = new ImportHelper(settings)
+//                .prepareOptimizeImportsResult((PsiJavaFile) psiFile);
+//        PsiJavaFileImpl jfile = (PsiJavaFileImpl) psiFile;
+//        System.out.println("Optimized imports: " + importList);
+
+        if (!(psiFile instanceof PsiJavaFile)) {
+            return SimpleResult.error(file + " is not a Java file");
+        }
+
+        final VimEditor editor = new VimEditor(project, psiFile, 0);
+
+        PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+        for (PsiClass name : cache.getClassesByName("ArrayList", GlobalSearchScope.allScope(project))) {
+            System.out.println("Cached class: " + name);
+        }
+
+        boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+        for (PsiJavaCodeReferenceElement el
+                : findUnresolvedReferences((PsiJavaFile) psiFile)) {
+            editor.getCaretModel().moveToOffset(el.getTextOffset());
+            System.out.println("result: " +
+                    new ImportClassFix(el).doFix(editor, true, false));
+        }
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+
+//        final List<QuickFixDescriptor> fixes = findImportProblemFixes();
+//        for (QuickFixDescriptor fix : fixes) {
+////            fix.execute(project, editor, psiFile);
+//            ImportClassFix actual = (ImportClassFix) fix.getFix();
+//            System.out.println("result: " + actual.doFix(editor, true, false));
+//        }
+
         Runnable action = optimizer.processFile(psiFile);
-        action.run();
+        ApplicationManager.getApplication().runWriteAction(action);
         return SimpleResult.success();
+    }
+
+    private List<QuickFixDescriptor> findImportProblemFixes() {
+        List<QuickFixDescriptor> fixes = new ArrayList<QuickFixDescriptor>();
+        Problems problems = Problems.collectFrom(project, file);
+        for (Problem problem : problems) {
+            if (!problem.isError()) continue;
+
+            QuickFixDescriptor importFix = findImportFix(problem);
+            if (importFix != null) {
+                // found import fix
+                fixes.add(importFix);
+            }
+        }
+
+        return fixes;
+    }
+
+    private QuickFixDescriptor findImportFix(Problem problem) {
+
+        for (QuickFixDescriptor descriptor : problem.getFixes()) {
+            if (descriptor.getFix() instanceof ImportClassFix)
+                return descriptor;
+        }
+
+        return null;
+    }
+
+    private List<PsiJavaCodeReferenceElement> findUnresolvedReferences(PsiJavaFile file) {
+        List<PsiJavaCodeReferenceElement> elements = new ArrayList<PsiJavaCodeReferenceElement>();
+
+        // mostly borrowed from ImportHelper
+        final LinkedList<PsiElement> stack = new LinkedList<PsiElement>();
+        stack.add(file);
+        while (!stack.isEmpty()) {
+            final PsiElement child = stack.removeFirst();
+            if (child instanceof PsiLiteralExpression) continue;
+            ContainerUtil.addAll(stack, child.getChildren());
+
+            for (final PsiReference reference : child.getReferences()) {
+                if (!(reference instanceof PsiJavaReference)) continue;
+                final PsiJavaReference javaReference = (PsiJavaReference) reference;
+                if (javaReference instanceof JavaClassReference && ((JavaClassReference) javaReference).getContextReference() != null)
+                    continue;
+                PsiJavaCodeReferenceElement referenceElement = null;
+                if (reference instanceof PsiJavaCodeReferenceElement) {
+                    referenceElement = (PsiJavaCodeReferenceElement) child;
+                    if (referenceElement.getQualifier() != null) {
+                        continue;
+                    }
+                    if (reference instanceof PsiJavaCodeReferenceElementImpl
+                            && ((PsiJavaCodeReferenceElementImpl) reference).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+                        continue;
+                    }
+                }
+
+                final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
+                PsiElement refElement = resolveResult.getElement();
+                if (refElement == null && referenceElement != null) {
+                    refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
+                }
+                if (refElement != null) continue; // already resolved?
+
+                if (referenceElement != null) {
+                    System.out.println("Couldn't resolve: " + javaReference
+                            + " @" + child.getTextOffset());
+
+                    elements.add(referenceElement);
+                }
+            }
+        }
+
+        return elements;
     }
 
 }

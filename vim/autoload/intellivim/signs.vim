@@ -47,7 +47,6 @@ function! intellivim#signs#UnplaceAll(bufno) " {{{
         \ " buffer=" . a:bufno
 endfunction " }}}
 
-
 function! intellivim#signs#Update() " {{{
     " Update signs in current buffer to match the location list
     " and quickfix list

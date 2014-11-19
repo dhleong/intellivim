@@ -24,6 +24,7 @@ public class Problem {
 
     /** it is too slow if we include all these */
     private transient final List<QuickFixDescriptor> fixes;
+    private boolean error;
 
     private Problem(int id, int line, int col, HighlightSeverity severity,
             String description,
@@ -36,8 +37,24 @@ public class Problem {
         this.fixes = fixes;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public List<QuickFixDescriptor> getFixes() {
         return fixes;
+    }
+
+    public boolean isError() {
+        return severity == HighlightSeverity.ERROR;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[%d@%d:%d][%s]%s",
+                id, line, col,
+                severity,
+                description );
     }
 
     public static Problem from(int id, Document doc, HighlightInfo info) {
