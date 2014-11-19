@@ -43,8 +43,6 @@ import java.util.List;
  */
 public class ProjectUtil {
 
-    static final Key<Reference<Document>> DOCUMENT_KEY = FileDocumentManagerImpl.DOCUMENT_KEY;
-
     public static Project ensureProject(String projectPath) {
 
         final Project project = getProject(projectPath);
@@ -93,8 +91,6 @@ public class ProjectUtil {
         // we do this eagerly so FileDocumentManger#getCachedDocument will
         //  return the exact same instance that we want to use
         final VimDocument doc = VimDocument.getInstance(psiFile);
-        // this is handled in the factory, now
-//        virtual.putUserData(DOCUMENT_KEY, new WeakReference<Document>(doc));
         return virtual;
     }
 

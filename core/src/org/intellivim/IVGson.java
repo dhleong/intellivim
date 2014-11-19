@@ -45,6 +45,8 @@ public class IVGson {
             commandMap = initCommands();
         }
 
+        // FIXME booleans may need to be serialized as 1/0 since vim
+        //  doesn't understand true/false....
         return new GsonBuilder()
                 .registerTypeAdapter(Project.class, new ProjectTypeAdapter())
                 .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())

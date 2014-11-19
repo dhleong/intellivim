@@ -39,6 +39,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
         final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
         myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
                 new LightTempDirTestFixtureImpl(true));
+//        myFixture.setCaresAboutInjection(true);
         myFixture.setUp();
 
     }

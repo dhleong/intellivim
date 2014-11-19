@@ -79,7 +79,9 @@ public class OptimizeImportsCommand extends ProjectCommand {
         final VimEditor editor = new VimEditor(project, psiFile, 0);
 
         PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-        for (PsiClass name : cache.getClassesByName("ArrayList", GlobalSearchScope.allScope(project))) {
+//        for (PsiClass name : cache.getClassesByName("ArrayList", GlobalSearchScope.allScope(project))) {
+        System.out.println("names: "+  cache.getAllClassNames().length);
+        for (String name : cache.getAllClassNames()) {
             System.out.println("Cached class: " + name);
         }
 
@@ -153,16 +155,16 @@ public class OptimizeImportsCommand extends ProjectCommand {
                     if (referenceElement.getQualifier() != null) {
                         continue;
                     }
-                    if (reference instanceof PsiJavaCodeReferenceElementImpl
-                            && ((PsiJavaCodeReferenceElementImpl) reference).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
-                        continue;
-                    }
+//                    if (reference instanceof PsiJavaCodeReferenceElementImpl
+//                            && ((PsiJavaCodeReferenceElementImpl) reference).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
+//                        continue;
+//                    }
                 }
 
                 final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
                 PsiElement refElement = resolveResult.getElement();
                 if (refElement == null && referenceElement != null) {
-                    refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code
+                    refElement = ResolveClassUtil.resolveClass(referenceElement); // might be incomplete code
                 }
                 if (refElement != null) continue; // already resolved?
 

@@ -19,22 +19,31 @@ public class Problem {
     private final int id;
     private final int line;
     private final int col;
+    private final int startOffset;
+    private final int endOffset;
     private final HighlightSeverity severity;
     private final String description;
 
     /** it is too slow if we include all these */
     private transient final List<QuickFixDescriptor> fixes;
-    private boolean error;
 
-    private Problem(int id, int line, int col, HighlightSeverity severity,
+    private Problem(int id, int line, int col,
+            int startOffset, int endOffset,
+            HighlightSeverity severity,
             String description,
             List<QuickFixDescriptor> fixes) {
         this.id = id;
         this.line = line;
         this.col = col;
+        this.startOffset = startOffset;
+        this.endOffset = endOffset;
         this.severity = severity;
         this.description = description;
         this.fixes = fixes;
+    }
+
+    public boolean containsOffset(int offset) {
+        return offset >= startOffset && offset < endOffset;
     }
 
     public String getDescription() {
@@ -70,7 +79,7 @@ public class Problem {
             for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair
                     : info.quickFixActionRanges) {
 
-                final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber;
+                final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber++;
                 final HighlightInfo.IntentionActionDescriptor desc = pair.getFirst();
                 final TextRange range = pair.getSecond();
                 quickFixes.add(QuickFixDescriptor.from(quickFixId, desc, range));
@@ -81,6 +90,7 @@ public class Problem {
         // the offsets also start at 0, so our cols will be 0-indexed also
         return new Problem(id,
                 line + 1, col + 1,
+                info.getActualStartOffset(), info.getActualEndOffset(),
                 info.getSeverity(),
                 info.getDescription(),
                 quickFixes);

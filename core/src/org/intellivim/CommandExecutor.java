@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 
@@ -111,19 +112,29 @@ public class CommandExecutor {
 
     protected void execute(final CommandResult result, final ICommand command) {
         if (command instanceof ProjectCommand) {
-            Project project = ((ProjectCommand) command).getProject();
+            final Project project = ((ProjectCommand) command).getProject();
 
             final DumbService dumbService = DumbService.getInstance(project);
             dumbService.runWhenSmart(new Runnable() {
                 @Override
                 public void run() {
-                    result.setResult(command.execute());
+                    executeProjectCommand(project, command, result);
                 }
             });
         } else {
             // just invoke via the application
             result.setResult(command.execute());
         }
+    }
+
+    private void executeProjectCommand(final Project project, final ICommand command, final CommandResult result) {
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+
+            @Override
+            public void run() {
+                result.setResult(command.execute());
+            }
+        }, "intellivim-command", "org.intellivim");
     }
 
     private static Result handleError(Throwable e) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,4 +119,5 @@ public class NullSoftWrapModel implements SoftWrapModelEx {
     public void forceAdditionalColumnsUsage() {
 
     }
+
 }

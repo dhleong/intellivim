@@ -164,7 +164,6 @@ public class VimCaretModel implements CaretModel {
 
     @Override
     public void runForEachCaret(@NotNull CaretAction caretAction) {
-
     }
 
     @Override

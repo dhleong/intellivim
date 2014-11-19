@@ -6,7 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.apache.http.util.TextUtils;
 
 /**
@@ -51,6 +54,8 @@ public class QuickFixDescriptor {
                     System.out.println("NOW!");
                     action.invoke(project, editor, file);
                     System.out.println("Done!");
+
+                    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
                 }
             });
         } else {

@@ -99,7 +99,7 @@ public class NullMarkupModel extends UserDataHolderBase implements MarkupModelEx
 
     }
 
-    @Override
+//    @Override
     public boolean sweep(int start, int end, @NotNull SweepProcessor<RangeHighlighterEx> sweepProcessor) {
         return false;
     }
