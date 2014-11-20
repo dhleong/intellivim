@@ -6,11 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import org.apache.http.util.TextUtils;
+import org.intellivim.core.util.FileUtil;
 
 /**
  * Created by dhleong on 11/12/14.
@@ -45,23 +43,25 @@ public class QuickFixDescriptor {
 
     public void execute(final Project project, final Editor editor, final PsiFile file) {
         final IntentionAction action = descriptor.getAction();
+        final Runnable runnable = prepareExecuteAction(action, project, editor, file);
         if (action.startInWriteAction()) {
-            System.out.println("Exec");
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            ApplicationManager.getApplication().runWriteAction(runnable);
+        } else {
+            runnable.run();
+        }
+    }
+
+    private Runnable prepareExecuteAction(final IntentionAction action,
+              final Project project, final Editor editor, final PsiFile file) {
+        return new Runnable() {
 
                 @Override
                 public void run() {
-                    System.out.println("NOW!");
                     action.invoke(project, editor, file);
-                    System.out.println("Done!");
 
-                    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                    FileUtil.commitChanges(editor);
                 }
-            });
-        } else {
-            System.out.println("Just invoke " + action);
-            action.invoke(project, editor, file);
-        }
+            };
     }
 
     static QuickFixDescriptor from(String id,

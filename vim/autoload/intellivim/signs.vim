@@ -58,14 +58,17 @@ function! intellivim#signs#Update() " {{{
     let save_lazy = &lazyredraw
     set lazyredraw
 
-    " TODO remove existing signs
+    " remove existing signs
+    let bufno = bufnr('%')
+    call intellivim#signs#UnplaceAll(bufno)
+
+    " prepare new signs
     let qflist = filter(getqflist(),
         \ 'bufnr("%") == v:val.bufnr')
     let loclist = getloclist(0)
     let items = qflist + loclist
 
     " Place signs
-    let bufno = bufnr('%')
     call intellivim#signs#PrepareSigns(items)
     for item in items
         let line = item.lnum

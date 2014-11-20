@@ -1,13 +1,11 @@
 package org.intellivim.java.command;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -16,10 +14,8 @@ import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.Command;
@@ -31,6 +27,7 @@ import org.intellivim.core.command.problems.Problem;
 import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
 import org.intellivim.core.model.VimEditor;
+import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
@@ -85,15 +82,15 @@ public class OptimizeImportsCommand extends ProjectCommand {
             System.out.println("Cached class: " + name);
         }
 
-        boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-        for (PsiJavaCodeReferenceElement el
-                : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-            editor.getCaretModel().moveToOffset(el.getTextOffset());
-            System.out.println("result: " +
-                    new ImportClassFix(el).doFix(editor, true, false));
-        }
-        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+//        boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+//        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+//        for (PsiJavaCodeReferenceElement el
+//                : findUnresolvedReferences((PsiJavaFile) psiFile)) {
+//            editor.getCaretModel().moveToOffset(el.getTextOffset());
+//            System.out.println("result: " +
+//                    new ImportClassFix(el).doFix(editor, true, false));
+//        }
+//        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
 
 //        final List<QuickFixDescriptor> fixes = findImportProblemFixes();
 //        for (QuickFixDescriptor fix : fixes) {
@@ -104,6 +101,9 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
         Runnable action = optimizer.processFile(psiFile);
         ApplicationManager.getApplication().runWriteAction(action);
+
+        FileUtil.commitChanges(editor);
+
         return SimpleResult.success();
     }
 
