@@ -26,6 +26,62 @@ function! intellivim#core#Update() " {{{
 
 endfunction " }}}
 
+function! intellivim#core#FixProblem() " {{{
+    " Begin the process of fixing the problem under the cursor
+    if !intellivim#InProject()
+        return
+    endif
+
+    let command = intellivim#NewCommand("get_fixes")
+    let command.offset = intellivim#GetOffset()
+    let result = intellivim#client#Execute(command)
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    " prepare contents
+    let contents = []
+    for quickfix in result.result
+        call add(contents, quickfix.id . ": " . quickfix.description)
+    endfor
+
+    " show quickfix window (not to be confused with vim's quickfix)
+    call intellivim#display#TempWindow("[Quick Fix]", contents)
+    nnoremap <buffer> <cr> :call <SID>ExecuteQuickFix()<cr>
+
+endfunction " }}}
+
+function s:ExecuteQuickFix() " {{{
+    let line = getline('.')
+    let parts = split(line, ':')
+    if len(parts) == 1
+        " nothing to be done
+        return
+    endif
+
+    let fixId = parts[0]
+    let oldWinr = bufwinnr(b:last_bufno)
+
+    " close the tempwindow and pop back
+    norm! ZZ
+    exe oldWinr . 'winc w'
+
+    let command = intellivim#NewCommand("quickfix")
+    let command.fixId = fixId
+    let result = intellivim#client#Execute(command)
+
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    " reload the file
+    edit!
+
+    " refresh problems
+    call intellivim#core#Update()
+
+endfunction " }}}
+
 function s:ProblemToLocationEntry(problem) " {{{
 
     let prob = a:problem

@@ -1,4 +1,13 @@
 
+function! intellivim#GetOffset() " {{{
+    let line = line('.')
+    let col = col('.')
+
+    " NB line2byte is 1-indexed
+    return line2byte(line) - 1
+            \ + col - 1
+endfunction " }}}
+
 function! intellivim#GetCurrentProject() " {{{
 
     if exists('b:intellivim_project')
@@ -17,6 +26,10 @@ function! intellivim#GetCurrentProject() " {{{
 
     let b:intellivim_project = iml
     return iml
+endfunction " }}}
+
+function! intellivim#InProject() " {{{
+    return !empty(intellivim#GetCurrentProject())
 endfunction " }}}
 
 function! intellivim#NewCommand(commandName) " {{{
