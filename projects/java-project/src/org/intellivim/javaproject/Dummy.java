@@ -16,6 +16,7 @@ public class Dummy {
 
     /** I promise it's not boring */
     public void notBoring(int number) {
+
     }
 
     public Dummy fluid() {

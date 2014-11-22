@@ -1,7 +1,8 @@
 package org.intellivim;
 
 /**
- * Created by dhleong on 11/7/14.
+ * Convenient implementation of Result
+ * @author dhleong
  */
 public class SimpleResult implements Result {
     public final String error;
@@ -10,6 +11,12 @@ public class SimpleResult implements Result {
     SimpleResult(String error, Object result) {
         this.error = error;
         this.result = result;
+    }
+
+    /** Convenience method to avoid casting when you're sure of what it is */
+    @SuppressWarnings("unchecked")
+    public <T> T getResult() {
+        return (T) result;
     }
 
     @Override

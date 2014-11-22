@@ -6,6 +6,8 @@ function! intellivim#core#Setup() " {{{
         autocmd BufWritePost <buffer> call intellivim#core#Update()
     augroup END
 
+    " also, update now
+    call intellivim#core#Update()
 endfunction " }}}
 
 function! intellivim#core#Update() " {{{

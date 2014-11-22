@@ -12,7 +12,7 @@ import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
 
 /**
- * Created by dhleong on 11/11/14.
+ * @author dhleong
  */
 @Command("quickfix")
 public class FixProblemCommand extends ProjectCommand {
