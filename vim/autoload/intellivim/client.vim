@@ -1,3 +1,6 @@
+" Author: Daniel Leong
+"
+
 if !has('python') && !has('python3')
     echo 'intellivim requires python support'
     finish

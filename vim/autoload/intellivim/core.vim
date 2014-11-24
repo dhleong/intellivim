@@ -1,3 +1,18 @@
+" Author: Daniel Leong
+"
+
+function! intellivim#core#ReloadFile() " {{{
+    " Update the contents/state of a file after
+    "  we (think) it has been changed externally
+
+    " reload the file
+    edit!
+
+    " TODO somehow preserve cursor position?
+
+    " refresh problems
+    call intellivim#core#Update()
+endfunction " }}}
 
 function! intellivim#core#Setup() " {{{
 
@@ -76,11 +91,7 @@ function s:ExecuteQuickFix() " {{{
         return
     endif
 
-    " reload the file
-    edit!
-
-    " refresh problems
-    call intellivim#core#Update()
+    call intellivim#core#ReloadFile()
 
 endfunction " }}}
 

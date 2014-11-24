@@ -1,9 +1,12 @@
 package org.intellivim.java.command;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
@@ -29,6 +32,7 @@ import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
+import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
@@ -52,60 +56,45 @@ public class OptimizeImportsCommand extends ProjectCommand {
     @Override
     public Result execute() {
         final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        ImportOptimizer optimizer = new JavaImportOptimizer();
-        if (!optimizer.supports(psiFile)) {
-            return SimpleResult.error(file + " is not supported by " + optimizer);
-        }
-
-//        try {
-//            System.out.println("contents:\n" + new String(virtualFile.contentsToByteArray()));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-//        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-//        PsiImportList importList = new ImportHelper(settings)
-//                .prepareOptimizeImportsResult((PsiJavaFile) psiFile);
-//        PsiJavaFileImpl jfile = (PsiJavaFileImpl) psiFile;
-//        System.out.println("Optimized imports: " + importList);
-
+        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        final VimEditor editor = new VimEditor(project, psiFile, 0);
         if (!(psiFile instanceof PsiJavaFile)) {
             return SimpleResult.error(file + " is not a Java file");
         }
 
-        final VimEditor editor = new VimEditor(project, psiFile, 0);
+        IntelliVimUtil.runInUnitTestMode(new Runnable() {
 
-        PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-//        for (PsiClass name : cache.getClassesByName("ArrayList", GlobalSearchScope.allScope(project))) {
-        System.out.println("names: "+  cache.getAllClassNames().length);
-        for (String name : cache.getAllClassNames()) {
-            System.out.println("Cached class: " + name);
+            @Override
+            public void run() {
+                final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+                CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+
+                for (PsiJavaCodeReferenceElement el
+                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
+                    // TODO handle ambiguous imports somehow
+                    attemptAutoImport(editor, el);
+                }
+
+                CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+
+                FileUtil.commitChanges(editor);
+            }
+        });
+
+        ImportOptimizer optimizer = new JavaImportOptimizer();
+        if (optimizer.supports(psiFile)) {
+            Runnable action = optimizer.processFile(psiFile);
+            ApplicationManager.getApplication().runWriteAction(action);
         }
-
-//        boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-//        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-//        for (PsiJavaCodeReferenceElement el
-//                : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-//            editor.getCaretModel().moveToOffset(el.getTextOffset());
-//            System.out.println("result: " +
-//                    new ImportClassFix(el).doFix(editor, true, false));
-//        }
-//        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-
-//        final List<QuickFixDescriptor> fixes = findImportProblemFixes();
-//        for (QuickFixDescriptor fix : fixes) {
-////            fix.execute(project, editor, psiFile);
-//            ImportClassFix actual = (ImportClassFix) fix.getFix();
-//            System.out.println("result: " + actual.doFix(editor, true, false));
-//        }
-
-        Runnable action = optimizer.processFile(psiFile);
-        ApplicationManager.getApplication().runWriteAction(action);
 
         FileUtil.commitChanges(editor);
 
         return SimpleResult.success();
+    }
+
+    private ImportClassFixBase.Result attemptAutoImport(EditorEx editor, PsiJavaCodeReferenceElement el) {
+        editor.getCaretModel().moveToOffset(el.getTextOffset());
+        return new ImportClassFix(el).doFix(editor, false, false);
     }
 
     private List<QuickFixDescriptor> findImportProblemFixes() {

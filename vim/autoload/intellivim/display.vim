@@ -1,3 +1,5 @@
+" Author: Daniel Leong
+"
 
 function! intellivim#display#TempWindow(name, contents, ...) " {{{
     " Prepare a temporary window with the given name and contents.

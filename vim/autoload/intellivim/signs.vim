@@ -1,3 +1,5 @@
+" Author: Daniel Leong
+"
 " The functions in this file draw heavy inspiration
 "  from previous work on eclim (c) Eric Van Dewoestine
 "  without which I would have had no idea where to 
