@@ -1,4 +1,4 @@
-package org.intellivim.org.intellivim.java.command;
+package org.intellivim.java.command;
 
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
@@ -8,7 +8,7 @@ import org.intellivim.java.command.OptimizeImportsCommand;
 import java.io.IOException;
 
 /**
- * Created by dhleong on 11/18/14.
+ * @author dhleong
  */
 public class OptimizeImportsTest extends FileEditingTestCase {
 
