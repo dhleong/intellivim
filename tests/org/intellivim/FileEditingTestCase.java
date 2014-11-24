@@ -6,6 +6,8 @@ import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Convenient base test case for commands that
  *  will edit some file. Any changes will be
@@ -18,14 +20,12 @@ public abstract class FileEditingTestCase extends BaseTestCase {
 
     private byte[] originalContents;
 
-    protected abstract String getProjectPath();
-
     protected abstract String getFilePath();
 
     public void setUp() throws Exception {
         super.setUp();
 
-        Project project = ProjectUtil.getProject(getProjectPath());
+        Project project = getProject();
         VirtualFile file = ProjectUtil.getVirtualFile(project, getFilePath());
         originalContents = file.contentsToByteArray();
 
@@ -97,16 +97,17 @@ public abstract class FileEditingTestCase extends BaseTestCase {
 
     protected void assertFileDoesNotContain(CharSequence expectedContents) {
         String actualContents = getCurrentFileContentsSafely();
-        assertFalse("Expected file to NOT contain `" + expectedContents + "`",
-                actualContents.contains(expectedContents));
-
+//        assertFalse("Expected file to NOT contain `" + expectedContents + "`",
+//                actualContents.contains(expectedContents));
+        assertThat(actualContents).doesNotContain(expectedContents);
     }
 
     protected void assertFileContains(CharSequence expectedContents) {
         String actualContents = getCurrentFileContentsSafely();
-        assertTrue("Expected file to contain `" + expectedContents
-                        + "`; found instead:\n" + actualContents,
-                actualContents.contains(expectedContents));
+        assertThat(actualContents).contains(expectedContents);
+//        assertTrue("Expected file to contain `" + expectedContents
+//                        + "`; found instead:\n" + actualContents,
+//                actualContents.contains(expectedContents));
     }
 
     /**
@@ -125,7 +126,7 @@ public abstract class FileEditingTestCase extends BaseTestCase {
      */
 
     private VirtualFile getFile() {
-        final Project proj = ProjectUtil.getProject(getProjectPath());
+        final Project proj = getProject();
         return ProjectUtil.getVirtualFile(proj, getFilePath());
     }
 

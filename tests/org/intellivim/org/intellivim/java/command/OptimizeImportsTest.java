@@ -2,6 +2,7 @@ package org.intellivim.org.intellivim.java.command;
 
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.problems.FixProblemTest;
 import org.intellivim.java.command.OptimizeImportsCommand;
 
 import java.io.IOException;
@@ -29,9 +30,9 @@ public class OptimizeImportsTest extends FileEditingTestCase {
      */
     public void testCommand() throws IOException {
 
-        SimpleResult result = (SimpleResult) new OptimizeImportsCommand(projPath, filePath).execute();
+        SimpleResult result = (SimpleResult) new OptimizeImportsCommand(getProject(), filePath).execute();
         assertSuccess(result);
-        assertFileContentsChanged();
+        assertFileNowContains(FixProblemTest.IMPORT_STATEMENT);
     }
 
 }

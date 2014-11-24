@@ -6,7 +6,7 @@ package org.intellivim.javaproject;
 public class Problematic {
 
     public void foo() {
-        ArrayList obj;
+        NotImported obj;
     }
 
 }

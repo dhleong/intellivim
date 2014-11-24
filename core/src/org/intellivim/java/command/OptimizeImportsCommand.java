@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -43,8 +44,8 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
     @Required String file;
 
-    public OptimizeImportsCommand(String projectPath, String filePath) {
-        project = ProjectUtil.ensureProject(projectPath);
+    public OptimizeImportsCommand(Project project, String filePath) {
+        super(project);
         file = filePath;
     }
 

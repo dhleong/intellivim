@@ -1,5 +1,6 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -20,8 +21,8 @@ public class FixProblemCommand extends ProjectCommand {
     @Required String file;
     @Required String fixId;
 
-    public FixProblemCommand(String projPath, String filePath, String fixId) {
-        project = ProjectUtil.getProject(projPath);
+    public FixProblemCommand(Project project, String filePath, String fixId) {
+        super(project);
         file = filePath;
         this.fixId = fixId;
     }

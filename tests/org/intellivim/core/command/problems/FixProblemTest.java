@@ -1,5 +1,6 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.openapi.project.Project;
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
 
@@ -8,7 +9,8 @@ import org.intellivim.SimpleResult;
  */
 public class FixProblemTest extends FileEditingTestCase {
 
-    static final String IMPORT_STATEMENT = "import java.util.ArrayList;";
+//    public static final String IMPORT_STATEMENT = "import java.util.ArrayList;";
+    public static final String IMPORT_STATEMENT = "import org.intellivim.javaproject.subpackage.NotImported;";
 
     final String projPath = getProjectPath(JAVA_PROJECT);
     final String filePath = PROBLEMATIC_FILE_PATH;
@@ -27,7 +29,8 @@ public class FixProblemTest extends FileEditingTestCase {
         // clean slate
         assertFileDoesNotContain(IMPORT_STATEMENT);
 
-        SimpleResult result = (SimpleResult) new GetProblemsCommand(projPath, filePath).execute();
+        Project project = getProject();
+        SimpleResult result = (SimpleResult) new GetProblemsCommand(project, filePath).execute();
         assertSuccess(result);
 
         final Problems problems = result.getResult();
@@ -37,7 +40,7 @@ public class FixProblemTest extends FileEditingTestCase {
         assertNotNull(quickFix);
         assertEquals("Import Class", quickFix.description);
 
-        SimpleResult fixResult = (SimpleResult) new FixProblemCommand(projPath, filePath, quickFix.id).execute();
+        SimpleResult fixResult = (SimpleResult) new FixProblemCommand(project, filePath, quickFix.id).execute();
         assertSuccess(fixResult);
         assertFileNowContains(IMPORT_STATEMENT);
     }

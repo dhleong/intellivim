@@ -44,8 +44,6 @@ public class FileUtil {
         }
 
         manager.saveDocument(doc);
-
-        System.out.println("Text: " + doc.getText());
     }
 
     /** @see #commitChanges(com.intellij.openapi.editor.Document) */

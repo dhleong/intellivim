@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import org.intellivim.Command;
-import org.intellivim.ICommand;
+import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
@@ -29,14 +29,13 @@ import java.util.List;
  * Created by dhleong on 11/3/14.
  */
 @Command("complete")
-public class CompleteCommand implements ICommand {
+public class CompleteCommand extends ProjectCommand {
 
-    @Required Project project;
     @Required String file;
     @Required int offset;
 
-    public CompleteCommand(String projectPath, String filePath, int offset) {
-        project = ProjectUtil.getProject(projectPath);
+    public CompleteCommand(Project project, String filePath, int offset) {
+        super(project);
         file = filePath;
         this.offset = offset;
     }

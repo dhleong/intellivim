@@ -9,11 +9,16 @@ import org.intellivim.SimpleResult;
  * Created by dhleong on 11/8/14.
  */
 public class GetProblemsTest extends BaseTestCase {
+
+    @Override
+    protected String getProjectPath() {
+        return getProjectPath(JAVA_PROJECT);
+    }
+
     public void testProblematic() {
-        String projPath = getProjectPath(JAVA_PROJECT);
         String filePath = "src/org/intellivim/javaproject/Problematic.java";
 
-        SimpleResult result = (SimpleResult) new GetProblemsCommand(projPath, filePath).execute();
+        SimpleResult result = (SimpleResult) new GetProblemsCommand(getProject(), filePath).execute();
         assertSuccess(result);
         assertNotNull(result.result);
 
@@ -22,10 +27,9 @@ public class GetProblemsTest extends BaseTestCase {
     }
 
     public void testProblematicFromExecutor() {
-        String projPath = getProjectPath(JAVA_PROJECT);
         String filePath = "src/org/intellivim/javaproject/Problematic.java";
         String command = "{'command':'get_problems'," +
-                "'project': '" + projPath + "'," +
+                "'project': '" + getProjectPath() + "'," +
                 "'file': '" + filePath + "'}";
 
         CommandExecutor ex = new CommandExecutor(IVGson.newInstance());

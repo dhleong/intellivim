@@ -1,5 +1,6 @@
 package org.intellivim.core.command.complete;
 
+import com.intellij.openapi.project.Project;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
@@ -10,13 +11,18 @@ import java.util.List;
  */
 public class CompletionTest extends BaseTestCase {
 
+    @Override
+    protected String getProjectPath() {
+        return getProjectPath(JAVA_PROJECT);
+    }
+
     public void testCompletion() {
-        String projPath = getProjectPath(JAVA_PROJECT);
+        Project project = getProject();
         String filePath = "src/org/intellivim/javaproject/Dummy.java";
         int offset = 243;
 
         SimpleResult result = (SimpleResult) new CompleteCommand(
-                projPath, filePath, offset).execute();
+                project, filePath, offset).execute();
         assertSuccess(result);
 
         List<CompletionInfo> infoList = (List<CompletionInfo>) result.result;

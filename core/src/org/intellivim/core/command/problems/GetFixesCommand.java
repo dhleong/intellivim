@@ -1,9 +1,12 @@
 package org.intellivim.core.command.problems;
 
-import org.intellivim.*;
-import org.intellivim.core.util.ProjectUtil;
+import com.intellij.openapi.project.Project;
+import org.intellivim.Command;
+import org.intellivim.ProjectCommand;
+import org.intellivim.Required;
+import org.intellivim.Result;
+import org.intellivim.SimpleResult;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -15,8 +18,8 @@ public class GetFixesCommand extends ProjectCommand {
     @Required String file;
     @Required int offset;
 
-    public GetFixesCommand(String projectPath, String filePath, int offset) {
-        project = ProjectUtil.ensureProject(projectPath);
+    public GetFixesCommand(Project project, String filePath, int offset) {
+        super(project);
         file = filePath;
         this.offset = offset;
     }

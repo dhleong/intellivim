@@ -7,7 +7,11 @@ import com.intellij.openapi.project.Project;
  */
 public abstract class ProjectCommand implements ICommand {
 
-    @Required protected Project project;
+    @Required protected final Project project;
+
+    public ProjectCommand(Project project) {
+        this.project = project;
+    }
 
     public Project getProject() {
         return project;

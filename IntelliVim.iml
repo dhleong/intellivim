@@ -11,6 +11,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="com.google.code.gson:gson:2.3" level="project" />
     <orderEntry type="library" name="org.reflections:reflections:0.9.9" level="project" />
+    <orderEntry type="library" name="org.assertj:assertj-core:1.7.0" level="project" />
   </component>
 </module>
 

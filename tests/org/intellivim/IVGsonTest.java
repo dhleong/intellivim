@@ -3,6 +3,8 @@ package org.intellivim;
 import com.google.gson.Gson;
 import org.intellivim.core.command.problems.GetProblemsCommand;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * I would much rather use JUnit 4 and assertj,
  *  but for the sake of homogeneity with the
@@ -13,6 +15,11 @@ import org.intellivim.core.command.problems.GetProblemsCommand;
 public class IVGsonTest extends BaseTestCase {
 
     Gson gson;
+
+    @Override
+    protected String getProjectPath() {
+        return null; // NB unused here
+    }
 
     public void setUp() throws Exception {
         super.setUp();
@@ -53,8 +60,7 @@ public class IVGsonTest extends BaseTestCase {
         String json = "{command: 'get_problems', project: '"
                 + projectPath + "', file: 'src/SomeClass.java'}";
         ICommand command = gson.fromJson(json, ICommand.class);
-        assertTrue("Parsed command should be a GetProblemsCommand",
-                command instanceof GetProblemsCommand);
+        assertThat(command).isInstanceOf(GetProblemsCommand.class);
     }
 
     static void assertError(String expectedMessage, Throwable error) {
