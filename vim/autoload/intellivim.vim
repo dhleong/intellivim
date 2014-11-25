@@ -1,3 +1,5 @@
+" Author: Daniel Leong
+"
 
 function! intellivim#GetOffset() " {{{
     let line = line('.')
@@ -48,16 +50,6 @@ function! intellivim#NewCommand(commandName) " {{{
         \ }
 endfunction " }}}
 
-function! intellivim#Setup()
-    let project = intellivim#GetCurrentProject()
-    if empty(project)
-        " no project, no setup
-        return
-    endif
-
-    " TODO commands, etc.
-    call intellivim#core#Setup()
-endfunction
 
 function! intellivim#ShowErrorResult(result) " {{{
     if has_key(a:result, 'error')

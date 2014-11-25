@@ -1,6 +1,17 @@
 " Author: Daniel Leong
 "
 
+function! intellivim#core#Setup() " {{{
+
+    augroup intellivim_core
+        autocmd!
+        autocmd BufWritePost <buffer> call intellivim#core#Update()
+    augroup END
+
+    " also, update now
+    call intellivim#core#Update()
+endfunction " }}}
+
 function! intellivim#core#ReloadFile() " {{{
     " Update the contents/state of a file after
     "  we (think) it has been changed externally
@@ -11,17 +22,6 @@ function! intellivim#core#ReloadFile() " {{{
     " TODO somehow preserve cursor position?
 
     " refresh problems
-    call intellivim#core#Update()
-endfunction " }}}
-
-function! intellivim#core#Setup() " {{{
-
-    augroup intellivim_core
-        autocmd!
-        autocmd BufWritePost <buffer> call intellivim#core#Update()
-    augroup END
-
-    " also, update now
     call intellivim#core#Update()
 endfunction " }}}
 
