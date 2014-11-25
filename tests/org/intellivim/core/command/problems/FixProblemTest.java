@@ -5,7 +5,7 @@ import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
 
 /**
- * Created by dhleong on 11/12/14.
+ * @author dhleong
  */
 public class FixProblemTest extends FileEditingTestCase {
 

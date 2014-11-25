@@ -81,7 +81,7 @@ public class IVGson {
         if (klass != null)
             return klass;
 
-        throw new RuntimeException("Unknown command `" + commandName + "`");
+        throw new IllegalArgumentException("Unknown command `" + commandName + "`");
     }
 
     private static class CommandTypeAdapterFactory implements TypeAdapterFactory {
@@ -125,7 +125,7 @@ public class IVGson {
 
         static void ensureRequiredField(Field f, JsonObject obj, Object result) {
             if (!obj.has(f.getName())) {
-                throw new IllegalStateException("The `"
+                throw new IllegalArgumentException("The `"
                         + f.getName() + "` field is required");
             }
         }

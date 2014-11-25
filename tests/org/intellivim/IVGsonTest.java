@@ -4,13 +4,14 @@ import com.google.gson.Gson;
 import org.intellivim.core.command.problems.GetProblemsCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 /**
- * I would much rather use JUnit 4 and assertj,
+ * I would much rather use JUnit 4 for exceptions here,
  *  but for the sake of homogeneity with the
  *  platform tests that require JUnit 3....
  *
- * Created by dhleong on 11/9/14.
+ * @author dhleong
  */
 public class IVGsonTest extends BaseTestCase {
 
@@ -30,18 +31,18 @@ public class IVGsonTest extends BaseTestCase {
     public void testInvalidCommand() {
         try {
             gson.fromJson("{command: 'whatsit'}", ICommand.class);
-            fail("Runtime exception should be thrown for invalid command");
-        } catch (RuntimeException e) {
-            assertEquals("Unknown command `whatsit`", e.getMessage());
+            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageContaining("Unknown command `whatsit`");
         }
     }
 
     public void testValidCommandMissingProject() {
         try {
             gson.fromJson("{command: 'get_problems', file: 'bleh.java'}", ICommand.class);
-            fail("Exception should be thrown for missing project");
-        } catch (Exception e) {
-            assertError("The `project` field is required", e);
+            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageContaining("The `project` field is required");
         }
     }
 
@@ -49,9 +50,9 @@ public class IVGsonTest extends BaseTestCase {
         try {
             gson.fromJson("{command: 'get_problems', project: 'bleh', file: 'bleh.java'}",
                     ICommand.class);
-            fail("Exception should be thrown for invalid project");
-        } catch (Exception e) {
-            assertError("Couldn't find project at bleh", e);
+            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessageContaining("Couldn't find project at bleh");
         }
     }
 
@@ -61,14 +62,6 @@ public class IVGsonTest extends BaseTestCase {
                 + projectPath + "', file: 'src/SomeClass.java'}";
         ICommand command = gson.fromJson(json, ICommand.class);
         assertThat(command).isInstanceOf(GetProblemsCommand.class);
-    }
-
-    static void assertError(String expectedMessage, Throwable error) {
-        final String actual = error.getMessage();
-        if (actual.endsWith(expectedMessage))
-            return;
-
-        assertEquals(expectedMessage, actual);
     }
 
 }

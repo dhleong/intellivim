@@ -18,7 +18,8 @@ import org.intellivim.core.util.ProjectUtil;
 import java.io.File;
 
 /**
- * Created by dhleong on 11/7/14.
+ * Base TestCase for all IntelliVim tests
+ * @author dhleong
  */
 public abstract class BaseTestCase extends UsefulTestCase {
     private static final String ULTIMATE_MARKER_CLASS = "com.intellij.psi.css.CssFile";

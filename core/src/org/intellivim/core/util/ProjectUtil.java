@@ -2,8 +2,6 @@ package org.intellivim.core.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -14,7 +12,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -28,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,7 +43,7 @@ public class ProjectUtil {
 
         final Project project = getProject(projectPath);
         if (project == null)
-            throw new RuntimeException("Couldn't find project at " + projectPath);
+            throw new IllegalArgumentException("Couldn't find project at " + projectPath);
 
         return project;
     }
