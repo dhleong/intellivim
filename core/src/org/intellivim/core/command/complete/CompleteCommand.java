@@ -26,7 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * Created by dhleong on 11/3/14.
+ * @author dhleong
  */
 @Command("complete")
 public class CompleteCommand extends ProjectCommand {
@@ -63,6 +63,8 @@ public class CompleteCommand extends ProjectCommand {
      */
     public LookupElement[] performCompletion(final CompletionParameters parameters,
                                              final Consumer<CompletionResult> consumer) {
+
+
         final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
         getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {

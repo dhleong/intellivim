@@ -17,7 +17,7 @@ import org.intellivim.core.model.VimLookup;
 import java.lang.reflect.Constructor;
 
 /**
- * Created by dhleong on 11/8/14.
+ * @author dhleong
  */
 public class CompletionParametersUtil {
 
@@ -54,9 +54,9 @@ public class CompletionParametersUtil {
     static CompletionParameters from(Project project, VirtualFile file, int offset) {
         PsiFile originalFile = PsiManager.getInstance(project).findFile(file);
 
-        PsiFile fileCopy = originalFile;
-        PsiElement position = fileCopy.findElementAt(offset);
-        CompletionType completionType = CompletionType.BASIC;
+        final PsiFile fileCopy = originalFile;
+        final PsiElement position = fileCopy.findElementAt(offset);
+        final CompletionType completionType = CompletionType.BASIC;
 
         Editor editor = new VimEditor(project, fileCopy, offset);
         Lookup lookup = new VimLookup(project, editor);
@@ -67,12 +67,17 @@ public class CompletionParametersUtil {
         CompletionContext context = new CompletionContext(originalFile, offsetMap);
         position.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
 
+        // FIXME it looks like we really do need to insert the dummy identifier
+        //  CodeCompletionHandlerBase has pretty much everything we need, including
+        //  dup'ing the document in a safe way
+        PsiElement completionPosition = position;
+
 //        System.out.println("In " + originalFile + ": found: " + position + " with " + lookup);
 //        System.out.println("After caret:["
 //                + editor.getDocument().getText(new TextRange(offset, offset + 10))
 //                + "]");
 
-        return newInstance(position, originalFile,
+        return newInstance(completionPosition, fileCopy,
                 completionType, offset, invocationCount, lookup);
     }
 }

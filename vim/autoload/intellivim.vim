@@ -51,11 +51,19 @@ function! intellivim#NewCommand(commandName) " {{{
 endfunction " }}}
 
 
-function! intellivim#ShowErrorResult(result) " {{{
+function! intellivim#ShowErrorResult(result, ...) " {{{
+    " Optional Arg:
+    "  accept_empty If truthy, a missing "result" key
+    "               will not be treated as an error
     if has_key(a:result, 'error')
         " TODO intellivim#util#EchoError
         redraw " prevent 'press enter to continue'
         echo a:result.error
+        return 1
+    endif
+
+    if !has_key(a:result, 'result') && a:0 && a:1
+        " not an error, but let's protect ourselves from missing results
         return 1
     endif
 

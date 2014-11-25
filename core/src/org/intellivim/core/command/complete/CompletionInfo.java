@@ -1,6 +1,7 @@
 package org.intellivim.core.command.complete;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -71,8 +72,14 @@ public class CompletionInfo {
 
         // FIXME other info types
 
-        System.out.println("Unexpected completion: " + el
-                + " with element type " + el.getPsiElement().getClass());
+        if (el != null) {
+            final PsiElement psi = el.getPsiElement();
+            final Class<?> type = psi == null ? null : psi.getClass();
+            System.out.println("Unexpected completion: " + el
+                    + " with element type " + type);
+        } else {
+            System.err.println("Null LookupElement?!");
+        }
         return null;
     }
 }

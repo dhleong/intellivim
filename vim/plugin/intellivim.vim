@@ -15,9 +15,9 @@ function! s:Setup()
     call intellivim#core#Setup()
 
     " filetype-specific setup
-    let filetype = &ft;
+    let filetype = &ft
     let setupFunction = "intellivim#" . filetype . "#Setup"
-    if exists(setupFunction)
+    if exists("*" . setupFunction)
         exe "call " . setupFunction . "()"
     endif
 endfunction
