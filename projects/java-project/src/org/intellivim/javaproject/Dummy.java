@@ -3,7 +3,8 @@ package org.intellivim.javaproject;
 import java.util.ArrayList;
 
 /**
- * Created by dhleong on 11/5/14.
+ * Some dummy class for testing purposes
+ * @author dhleong
  */
 public class Dummy {
     public void boring() {
@@ -12,6 +13,7 @@ public class Dummy {
         new Dummy().fluid().boring();
         ArrayList<String> list = new ArrayList<String>();
         list.add("hi");
+        notBoring(42);
     }
 
     /** I promise it's not boring */

@@ -1,5 +1,7 @@
 package org.intellivim.javaproject;
 
+import org.intellivim.javaproject.subpackage.NotImported;
+
 /**
  * Class with intentional problems for testing
  */

@@ -19,7 +19,7 @@ public class CompletionTest extends BaseTestCase {
     public void testCompletion() {
         Project project = getProject();
         String filePath = "src/org/intellivim/javaproject/Dummy.java";
-        int offset = 243;
+        int offset = 269;
 
         SimpleResult result = (SimpleResult) new CompleteCommand(
                 project, filePath, offset).execute();

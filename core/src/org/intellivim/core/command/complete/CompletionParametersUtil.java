@@ -17,11 +17,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.DocumentUtil;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.model.VimLookup;
 import org.intellivim.core.util.FileUtil;
+import org.intellivim.core.util.ProjectUtil;
 
 import java.lang.reflect.Constructor;
 
@@ -62,7 +62,7 @@ public class CompletionParametersUtil {
 
     static CompletionParameters from(Project project, VirtualFile file, int offset) {
 
-        final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+        final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
         final PsiElement position = psiFile.findElementAt(offset);
         final CompletionType completionType = CompletionType.BASIC;
 

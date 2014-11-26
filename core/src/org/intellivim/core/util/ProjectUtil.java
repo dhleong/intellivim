@@ -75,6 +75,14 @@ public class ProjectUtil {
         return null;
     }
 
+    public static PsiFile getPsiFile(Project project, String filePath) {
+        return getPsiFile(project, getVirtualFile(project, filePath));
+    }
+
+    public static PsiFile getPsiFile(Project project, VirtualFile file) {
+        return PsiManager.getInstance(project).findFile(file);
+    }
+
     public static VirtualFile getVirtualFile(Project project, String filePath) {
         final File file = new File(project.getBasePath(), filePath);
 
@@ -173,5 +181,4 @@ public class ProjectUtil {
             e.printStackTrace();
         }
     }
-
 }
