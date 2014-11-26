@@ -17,13 +17,16 @@ function! s:Setup()
     " filetype-specific setup
     let filetype = &ft
     let setupFunction = "intellivim#" . filetype . "#Setup"
-    if exists("*" . setupFunction)
+    try
         exe "call " . setupFunction . "()"
-    endif
+    catch /^Vim\%((\a\+)\)\=:E117/
+        " 'Unknown function'
+        " it's okay; just means there's no ft-specific setup
+    endtry
 endfunction
 
 augroup eclim_setup
     autocmd!
-    autocmd BufReadPre * call <SID>Setup()
+    autocmd BufRead * call <SID>Setup()
     autocmd BufNewFile * call <SID>Setup()
 augroup END

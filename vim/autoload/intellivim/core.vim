@@ -8,10 +8,19 @@ function! intellivim#core#Setup() " {{{
         autocmd BufWritePost <buffer> call intellivim#core#Update()
     augroup END
 
-    setlocal omnifunc=intellivim#core#lang#CodeComplete
-
     " also, update now
     call intellivim#core#Update()
+
+    " prepare omnifunc
+    setlocal omnifunc=intellivim#core#lang#CodeComplete
+
+    " define commands {{{
+    if !exists(":FixProblem")
+        command -nargs=0 FixProblem
+            \ call intellivim#core#FixProblem()
+    endif
+    " }}}
+
 endfunction " }}}
 
 function! intellivim#core#ReloadFile() " {{{

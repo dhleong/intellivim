@@ -57,7 +57,6 @@ function! intellivim#NewCommand(commandName) " {{{
         \ }
 endfunction " }}}
 
-
 function! intellivim#ShowErrorResult(result, ...) " {{{
     " Optional Arg:
     "  accept_empty If truthy, a missing "result" key
