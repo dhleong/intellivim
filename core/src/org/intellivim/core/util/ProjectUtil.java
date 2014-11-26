@@ -66,7 +66,7 @@ public class ProjectUtil {
             DirectoryIndex index = DirectoryIndex.getInstance(project);
             waitForFileWatcher(project, index);
             waitForStartup(project);
-//            markProjectOpened(mgr, project);
+            markProjectOpened(mgr, project);
             return project;
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,7 +86,7 @@ public class ProjectUtil {
 
         // we do this eagerly so FileDocumentManger#getCachedDocument will
         //  return the exact same instance that we want to use
-        final VimDocument doc = VimDocument.getInstance(psiFile);
+        VimDocument.getInstance(psiFile);
         return virtual;
     }
 

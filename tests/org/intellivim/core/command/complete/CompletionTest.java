@@ -7,7 +7,7 @@ import org.intellivim.SimpleResult;
 import java.util.List;
 
 /**
- * Created by dhleong on 11/7/14.
+ * @author dhleong
  */
 public class CompletionTest extends BaseTestCase {
 
@@ -46,5 +46,7 @@ public class CompletionTest extends BaseTestCase {
         assertEquals("()-> Dummy", last.detail);
         assertEquals("", last.doc);
     }
+
+    // TODO test completion with incomplete text, eg: list.<caret>
 
 }
