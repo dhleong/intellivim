@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -38,6 +39,8 @@ import java.util.List;
  * Created by dhleong on 11/5/14.
  */
 public class ProjectUtil {
+
+    static final HashMap<String, Project> sProjectCache = new HashMap<String, Project>();
 
     public static Project ensureProject(String projectPath) {
 
@@ -51,11 +54,21 @@ public class ProjectUtil {
     public static Project getProject(String projectPath) {
         ProjectManagerEx mgr = ProjectManagerEx.getInstanceEx();
 
-        // check for an open one first
-        for (Project p : mgr.getOpenProjects()) {
-            System.out.println("Check: " + p.getProjectFilePath());
-            if (p.getProjectFilePath().equals(projectPath))
-                return p;
+        // this doesn't really work; use our own cache
+//        // check for an open one first
+//        for (Project p : mgr.getOpenProjects()) {
+//            System.out.println("Check: " + p.getProjectFilePath());
+//            if (p.getProjectFilePath().equals(projectPath))
+//                return p;
+//        }
+
+        final Project cached = sProjectCache.get(projectPath);
+        if (cached != null) {
+            // we can't use this as a real cache for some reason;
+            //  we have to "close" any previously-opened projects
+            //  and re-open each time to prevent unit test failures
+//            return cached;
+            markProjectClosed(mgr, cached);
         }
 
         try {
@@ -67,6 +80,7 @@ public class ProjectUtil {
             waitForFileWatcher(project, index);
             waitForStartup(project);
             markProjectOpened(mgr, project);
+            sProjectCache.put(projectPath, project);
             return project;
         } catch (IOException e) {
             e.printStackTrace();
@@ -168,6 +182,35 @@ public class ProjectUtil {
                     return; // done
 
                 myOpenProjects.add(project);
+                cacheOpenProjects.invoke(mgr);
+            }
+
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void markProjectClosed(ProjectManagerEx mgr, Project project) {
+        // gross reflection
+        try {
+            Field f = ProjectManagerImpl.class.getDeclaredField("myOpenProjects");
+            f.setAccessible(true);
+
+            Method cacheOpenProjects = ProjectManagerImpl.class.getDeclaredMethod("cacheOpenProjects");
+            cacheOpenProjects.setAccessible(true);
+
+            List<Project> myOpenProjects = (List<Project>) f.get(mgr);
+            synchronized (myOpenProjects) {
+                if (!myOpenProjects.contains(project))
+                    return; // done
+
+                myOpenProjects.remove(project);
                 cacheOpenProjects.invoke(mgr);
             }
 
