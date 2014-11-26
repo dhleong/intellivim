@@ -22,7 +22,14 @@ function! intellivim#GetCurrentProject() " {{{
     let iml = glob(fileDir . '/*.iml')
     while !empty(fileDir) && empty(iml)
         let expandStr = expandStr . ':h'
+        let lastFileDir = fileDir
         let fileDir = expand(expandStr)
+
+        if lastFileDir == fileDir
+            " at root!
+            break
+        endif
+
         let iml = glob(fileDir . '/*.iml')
     endwhile
 
