@@ -34,7 +34,10 @@ import java.util.Set;
 import static org.reflections.ReflectionUtils.withAnnotation;
 
 /**
- * Created by dhleong on 11/9/14.
+ * Factory for Gson instances used to read
+ *  Command inputs and serialize Results
+ *
+ * @author dhleong
  */
 public class IVGson {
 
@@ -102,6 +105,7 @@ public class IVGson {
                 }
 
                 @Override
+                @SuppressWarnings("unchecked")
                 public T read(JsonReader jsonReader) throws IOException {
                     final JsonObject obj = jsonAdapter.read(jsonReader);
                     final String commandName = obj.get("command").getAsString();

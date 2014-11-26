@@ -18,6 +18,8 @@ import java.util.Set;
 
 /**
  * Various file-related utilities
+ *
+ * @author dhleong
  */
 public class FileUtil {
 
@@ -29,6 +31,7 @@ public class FileUtil {
      *  PsiFile to disk.
      * @param doc
      */
+    @SuppressWarnings("unchecked")
     public static void commitChanges(final Document doc) {
 
         // we have to assume the Impl because it will refuse to write anything
@@ -80,7 +83,7 @@ public class FileUtil {
             if (cached != null && cached.first.getClass().equals(file.getClass()) && isCopyUpToDate(cached.second, cached.first)) {
                 final PsiFile copy = cached.first;
                 if (copy.getViewProvider().getModificationStamp() > file.getViewProvider().getModificationStamp() &&
-                        cached.third.longValue() != combinedOffsets) {
+                        cached.third != combinedOffsets) {
                     // the copy PSI might have some caches that are not cleared on its modification because there are no events in the copy
                     //   so, clear all the caches
                     // hopefully it's a rare situation that the user invokes completion in different parts of the file
