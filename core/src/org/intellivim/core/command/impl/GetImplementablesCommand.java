@@ -26,8 +26,13 @@ public class GetImplementablesCommand extends ProjectCommand {
     @Override
     public Result execute() {
 
-        final Implementables implementables =
-                Implementables.collectFrom(project, file, offset);
+        final Implementables implementables;
+        try {
+            implementables =
+                    Implementables.collectFrom(project, file, offset);
+        } catch (IllegalArgumentException e) {
+            return SimpleResult.error(e);
+        }
 
         if (implementables.isEmpty()) {
             return SimpleResult.error("Nothing to implement");
