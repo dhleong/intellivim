@@ -20,11 +20,9 @@ public class GetDocumentationTest extends BaseTestCase {
 
     /** new [D]ummy() */
     public void testClassConstructor() {
-        String doc = getDocAt(261);
-        assertThat(doc)
+        assertThat(getDocAt(261))
             .isNotEmpty()
             .contains("Some dummy class for testing purposes");
-        System.out.println(doc);
     }
 
     /** [n]otBoring() */
@@ -32,7 +30,7 @@ public class GetDocumentationTest extends BaseTestCase {
         assertThat(getDocAt(377))
                 .isNotEmpty()
                 .contains("I promise it's not boring") // the doc
-                .contains("int&nbsp;number"); // the parameters (NB: it's html right now...)
+                .contains("int number"); // the parameters
     }
 
     private String getDocAt(int offset) {

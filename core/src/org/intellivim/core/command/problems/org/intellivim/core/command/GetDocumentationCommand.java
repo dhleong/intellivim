@@ -42,6 +42,21 @@ public class GetDocumentationCommand extends ProjectCommand {
         if (doc == null)
             return SimpleResult.error("Could not find documentation");
 
-        return SimpleResult.success(doc);
+        if (doc.isEmpty())
+            return SimpleResult.error("No documentation for " + element);
+
+        return SimpleResult.success(stripHtml(doc));
+    }
+
+    static final String stripHtml(String input) {
+        return input.replaceAll("(<br[ /]*>|</?PRE>)", "\n")
+                    .replaceAll("<li>", "\n - ")
+                    .replaceAll("<style .*style>", "")
+                    .replaceAll("<[^>]+>", "")
+                    .replaceAll("&nbsp;", " ")
+                    .replaceAll("&amp;", "&")
+                    .replaceAll("&lt;", "<")
+                    .replaceAll("&gt;", ">")
+                    .trim();
     }
 }

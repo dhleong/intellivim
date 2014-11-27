@@ -3,6 +3,11 @@
 
 function! intellivim#core#Setup() " {{{
 
+    if &previewwindow || &ft == ''
+        " preview window, or no real ft; don't do anything
+        return
+    endif
+
     augroup intellivim_core
         autocmd!
         autocmd BufWritePost <buffer> call intellivim#core#Update()
@@ -18,6 +23,11 @@ function! intellivim#core#Setup() " {{{
     if !exists(":FixProblem")
         command -nargs=0 FixProblem
             \ call intellivim#core#FixProblem()
+    endif
+
+    if !exists(":GetDocumentation")
+        command -nargs=0 GetDocumentation
+            \ call intellivim#core#GetDocumentation()
     endif
     " }}}
 
@@ -51,6 +61,21 @@ function! intellivim#core#Update() " {{{
 
     call setloclist(0, list, 'r')
     call intellivim#signs#Update()
+
+endfunction " }}}
+
+function! intellivim#core#GetDocumentation() " {{{
+    " Fetch and show the documentation for the element under the cursor
+
+    if !intellivim#InProject()
+        return
+    endif
+
+    let command = intellivim#NewCommand("get_documentation")
+    let command.offset = intellivim#GetOffset()
+
+    " show documentation window
+    call intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
 
 endfunction " }}}
 

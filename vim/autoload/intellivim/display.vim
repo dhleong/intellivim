@@ -1,6 +1,42 @@
 " Author: Daniel Leong
 "
 
+function! s:ExecuteAndFillWindow(command) " {{{
+    " Execute a command and append the results
+    "  line-by-line to the current window
+
+    let result = intellivim#client#Execute(a:command)
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    setlocal modifiable
+
+    " prepare contents
+    let contents = split(result.result, '\n')
+    call append(0, contents)
+    retab
+    norm! gg
+
+    setlocal wrap
+    setlocal nomodifiable
+    setlocal nolist
+    setlocal noswapfile
+    setlocal nobuflisted
+    setlocal buftype=nofile
+    setlocal bufhidden=wipe
+
+    nnoremap <buffer> <silent> q :q<cr>
+endfunction " }}}
+
+function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
+    " Show a preview window whose contents are the results
+    "  of executing the given command
+
+    exe 'pedit +:call\ s:ExecuteAndFillWindow(a:command) ' . a:name
+
+endfunction " }}}
+
 function! intellivim#display#TempWindow(name, contents, ...) " {{{
     " Prepare a temporary window with the given name and contents.
     " Optionally, a dict may be provided to specify extra options:
