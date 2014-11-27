@@ -3,10 +3,7 @@ package org.intellivim.core.command.complete;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.javadoc.PsiDocComment;
+import org.intellivim.core.util.FormatUtil;
 
 /**
  * Created by dhleong on 11/7/14.
@@ -27,47 +24,13 @@ public class CompletionInfo {
         this.doc = doc;
     }
 
-    private static String buildDocComment(PsiMethod method) {
-        PsiDocComment docComment = method.getDocComment();
-        if (docComment == null)
-            return ""; // never be null?
-
-        return docComment.getText();
-    }
-
-    private static String buildParamsString(PsiMethod method) {
-        StringBuilder builder = new StringBuilder(128);
-        builder.append('(');
-
-        boolean first = true;
-        PsiParameterList parameterList = method.getParameterList();
-        for (PsiParameter param : parameterList.getParameters()) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(", ");
-            }
-
-            builder.append(getType(param.getType()))
-                   .append(' ')
-                   .append(param.getName());
-        }
-
-        builder.append(')');
-        return builder.toString();
-    }
-
-    private static String getType(PsiType type) {
-        return type.getPresentableText();
-    }
-
     public static CompletionInfo from(LookupElement el) {
         if (el.getPsiElement() instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod) el.getPsiElement();
             return new CompletionInfo(TYPE_METHOD,
                     el.getLookupString(),
-                    buildParamsString(method) + "-> " + getType(method.getReturnType()),
-                    buildDocComment(method));
+                    FormatUtil.buildParamsList(method) + "-> " + FormatUtil.getTypeName(method.getReturnType()),
+                    FormatUtil.buildDocComment(method));
         }
 
         // FIXME other info types
