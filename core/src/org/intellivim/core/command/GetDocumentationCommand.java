@@ -1,4 +1,4 @@
-package org.intellivim.core.command.problems.org.intellivim.core.command;
+package org.intellivim.core.command;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;

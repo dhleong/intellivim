@@ -1,8 +1,7 @@
-package org.intellivim.org.intellivim.core.command;
+package org.intellivim.core.command;
 
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
-import org.intellivim.core.command.problems.org.intellivim.core.command.GetDocumentationCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -18,7 +18,7 @@ public class Dummy {
 
     /** I promise it's not boring */
     public void notBoring(int number) {
-
+        Problematic problem;
     }
 
     public Dummy fluid() {
