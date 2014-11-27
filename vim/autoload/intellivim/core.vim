@@ -29,6 +29,11 @@ function! intellivim#core#Setup() " {{{
         command -nargs=0 GetDocumentation
             \ call intellivim#core#GetDocumentation()
     endif
+
+    if !exists(":GotoDeclaration")
+        command -nargs=0 GotoDeclaration
+            \ call intellivim#core#GotoDeclaration()
+    endif
     " }}}
 
 endfunction " }}}
@@ -76,6 +81,34 @@ function! intellivim#core#GetDocumentation() " {{{
 
     " show documentation window
     call intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
+
+endfunction " }}}
+
+function! intellivim#core#GotoDeclaration() " {{{
+    " Fetch and show the documentation for the element under the cursor
+
+    if !intellivim#InProject()
+        return
+    endif
+
+    let command = intellivim#NewCommand("find_declaration")
+    let command.offset = intellivim#GetOffset()
+    let result = intellivim#client#Execute(command)
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    " intellij offsets start at 0; we start at 1
+    let offset = result.result.offset + 1
+    let file = result.result.file
+
+    if file != expand("%:p")
+        " TODO different file. split? vsp? tabn?
+        let openCommand = 'split'
+        exe openCommand . ' ' . substitute(file, ' ', '\ ', 'g')
+    endif
+
+    exe 'goto ' . offset
 
 endfunction " }}}
 
