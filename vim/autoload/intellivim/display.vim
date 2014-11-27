@@ -105,3 +105,5 @@ function! intellivim#display#TempWindow(name, contents, ...) " {{{
     let b:last_bufno = bufno
 
 endfunction " }}}
+
+" vim:ft=vim:fdm=marker
