@@ -1,3 +1,4 @@
 system/
 .idea
-
+intellij-platform
+gradle.properties

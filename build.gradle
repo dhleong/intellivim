@@ -1,0 +1,96 @@
+//
+// With thanks to https://github.com/pbetkier/intellij-synonyms/
+//  for reference on how to get this to work
+//
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+def ideaPlatformVersion = '13.1.6'
+def ideaPlatformZip = "ideaIC-${ideaPlatformVersion}.tar.gz"
+def ideaPlatformUrl = "http://download.jetbrains.com/idea/${ideaPlatformZip}"
+def ideaPlatformDir = "./intellij-platform"
+def ideaPlatformLibsDir = "${ideaPlatformDir}/lib"
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    provided
+}
+
+task preparePlatformDependency {
+    def platformDir = new File(ideaPlatformDir)
+    if (platformDir.exists() && platformDir.listFiles().length > 1) {
+        // already set up (2 = zip + original extracted dir)
+        println "Platform already setup"
+    } else {
+        println "Fetching IDEA platform (this may take a while)"
+        platformDir.mkdirs()
+        ant.get(src: ideaPlatformUrl, dest: platformDir, skipexisting: 'true')
+
+        println "Extracting IDEA platform (this may take a minute or so)"
+        ant.untar(src: "${platformDir}/${ideaPlatformZip}", dest: platformDir, compression: "gzip", overwrite: false)
+    }
+
+    println "Locating libs dir"
+    def unzipDir = files(platformDir.listFiles()).filter {
+        it.isDirectory()
+    }
+
+    ideaPlatformLibsDir = new File(unzipDir.getSingleFile(), "lib").getAbsolutePath()
+    println "Using " + ideaPlatformLibsDir
+
+    println "Done!"
+}
+
+dependencies {
+
+    compile 'com.google.code.gson:gson:2.3'
+    compile ('org.reflections:reflections:0.9.9') {
+        // this guava conflicts with intellij
+        exclude group: 'com.google.guava'
+    }
+
+    testCompile 'org.assertj:assertj-core:1.7.0'
+
+    // platform stuff
+    testRuntime fileTree(dir: "${System.properties['java.home']}/../lib/", include: "tools.jar")
+    provided fileTree(dir: ideaPlatformLibsDir, include: '*.jar')
+}
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+    }
+    test {
+        compileClasspath += configurations.provided
+        runtimeClasspath += configurations.provided
+    }
+}
+
+idea.project.ipr {
+    beforeMerged { project ->
+        project.modulePaths.clear()
+    }
+}
+
+idea.module.iml {
+    withXml {
+        it.node.@type = "PLUGIN_MODULE"
+    }
+}
+
+task setup {
+    dependsOn ideaModule, ideaProject
+    doLast {
+        copy {
+            from '.'
+            into '.idea/'
+            include '*.ipr'
+            rename { "modules.xml" }
+        }
+        project.delete "${project.name}.ipr"
+    }
+}
