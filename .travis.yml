@@ -1,3 +1,5 @@
 language: java
 jdk:
   - oraclejdk7
+script: gradle check --info
+after_script: cat build/reports/tests/classes/*
