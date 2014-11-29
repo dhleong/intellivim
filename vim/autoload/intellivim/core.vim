@@ -34,6 +34,11 @@ function! intellivim#core#Setup() " {{{
         command -nargs=0 GotoDeclaration
             \ call intellivim#core#GotoDeclaration()
     endif
+
+    if !exists(":Implement")
+        command -nargs=0 Implement
+            \ call intellivim#core#impl#ShowImplementables()
+    endif
     " }}}
 
 endfunction " }}}

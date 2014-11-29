@@ -99,7 +99,7 @@ function! intellivim#display#TempWindow(name, contents, ...) " {{{
         setlocal nomodified
         setlocal nomodifiable
         setlocal readonly
-        nmap <buffer> q :q<cr>
+        nmap <buffer> <silent> q :q<cr>
     endif
 
     let b:last_bufno = bufno
