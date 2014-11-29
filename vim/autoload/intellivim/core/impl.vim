@@ -1,11 +1,13 @@
 " Author: Daniel Leong
 "
 
-function! intellivim#core#impl#ShowImplementables()
+function! intellivim#core#impl#ShowImplementables() " {{{
 
     if !intellivim#InProject()
         return
     endif
+
+    call intellivim#SilentUpdate()
 
     let command = intellivim#NewCommand("get_implementables")
     let command.offset = intellivim#GetOffset()
@@ -21,9 +23,9 @@ function! intellivim#core#impl#ShowImplementables()
     nnoremap <buffer> <cr> :call <SID>DoImplement()<cr>
     vnoremap <buffer> <cr> :call <SID>DoImplement()<cr>
 
-endfunction
+endfunction " }}}
 
-function! s:DoImplement() range
+function! s:DoImplement() range " {{{
     let signatures = []
     for i in range(a:firstline, a:lastline)
         call add(signatures, getline(i))
@@ -46,6 +48,6 @@ function! s:DoImplement() range
     " refresh and re-request
     call intellivim#core#ReloadFile()
     call intellivim#core#impl#ShowImplementables()
-endfunction
+endfunction " }}}
 
 " vim:ft=vim:fdm=marker

@@ -33,7 +33,7 @@ function! intellivim#core#lang#CodeComplete(findstart, base)
     if a:findstart
 
         " make sure the file on disk is up to date
-        silent noautocmd update
+        call intellivim#SilentUpdate()
 
         let findStart = "intellivim#" . filetype . "#lang#FindStart"
         if !exists("*" . findStart)

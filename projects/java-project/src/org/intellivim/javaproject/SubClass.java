@@ -9,5 +9,13 @@ public class SubClass extends SuperClass {
 
     }
 
+    @Override
+    public void normalMethod() {
+        super.normalMethod();
+    }
 
+    @Override
+    public void abstractMethod() {
+        super.abstractMethod();
+    }
 }
