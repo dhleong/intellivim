@@ -7,8 +7,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -21,6 +19,7 @@ import com.intellij.util.DocumentUtil;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.model.VimLookup;
 import org.intellivim.core.util.FileUtil;
+import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.lang.reflect.Constructor;
@@ -106,23 +105,18 @@ public class CompletionParametersUtil {
             throw new IllegalStateException("No document found for copy");
         }
 
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        IntelliVimUtil.runWriteCommand(new Runnable() {
             @Override
             public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        final String dummyIdentifier =
-                                CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
-                        if (StringUtil.isEmpty(dummyIdentifier)) return;
+                final String dummyIdentifier =
+                        CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+                if (StringUtil.isEmpty(dummyIdentifier)) return;
 
-                        final int startOffset = position.getTextOffset();
-                        final int endOffset = startOffset + position.getTextLength();
+                final int startOffset = position.getTextOffset();
+                final int endOffset = startOffset + position.getTextLength();
 //                        int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
 //                        int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-                        copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
-                    }
-                });
+                copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
             }
         });
 

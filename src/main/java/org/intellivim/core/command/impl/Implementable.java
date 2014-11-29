@@ -5,27 +5,43 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.infos.CandidateInfo;
 import org.intellivim.core.util.FormatUtil;
 
+import java.util.Arrays;
+
 /**
  * @author dhleong
  */
 public class Implementable {
 
-    private transient final PsiElement element;
+    private transient final Implementables context;
+    transient final CandidateInfo candidate;
     private final CharSequence description;
 
-    public Implementable(PsiElement element, CharSequence description) {
-        this.element = element;
+    public Implementable(Implementables context, CandidateInfo candidate, CharSequence description) {
+        this.context = context;
+        this.candidate = candidate;
         this.description = description;
     }
 
-    public static Implementable from(CandidateInfo info) {
+    /**
+     * Implement the method
+     */
+    public void execute() {
+
+        context.implementCandidates(Arrays.asList(candidate));
+    }
+
+    public String getSignature() {
+        return description.toString();
+    }
+
+    public static Implementable from(Implementables context, CandidateInfo info) {
         PsiElement element = info.getElement();
         if (element == null)
             return null;
 
         if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            return new Implementable(element, describe(method));
+            return new Implementable(context, info, describe(method));
         }
 
         System.err.println("Unexpected element type " + element.getClass());
@@ -47,4 +63,5 @@ public class Implementable {
 
         return builder;
     }
+
 }

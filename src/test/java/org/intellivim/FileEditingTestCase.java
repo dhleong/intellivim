@@ -125,6 +125,12 @@ public abstract class FileEditingTestCase extends BaseTestCase {
      * utils
      */
 
+    /** For testing */
+    @SuppressWarnings("unused")
+    protected void dumpFileContents() {
+        System.out.println(getCurrentFileContentsSafely());
+    }
+
     private VirtualFile getFile() {
         final Project proj = getProject();
         return ProjectUtil.getVirtualFile(proj, getFilePath());
