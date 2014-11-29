@@ -11,18 +11,39 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by dhleong on 11/6/14.
+ * @author dhleong
  */
 public class VimDocument extends DocumentImpl implements DocumentEx {
     private PsiFile psiFile;
+    private boolean forceEventsHandling;
 
     VimDocument(PsiFile psiFile) {
         this(psiFile, psiFile.getViewProvider().getContents());
     }
 
-    public VimDocument(PsiFile psiFile, @NotNull CharSequence chars) {
+    VimDocument(PsiFile psiFile, @NotNull CharSequence chars) {
         super(chars);
         this.psiFile = psiFile;
+    }
+
+    @Override
+    public boolean isInEventsHandling() {
+        if (forceEventsHandling)
+            return true;
+
+        return super.isInEventsHandling();
+    }
+
+    public void setUncommited(boolean isUncommited) {
+        // while this flag is true, PsiDocumentManager will
+        //  think we are uncommitted. In this state, the
+        //  FormattingDocumentModelImpl will create a new,
+        //  temporary DocumentImpl. When using that new one,
+        //  it successfully formats the text without generating
+        //  garbage. I still don't know why it makes that garbage,
+        //  or what the practical difference between this DocumentImpl
+        //  and the new one would be, but this seems an acceptable hack
+        forceEventsHandling = isUncommited;
     }
 
     @Override

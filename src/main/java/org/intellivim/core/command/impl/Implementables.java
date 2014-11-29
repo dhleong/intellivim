@@ -4,6 +4,7 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellivim.core.model.VimDocument;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -107,9 +109,9 @@ public class Implementables extends ArrayList<Implementable> {
                 }
                 FileUtil.commitChanges(editor);
 
-//                for (PsiMethodMember member : members) {
-//                    reformatMethod(member);
-//                }
+                for (PsiMethodMember member : members) {
+                    reformatMethod(editor, member);
+                }
                 FileUtil.commitChanges(editor);
 
             }
@@ -134,16 +136,34 @@ public class Implementables extends ArrayList<Implementable> {
         }
     }
 
-    void reformatMethod(PsiMethodMember member) {
+    void reformatMethod(VimEditor editor, PsiMethodMember member) {
+
+        final PsiMethod[] ms = targetClass.findMethodsBySignature(
+                member.getElement(), false);
+        final TextRange range;
+        if (ms.length > 0) {
+            range = ms[0].getTextRange();
+        } else {
+            // just in case, but the above should always work
+            int offset = editor.getCaretModel().getOffset();
+            range = new TextRange(offset, offset + member.getElement().getTextLength());
+        }
+
+        // NB see the comments in this method
+        ((VimDocument) editor.getDocument()).setUncommited(true);
+
         new ReformatCodeProcessor(project,
                 targetClass.getContainingFile(),
-                member.getElement().getTextRange(),
+                range,
                 false)
             .runWithoutProgress();
 
-        // sometimes it complains with:
+        // the above sometimes complains with:
         // "Document and psi file texts should be equal"
-        //  even if they are
+        //  even if they are. The `setUncommited` hack seems
+        //  to prevent that now
+
+        ((VimDocument) editor.getDocument()).setUncommited(false);
     }
 
 
