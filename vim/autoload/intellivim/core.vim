@@ -1,9 +1,14 @@
 " Author: Daniel Leong
 "
 
+" Variables {{{
+" never run core Setup in these filetypes
+let s:alwaysIgnoredFiletypes = ["gitcommit"]
+" }}}
+
 function! intellivim#core#Setup() " {{{
 
-    if &previewwindow || &ft == ''
+    if &previewwindow || &ft == '' || s:ShouldIgnoreFiletype(&ft)
         " preview window, or no real ft; don't do anything
         return
     endif
@@ -59,7 +64,7 @@ endfunction " }}}
 function! intellivim#core#Update() " {{{
     let command = intellivim#NewCommand("get_problems")
     let result = intellivim#client#Execute(command)
-    if intellivim#ShowErrorResult(result)
+    if intellivim#ShowErrorResult(result, 1)
         return
     endif
 
@@ -187,6 +192,16 @@ function s:ProblemToLocationEntry(problem) " {{{
         \ 'type': strpart(prob.severity, 0, 1),
         \ 'nr': prob.id
         \ }
+endfunction " }}}
+
+function s:ShouldIgnoreFiletype(ft) " {{{
+
+    if -1 == index(s:alwaysIgnoredFiletypes, a:ft)
+        return 1
+    endif
+
+    " TODO user-specifiable
+    return 0
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker
