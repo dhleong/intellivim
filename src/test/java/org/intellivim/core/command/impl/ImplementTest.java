@@ -83,6 +83,19 @@ public class ImplementTest extends FileEditingTestCase {
         assertFileFormattedCorrectly();
     }
 
+    public void testNestedClassWithJavadoc() {
+        final String signature = "public void notBoring(int number)";
+        final int offset = 153;
+
+        assertFileDoesNotContain(signature);
+        SimpleResult result = implementAt(signature, offset);
+        assertSuccess(result);
+        assertFileNowContains(signature + " {");
+
+        assertFileFormattedCorrectly();
+        dumpFileContents();
+    }
+
     private void assertFileFormattedCorrectly() {
 
         // make sure there are no wacky formatting issues

@@ -196,7 +196,7 @@ endfunction " }}}
 
 function s:ShouldIgnoreFiletype(ft) " {{{
 
-    if -1 == index(s:alwaysIgnoredFiletypes, a:ft)
+    if -1 != index(s:alwaysIgnoredFiletypes, a:ft)
         return 1
     endif
 

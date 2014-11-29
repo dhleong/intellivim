@@ -107,9 +107,9 @@ public class Implementables extends ArrayList<Implementable> {
                 }
                 FileUtil.commitChanges(editor);
 
-                for (PsiMethodMember member : members) {
-                    reformatMethod(member);
-                }
+//                for (PsiMethodMember member : members) {
+//                    reformatMethod(member);
+//                }
                 FileUtil.commitChanges(editor);
 
             }
