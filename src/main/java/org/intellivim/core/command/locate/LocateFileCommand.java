@@ -2,6 +2,7 @@ package org.intellivim.core.command.locate;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
@@ -28,12 +29,14 @@ public class LocateFileCommand extends ProjectCommand {
     public enum LocateType {
         FILE,
         CLASS
+        // TODO symbol?
     }
 
     @Required LocateType type;
     @Required String pattern;
 
     /* optional */String file;
+    /* optional */boolean fuzzy = true;
 
     public LocateFileCommand(Project project, LocateType type, String fileContext, String pattern) {
         super(project);
@@ -60,6 +63,8 @@ public class LocateFileCommand extends ProjectCommand {
             return SimpleResult.error("Invalid locate file type");
         }
 
+        final String pattern = preparePattern(model);
+
         final ChooseByNameBase chooser = new NullChooseByNameBase(project, model, pattern, context);
         new DefaultChooseByNameItemProvider(context).filterElements(
                 chooser, pattern,
@@ -74,6 +79,22 @@ public class LocateFileCommand extends ProjectCommand {
         });
 
         return SimpleResult.success(results);
+    }
+
+    private String preparePattern(ChooseByNameModel model) {
+        String pattern = this.pattern;
+        pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
+        pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
+
+        if (fuzzy) {
+            pattern = pattern.replaceAll("(.)", "$1*");
+        }
+
+        if (!pattern.startsWith("*") && pattern.length() > 1) {
+            pattern = "*" + pattern;
+        }
+
+        return pattern;
     }
 
     private ChooseByNameModel pickModel() {

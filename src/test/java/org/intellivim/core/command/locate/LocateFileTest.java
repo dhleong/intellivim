@@ -37,6 +37,20 @@ public class LocateFileTest extends BaseTestCase {
                 .contains(DUMMY_CLASS);
     }
 
+    /* fuzzy match */
+
+    public void testFileFuzzy_dummy() {
+        assertThat(searchFile("dmy"))
+                .isNotEmpty()
+                .contains(DUMMY_FILE);
+    }
+
+    public void testClassFuzzy_dummy() {
+        assertThat(searchClass("dmy"))
+                .isNotEmpty()
+                .contains(DUMMY_CLASS);
+    }
+
     private List<LocatedFile> searchFile(String pattern) {
         return searchResult(LocateFileCommand.LocateType.FILE, pattern).getResult();
     }
