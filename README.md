@@ -21,9 +21,9 @@ Autocomplete is bound to omnifunc (`<c-x><c-o>`) and should work with [YouComple
 
 ### Commands
 
-`:Implement`  Generate method implementations/overrides. 
-Press `enter` on a method to implement it, and `q` to quit. 
-Visual selection to implement multiple at a time is supported.
+`:FixProblem`  Provide options for fixing the problem under the cursor.
+Press `enter` on the desired fix to attempt it. "Import Class" usually works
+for unambiguous imports, but other fixes are not thoroughly tested yet.
 
 `:GotoDeclaration`  Jump to the declaration of the element under the cursor.
 A split is opened if the declaration is in another file
@@ -31,12 +31,17 @@ A split is opened if the declaration is in another file
 `:GetDocumentation`  Display the documentation for the element under the cursor
 in a preview window.
 
-`:FixProblem`  Provide options for fixing the problem under the cursor.
-Press `enter` on the desired fix to attempt it. "Import Class" usually works
-for unambiguous imports, but other fixes are not thoroughly tested yet.
+`:Implement`  Generate method implementations/overrides. 
+Press `enter` on a method to implement it, and `q` to quit. 
+Visual selection to implement multiple at a time is supported.
 
 `:JavaOptimizeImports`  Attempts to automatically add imports and organize them.
 Handling of ambiguous imports is currently undefined.
+
+`:Locate [type]` Opens a search window for locating files. Optionally pass the type
+of thing to locate: 
+ - `file` Search by file name/path (default)
+ - `class` Search by class name
 
 #### Mappings
 
