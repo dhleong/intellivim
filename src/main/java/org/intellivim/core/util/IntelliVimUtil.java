@@ -9,18 +9,17 @@ import com.intellij.openapi.command.CommandProcessor;
  */
 public class IntelliVimUtil {
 
+    private static boolean sTemporarilyUnitTest = false;
+
     /**
      * Sometimes a command will not cooperate unless it thinks
      *  we're in unit test mode. Let's be in unit test mode
      * @param runnable
      */
     public static void runInUnitTestMode(Runnable runnable) {
-        ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
-        final boolean wasUnitTest = app.isUnitTestMode();
-
-        app.setUnitTestMode(true);
+        setUnitTestMode();
         runnable.run();
-        app.setUnitTestMode(wasUnitTest);
+        unsetUnitTestMode();
     }
 
     /**
@@ -35,5 +34,20 @@ public class IntelliVimUtil {
                 ApplicationManager.getApplication().runWriteAction(runnable);
             }
         });
+    }
+
+    public static void setUnitTestMode() {
+        ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
+        sTemporarilyUnitTest = !app.isUnitTestMode();
+
+        if (sTemporarilyUnitTest)
+            app.setUnitTestMode(true);
+    }
+
+    public static void unsetUnitTestMode() {
+        ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
+        if (sTemporarilyUnitTest)
+            app.setUnitTestMode(false);
+        sTemporarilyUnitTest = false;
     }
 }

@@ -15,12 +15,14 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * NB We may be able to make improvements by studying SearchEverywhereAction
  * @author dhleong
  */
 @Command("locate")
@@ -50,6 +52,7 @@ public class LocateFileCommand extends ProjectCommand {
     @Override
     @SuppressWarnings("unchecked")
     public Result execute() {
+        System.out.println("Execute Locate:" + pattern);
 
         // be unchecked for testing convenience
         final List results = new ArrayList<LocatedFile>();
@@ -58,8 +61,9 @@ public class LocateFileCommand extends ProjectCommand {
             ? null
             : ProjectUtil.getPsiFile(project, file);
 
-        final ChooseByNameModel model = pickModel();
+        final ChooseByNameModel model = pickModelInUnitTestMode();
         if (model == null) {
+            System.out.println("Invalid!: " + type);
             return SimpleResult.error("Invalid locate file type");
         }
 
@@ -78,6 +82,7 @@ public class LocateFileCommand extends ProjectCommand {
             }
         });
 
+        System.out.println("Results: " + results);
         return SimpleResult.success(results);
     }
 
@@ -95,6 +100,19 @@ public class LocateFileCommand extends ProjectCommand {
         }
 
         return pattern;
+    }
+
+    /**
+     * We have to do this in UnitTestMode to avoid
+     *  an NPE when the constructors try to access
+     *  a Window
+     */
+    private ChooseByNameModel pickModelInUnitTestMode() {
+        final ChooseByNameModel chosen;
+        IntelliVimUtil.setUnitTestMode();
+        chosen = pickModel();
+        IntelliVimUtil.unsetUnitTestMode();
+        return chosen;
     }
 
     private ChooseByNameModel pickModel() {

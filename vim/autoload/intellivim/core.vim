@@ -8,8 +8,14 @@ let s:alwaysIgnoredFiletypes = ["gitcommit"]
 
 function! intellivim#core#Setup() " {{{
 
+    " always setup :Locate
+    if 2 != exists(":Locate") " compat with other Locate*
+        command -nargs=? Locate
+            \ :call intellivim#core#locate#Locate('<args>')
+    endif
+
     if &previewwindow || &ft == '' || s:ShouldIgnoreFiletype(&ft)
-        " preview window, or no real ft; don't do anything
+        " preview window, or no real ft; don't do anything else
         return
     endif
 
