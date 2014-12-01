@@ -9,22 +9,30 @@ import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import groovyjarjarcommonscli.CommandLine;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.util.IntelliVimUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dhleong
@@ -68,7 +76,38 @@ public class RunCommand extends ProjectCommand {
             return SimpleResult.error(e);
         }
 
-        System.out.println("Run!: " + state);
+        if (!(state instanceof CommandLineState)) {
+            throw new IllegalStateException("Unexpected RunProfileState: " + state
+                    + " (" + state.getClass() + ")");
+        }
+
+        CommandLineState command = (CommandLineState) state;
+        ConsoleViewImpl console = (ConsoleViewImpl) command.getConsoleBuilder().getConsole();
+        console.addMessageFilter(new Filter() {
+            @Nullable
+            @Override
+            public Result applyFilter(String line, int entireLength) {
+                System.out.println("Console: " + line);
+                return new Result(0, line.length(), null);
+            }
+        });
+
+        System.out.println("Run!: " + state + " / " + console + " / " + console.hasDeferredOutput());
+        console.getComponent(); // creates the Editor
+        System.out.println("Hello..." + console.getEditor());
+        System.out.println("Text: " + console.getEditor().getDocument().getText());
+        System.out.println("Hello?");
+        console.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void beforeDocumentChange(DocumentEvent event) {
+
+            }
+
+            @Override
+            public void documentChanged(DocumentEvent event) {
+                System.out.println(" ++" + event.getNewFragment());
+            }
+        });
 
         return SimpleResult.success();
     }

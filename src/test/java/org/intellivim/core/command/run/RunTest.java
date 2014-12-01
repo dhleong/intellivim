@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
@@ -36,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author dhleong
  */
 public class RunTest extends BaseTestCase {
+
+    Project project;
+
     @Override
     protected String getProjectPath() {
 //        return null;
@@ -46,6 +50,7 @@ public class RunTest extends BaseTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
+        project = getProject();
         Module module = myFixture.getModule();
 
         ModuleRootManagerImpl fixtureRoot = (ModuleRootManagerImpl) ModuleRootManager
@@ -53,7 +58,7 @@ public class RunTest extends BaseTestCase {
         Sdk fixtureSdk = fixtureRoot.getSdk();
         assertThat(fixtureSdk).isNotNull();
 
-        ModuleRootManagerImpl root = getModuleRoot(getProject());
+        ModuleRootManagerImpl root = getModuleRoot(project);
         if (root.getSdk() == null) {
             // no SDK in unit test, as expected :(
             // Let's fix that.
@@ -63,10 +68,13 @@ public class RunTest extends BaseTestCase {
             RootModelImpl model = root.getRootModel();
             ModuleJdkOrderEntryImpl entry = new ModuleJdkOrderEntryImpl(
                     "1.7", "JavaSDK",
-                    model, ProjectRootManagerImpl.getInstanceImpl(getProject()));
+                    model, ProjectRootManagerImpl.getInstanceImpl(project));
 
             ModuleJdkOrderEntryImpl spy = Mockito.spy(entry);
-            Mockito.when(spy.getJdk()).thenReturn(fixtureSdk);
+            Mockito.when(spy.getJdk()).thenReturn(new MockJdkWrapper(
+                    System.getProperty("java.home"),
+                    fixtureSdk
+            ));
 
             Field myWritable = RootModelImpl.class.getDeclaredField("myWritable");
             myWritable.setAccessible(true);
@@ -77,12 +85,12 @@ public class RunTest extends BaseTestCase {
                 if (e instanceof JdkOrderEntry
                         && ((JdkOrderEntry) e).getJdk() == null) {
 
-                    // okay, let's mock THIS one
-                    JdkOrderEntry mocked = Mockito.spy((JdkOrderEntry) e);
-                    Mockito.when(mocked.getJdk()).thenReturn(fixtureSdk);
+//                    // okay, let's mock THIS one
+//                    JdkOrderEntry mocked = Mockito.spy((JdkOrderEntry) e);
+//                    Mockito.when(mocked.getJdk()).thenReturn(fixtureSdk);
                     model.removeOrderEntry(e);
-                    model.addOrderEntry(mocked);
-                    foundJdk = true;
+//                    model.addOrderEntry(mocked);
+//                    foundJdk = true;
                 }
             }
 
@@ -93,13 +101,15 @@ public class RunTest extends BaseTestCase {
 
             myWritable.setBoolean(model, false);
 
+            assertTrue(getModuleRoot(project) == getModuleRoot(project));
+
             assertThat(root.getSdk()).isNotNull();
         }
     }
 
     public void testRun() {
-        System.out.println(getProject());
-        SimpleResult result = (SimpleResult) new RunCommand(getProject()).execute();
+        System.out.println(project);
+        SimpleResult result = (SimpleResult) new RunCommand(project).execute();
         assertSuccess(result);
     }
 
@@ -113,86 +123,4 @@ public class RunTest extends BaseTestCase {
                 .getInstance(configurationModule.getModule());
     }
 
-    private class MockJdk extends UserDataHolderBase implements Sdk {
-        private final String name;
-        private final String type;
-
-        public MockJdk(String name, String type) {
-            this.name = name;
-            this.type = type;
-        }
-
-        public MockJdk clone() {
-            return new MockJdk(name, type);
-        }
-
-        @NotNull
-        @Override
-        public SdkTypeId getSdkType() {
-            return new SdkTypeId() {
-                @NotNull
-                @Override
-                public String getName() {
-                    return type; // ?!?
-                }
-
-                @Nullable
-                @Override
-                public String getVersionString(@NotNull Sdk sdk) {
-                    return name; // ?!?
-                }
-
-                @Override
-                public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
-
-                }
-
-                @Nullable
-                @Override
-                public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
-                    return null;
-                }
-            };
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-            return type;
-        }
-
-        @Nullable
-        @Override
-        public String getVersionString() {
-            return name;
-        }
-
-        @Nullable
-        @Override
-        public String getHomePath() {
-            return System.getProperty("java.home");
-        }
-
-        public VirtualFile getHomeDirectory() {
-            return LocalFileSystem.getInstance().findFileByIoFile(new File(getHomePath()));
-        }
-
-        @NotNull
-        @Override
-        public RootProvider getRootProvider() {
-            return null;
-        }
-
-        @NotNull
-        @Override
-        public SdkModificator getSdkModificator() {
-            return null;
-        }
-
-        @Nullable
-        @Override
-        public SdkAdditionalData getSdkAdditionalData() {
-            return null;
-        }
-    }
 }
