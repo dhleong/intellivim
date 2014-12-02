@@ -6,7 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by dhleong on 11/9/14.
+ * All executable ICommand classes MUST
+ *  be annotated with @Command and an
+ *  appropriate command name value in
+ *  order to be handled.
+ *
+ * @author dhleong
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,7 +1,14 @@
 package org.intellivim;
 
 import com.google.gson.Gson;
+import org.assertj.core.api.ObjectAssert;
 import org.intellivim.core.command.problems.GetProblemsCommand;
+import org.intellivim.core.command.run.AsyncRunner;
+import org.intellivim.core.command.run.DummyRunner;
+import org.intellivim.core.command.run.RunCommand;
+import org.intellivim.core.command.run.VimAsyncRunner;
+
+import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
@@ -64,4 +71,33 @@ public class IVGsonTest extends BaseTestCase {
         assertThat(command).isInstanceOf(GetProblemsCommand.class);
     }
 
+    public void testInjectRunner() throws NoSuchFieldException, IllegalAccessException {
+        String projectPath = getProjectPath(JAVA_PROJECT);
+        String json = "{command: 'run', client: 'vim', exe: '/usr/bin/vim',"
+                + "instance: 'VIM1', project: '"
+                + projectPath + "'}";
+        ICommand command = gson.fromJson(json, ICommand.class);
+        assertThat(command).isInstanceOf(RunCommand.class);
+
+        final AsyncRunner runner = ((RunCommand) command).getRunner();
+        assertThat(runner)
+                .isNotNull()
+                .isInstanceOf(VimAsyncRunner.class);
+
+        VimAsyncRunner vim = (VimAsyncRunner) runner;
+        assertThat(vim.getExe()).isEqualTo("/usr/bin/vim");
+        assertThat(vim.getInstanceName()).isEqualTo("VIM1");
+    }
+
+    public void testDummyRunner() throws NoSuchFieldException, IllegalAccessException {
+        String projectPath = getProjectPath(JAVA_PROJECT);
+        String json = "{command: 'run',  project: '" + projectPath + "'}";
+        ICommand command = gson.fromJson(json, ICommand.class);
+        assertThat(command).isInstanceOf(RunCommand.class);
+
+        final AsyncRunner runner = ((RunCommand) command).getRunner();
+        assertThat(runner)
+                .isNotNull()
+                .isInstanceOf(DummyRunner.class);
+    }
 }

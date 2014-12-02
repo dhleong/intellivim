@@ -51,6 +51,9 @@ function! intellivim#NewCommand(commandName) " {{{
     let fileFull = expand('%:p')
     let file = strpart(fileFull, len(projectDir) + 1)
     return {
+        \ 'client': 'vim',
+        \ 'exe': exepath(v:progpath),
+        \ 'instance': v:servername,
         \ 'project': project,
         \ 'file': file,
         \ 'command': a:commandName

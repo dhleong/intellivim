@@ -22,11 +22,10 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import org.intellivim.Command;
-import org.intellivim.ProjectCommand;
-import org.intellivim.Result;
-import org.intellivim.SimpleResult;
+import org.intellivim.*;
 import org.intellivim.core.util.IntelliVimUtil;
+import org.intellivim.inject.Inject;
+import org.intellivim.inject.UnsupportedClientException;
 
 /**
  * @author dhleong
@@ -34,10 +33,24 @@ import org.intellivim.core.util.IntelliVimUtil;
 @Command("run")
 public class RunCommand extends ProjectCommand {
 
+    /* key names for output types */
+    private static final String KEY_STDOUT = "stdout";
+    private static final String KEY_STDERR = "stderr";
+    private static final String KEY_SYSTEM = "system";
+
+    @Required @Inject AsyncRunner asyncRunner;
+
     /* optional */String configuration;
 
-    public RunCommand(Project project) {
+    public RunCommand(Project project, AsyncRunner runner) {
         super(project);
+
+        asyncRunner = runner;
+    }
+
+    /** for testing */
+    public AsyncRunner getRunner() {
+        return asyncRunner;
     }
 
     @Override
@@ -80,6 +93,13 @@ public class RunCommand extends ProjectCommand {
             }
         };
 
+        try {
+            // make sure we can do it
+            asyncRunner.prepare();
+        } catch (UnsupportedClientException e) {
+            return SimpleResult.error(e);
+        }
+
         if (IntelliVimUtil.isUnitTestMode()) {
             startRunnable.run();
         } else {
@@ -106,21 +126,30 @@ public class RunCommand extends ProjectCommand {
                 System.out.println("Started!" + descriptor);
                 ProcessHandler handler = descriptor.getProcessHandler();
                 if (handler == null) {
-                    System.out.println("NO HANDLER!");
+                    System.out.println("NO HANDLER!"); // what does this even mean?
                     return;
                 }
+
                 handler.addProcessListener(new ProcessAdapter() {
                     @Override
                     public void processTerminated(ProcessEvent event) {
-                        System.out.println("TERMINATED!" + event);
-
                         // everybody do your share
                         descriptor.dispose();
+
+                        asyncRunner.terminate();
                     }
 
                     @Override
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
-                        System.out.println("TEXT!" + event.getText() + " / " + outputType);
+                        String typeName = outputType.toString();
+
+                        final String text = event.getText().trim();
+                        if (KEY_STDOUT.equals(typeName))
+                            asyncRunner.sendOut(text);
+                        else if (KEY_STDERR.equals(typeName))
+                            asyncRunner.sendErr(text);
+                        else if (KEY_SYSTEM.equals(typeName))
+                            asyncRunner.sendSys(text);
                     }
                 });
             }
@@ -168,7 +197,6 @@ public class RunCommand extends ProjectCommand {
 
     /**
      * Extracted from ProgramRunnerUtil
-     * @return
      * @throws ExecutionException
      */
     static ExecutionEnvironment prepareEnvironment(final Project project,
@@ -193,12 +221,9 @@ public class RunCommand extends ProjectCommand {
             throw new IllegalArgumentException("Can't run `" + configuration + "`");
         }
 
-        final ExecutionEnvironment env =
-                getExecutionEnvironment(project, configuration, runner, target, executor);
-
         // FINALLY the thing we came here to get (what is this, Costco?)
 //        return configuration.getConfiguration().getState(executor, env);
-        return env;
+        return getExecutionEnvironment(project, configuration, runner, target, executor);
     }
 
     static RunProfileState getRunProfileState(RunnerAndConfigurationSettings settings,

@@ -15,9 +15,12 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.inject.UnsupportedClientException;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,8 +96,25 @@ public class RunTest extends BaseTestCase {
     }
 
     public void testRun() {
-        SimpleResult result = (SimpleResult) new RunCommand(project).execute();
+        LoggingRunner runner = new LoggingRunner();
+        SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
+
+        try {
+            runner.awaitTermination(5000);
+        } catch (InterruptedException e) {
+            fail("RunnableProject did not finish execution within 5s");
+        }
+
+        assertThat(runner.stdout).contains("Standard Output");
+        assertThat(runner.stderr).contains("Standard Error");
+        assertThat(runner.system)
+                .hasSize(2) // first one is the command line
+                .contains("Process finished with exit code 0");
+    }
+
+    public void testCompileError() {
+        // FIXME try to run JAVA_PROJECT or something
     }
 
     static ModuleRootManagerImpl getModuleRoot(Project project) {
@@ -107,4 +127,39 @@ public class RunTest extends BaseTestCase {
                 .getInstance(configurationModule.getModule());
     }
 
+    static class LoggingRunner implements AsyncRunner {
+
+        List<String> stdout = new ArrayList<String>();
+        List<String> stderr = new ArrayList<String>();
+        List<String> system = new ArrayList<String>();
+
+        @Override
+        public void prepare() throws UnsupportedClientException {
+
+        }
+
+        @Override
+        public void sendOut(String line) {
+            stdout.add(line);
+        }
+
+        @Override
+        public void sendErr(String line) {
+            stderr.add(line);
+        }
+
+        @Override
+        public void sendSys(String line) {
+            system.add(line);
+        }
+
+        @Override
+        public synchronized void terminate() {
+            notify();
+        }
+
+        synchronized void awaitTermination(long timeout) throws InterruptedException {
+            wait(timeout);
+        }
+    }
 }
