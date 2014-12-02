@@ -1,6 +1,7 @@
 package org.intellivim.core.command.run;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.ExecutionTargetManager;
 import com.intellij.execution.Executor;
@@ -8,31 +9,24 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import groovyjarjarcommonscli.CommandLine;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.util.IntelliVimUtil;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dhleong
@@ -58,58 +52,79 @@ public class RunCommand extends ProjectCommand {
                     : error + ": " + configuration);
         }
 
-        ApplicationConfiguration config =
-                (ApplicationConfiguration) setting.getConfiguration();
-        JavaRunConfigurationModule configurationModule = config.getConfigurationModule();
-        ModuleRootManagerImpl root = (ModuleRootManagerImpl) ModuleRootManager
-                .getInstance(configurationModule.getModule());
-        if (root.getSdk() != null) {
-            System.out.println(root.getSdk().getName() +"|" + root.getSdk().getSdkType().getName());
-        }
-
         System.out.println("Use setting " + setting);
         Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+        final ProgramRunner runner = pickRunner(setting, executor);
+        final ExecutionEnvironment env;
         final RunProfileState state;
         try {
-            state = executeConfiguration(project, setting, executor);
+            env = prepareEnvironment(project, setting, runner, executor);
+            state = getRunProfileState(setting, executor, env);
         } catch (ExecutionException e) {
             return SimpleResult.error(e);
         }
 
-        if (!(state instanceof CommandLineState)) {
-            throw new IllegalStateException("Unexpected RunProfileState: " + state
-                    + " (" + state.getClass() + ")");
+        final Runnable startRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // run in unit test mode so it doesn't try to do dumb stuff with the UI
+                try {
+                    IntelliVimUtil.setUnitTestMode();
+                    execute(runner, env);
+                } catch (ExecutionException e) {
+                    // TODO do something with this
+                    e.printStackTrace();
+                } finally {
+                    IntelliVimUtil.unsetUnitTestMode();
+                }
+            }
+        };
+
+        if (IntelliVimUtil.isUnitTestMode()) {
+            startRunnable.run();
+        } else {
+            final ExecutionManager mgr = ExecutionManager.getInstance(project);
+            mgr.compileAndRun(startRunnable,
+                    env, state,
+                    new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("CANCEL");
+                }
+            });
         }
 
-        CommandLineState command = (CommandLineState) state;
-        ConsoleViewImpl console = (ConsoleViewImpl) command.getConsoleBuilder().getConsole();
-        console.addMessageFilter(new Filter() {
-            @Nullable
-            @Override
-            public Result applyFilter(String line, int entireLength) {
-                System.out.println("Console: " + line);
-                return new Result(0, line.length(), null);
-            }
-        });
-
-        System.out.println("Run!: " + state + " / " + console + " / " + console.hasDeferredOutput());
-        console.getComponent(); // creates the Editor
-        System.out.println("Hello..." + console.getEditor());
-        System.out.println("Text: " + console.getEditor().getDocument().getText());
-        System.out.println("Hello?");
-        console.getEditor().getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void beforeDocumentChange(DocumentEvent event) {
-
-            }
-
-            @Override
-            public void documentChanged(DocumentEvent event) {
-                System.out.println(" ++" + event.getNewFragment());
-            }
-        });
-
         return SimpleResult.success();
+    }
+
+    void execute(ProgramRunner runner, ExecutionEnvironment env)
+            throws ExecutionException {
+        // borrowed from ExecutionManagerImpl so we can get to the RunContentDescriptor
+        runner.execute(env, new ProgramRunner.Callback() {
+            @Override
+            public void processStarted(final RunContentDescriptor descriptor) {
+                System.out.println("Started!" + descriptor);
+                ProcessHandler handler = descriptor.getProcessHandler();
+                if (handler == null) {
+                    System.out.println("NO HANDLER!");
+                    return;
+                }
+                handler.addProcessListener(new ProcessAdapter() {
+                    @Override
+                    public void processTerminated(ProcessEvent event) {
+                        System.out.println("TERMINATED!" + event);
+
+                        // everybody do your share
+                        descriptor.dispose();
+                    }
+
+                    @Override
+                    public void onTextAvailable(ProcessEvent event, Key outputType) {
+                        System.out.println("TEXT!" + event.getText() + " / " + outputType);
+                    }
+                });
+            }
+        });
     }
 
     static RunnerAndConfigurationSettings pickRunSetting(Project project,
@@ -138,21 +153,25 @@ public class RunCommand extends ProjectCommand {
         return null;
     }
 
+    static ProgramRunner pickRunner(RunnerAndConfigurationSettings setting, Executor executor) {
+        return ProgramRunnerUtil.getRunner(executor.getId(), setting);
+    }
+
     /** Just a little bit of convenience */
-    static RunProfileState executeConfiguration(Project project,
-            RunnerAndConfigurationSettings setting, Executor executor)
+    static ExecutionEnvironment prepareEnvironment(Project project,
+            RunnerAndConfigurationSettings setting,
+            ProgramRunner runner, Executor executor)
             throws ExecutionException {
-        ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), setting);
         ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-        return executeConfiguration(project, setting, runner, target, executor);
+        return prepareEnvironment(project, setting, runner, target, executor);
     }
 
     /**
-     * Extracted from ProgramRunnerUtil so we can get access to the RunProfileState
+     * Extracted from ProgramRunnerUtil
      * @return
      * @throws ExecutionException
      */
-    static RunProfileState executeConfiguration(final Project project,
+    static ExecutionEnvironment prepareEnvironment(final Project project,
             final RunnerAndConfigurationSettings configuration,
             final ProgramRunner runner, final ExecutionTarget target,
             final Executor executor)
@@ -174,6 +193,22 @@ public class RunCommand extends ProjectCommand {
             throw new IllegalArgumentException("Can't run `" + configuration + "`");
         }
 
+        final ExecutionEnvironment env =
+                getExecutionEnvironment(project, configuration, runner, target, executor);
+
+        // FINALLY the thing we came here to get (what is this, Costco?)
+//        return configuration.getConfiguration().getState(executor, env);
+        return env;
+    }
+
+    static RunProfileState getRunProfileState(RunnerAndConfigurationSettings settings,
+            Executor executor, ExecutionEnvironment env) throws ExecutionException {
+        return settings.getConfiguration().getState(executor, env);
+    }
+
+    static ExecutionEnvironment getExecutionEnvironment(Project project,
+            RunnerAndConfigurationSettings configuration, ProgramRunner runner,
+            ExecutionTarget target, Executor executor) {
         ExecutionEnvironmentBuilder builder =
                 new ExecutionEnvironmentBuilder(project, executor);
         if (configuration != null) {
@@ -184,14 +219,7 @@ public class RunCommand extends ProjectCommand {
         }
         builder.setTarget(target).setContentToReuse(null).setDataContext(null);
         builder.assignNewId();
-        final ExecutionEnvironment env = builder.build();
-
-        // run in unit test mode so it doesn't try to do dumb stuff with the UI
-        IntelliVimUtil.setUnitTestMode();
-        runner.execute(env);
-        IntelliVimUtil.unsetUnitTestMode();
-
-        // FINALLY the thing we came here to get (what is this, Costco?)
-        return configuration.getConfiguration().getState(executor, env);
+        return builder.build();
     }
+
 }

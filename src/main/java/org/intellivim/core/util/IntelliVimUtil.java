@@ -36,6 +36,11 @@ public class IntelliVimUtil {
         });
     }
 
+    /** Convenience */
+    public static boolean isUnitTestMode() {
+        return ApplicationManager.getApplication().isUnitTestMode();
+    }
+
     public static void setUnitTestMode() {
         ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
         sTemporarilyUnitTest = !app.isUnitTestMode();
@@ -50,4 +55,5 @@ public class IntelliVimUtil {
             app.setUnitTestMode(false);
         sTemporarilyUnitTest = false;
     }
+
 }
