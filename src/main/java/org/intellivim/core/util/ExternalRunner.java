@@ -6,6 +6,7 @@ import org.apache.log4j.lf5.util.StreamUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeoutException;
 
 /**
  * For running an external program and gathering its output
@@ -25,13 +26,14 @@ public class ExternalRunner {
     private ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
     private int exitValue;
+    private boolean finished;
 
     private ExternalRunner(String[] cmdArray) {
         this.cmdArray = cmdArray;
     }
 
     public boolean isSuccess() {
-        return !interrupted && error == null && exitValue == 0;
+        return finished && !interrupted && error == null && exitValue == 0;
     }
 
     public String getStdOut() {
@@ -51,6 +53,10 @@ public class ExternalRunner {
         return exitValue;
     }
 
+    public boolean isInterrupted() {
+        return interrupted;
+    }
+
     void run() {
         final Runtime runtime = Runtime.getRuntime();
         try {
@@ -61,8 +67,18 @@ public class ExternalRunner {
 
             exitValue = proc.waitFor();
 
+            long now = System.currentTimeMillis();
+            System.out.println("Start");
             out.join(JOIN_TIMEOUT);
             err.join(JOIN_TIMEOUT);
+
+            System.out.println("Thread2: " + out.isAlive());
+            System.out.println("Thread2: " + err.isAlive());
+            System.out.println("Stop: " + (System.currentTimeMillis() - now));
+            System.out.println("out=" + stdout.toString());
+            System.out.println("err=" + stderr.toString());
+
+            finished = true;
 
         } catch (IOException e) {
             onError(e);
@@ -73,7 +89,6 @@ public class ExternalRunner {
 
     void onError(Exception e) {
         error = e;
-        e.printStackTrace();
     }
 
     private Thread readStreamInto(final InputStream in,
@@ -86,9 +101,11 @@ public class ExternalRunner {
                 } catch (IOException e) {
                     onError(e);
                 }
+                System.out.println("Copied: " + isAlive());
             }
         };
         thread.start();
+        System.out.println("Thread: " + thread.isAlive());
         return thread;
     }
 
@@ -104,10 +121,16 @@ public class ExternalRunner {
 
         try {
             thread.join(timeout);
+
+            if (!finished) {
+                // I guess?
+                onError(new TimeoutException());
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
             interrupted = true;
         }
+
         return this;
     }
 

@@ -43,6 +43,14 @@ public abstract class VimSpecific {
                 "--remote-expr", expr
         );
 
+        if (!exec.isSuccess()) {
+            // tell me why
+            System.err.println("Error running " + expr);
+            System.err.println(" -stderr: " + exec.getStdErr());
+            System.err.println(" -stdout: " + exec.getStdOut());
+            exec.getError().printStackTrace();
+        }
+
         return exec.getStdOut();
     }
 

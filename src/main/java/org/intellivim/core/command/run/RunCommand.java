@@ -12,6 +12,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -134,15 +135,37 @@ public class RunCommand extends ProjectCommand {
             @Override
             public void processStarted(final RunContentDescriptor descriptor) {
                 System.out.println("Started!" + descriptor);
-                ProcessHandler handler = descriptor.getProcessHandler();
+                final ProcessHandler handler = descriptor.getProcessHandler();
                 if (handler == null) {
                     System.out.println("NO HANDLER!"); // what would this even mean?
+                    return;
+                }
+
+                System.out.println("Process: " + handler);
+                if (handler.isProcessTerminated() || handler.isProcessTerminating()) {
+                    descriptor.dispose();
+                    System.err.println("Process was already terminated");
                     return;
                 }
 
                 LaunchManager.register(launchId, handler);
 
                 handler.addProcessListener(new ProcessAdapter() {
+                    @Override
+                    public void startNotified(ProcessEvent event) {
+                        System.out.println("Started: " + event.getText());
+                        System.out.println("      -  " + handler.isProcessTerminated());
+                        System.out.println("      -  " + handler.isProcessTerminating());
+                    }
+
+                    @Override
+                    public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+                        System.out.println("Soonjpg: " + event.getText());
+                        System.out.println("      -  " + handler.isProcessTerminated());
+                        System.out.println("      -  " + handler.isProcessTerminating());
+                        System.out.println("      -  " + willBeDestroyed);
+                    }
+
                     @Override
                     public void processTerminated(ProcessEvent event) {
                         // everybody do your share
@@ -155,8 +178,14 @@ public class RunCommand extends ProjectCommand {
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
                         final AsyncRunner.OutputType type =
                                 AsyncRunner.OutputType.from(outputType);
+                        System.out.println(type + "> " + event.getText().trim());
                         if (type != null)
                             asyncRunner.sendLine(type, event.getText().trim());
+
+                        System.out.println("exit:" + event.getExitCode());
+                        System.out.println("term?" + handler.isProcessTerminated());
+                        System.out.println("term!" + handler.isProcessTerminating());
+                        System.out.println("proc=" + ((OSProcessHandler) handler).getProcess());
                     }
                 });
             }
