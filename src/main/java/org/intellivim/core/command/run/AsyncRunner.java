@@ -1,6 +1,10 @@
 package org.intellivim.core.command.run;
 
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.Key;
 import org.intellivim.inject.UnsupportedClientException;
+
+import java.util.HashMap;
 
 /**
  * ClientSpecific async output support
@@ -9,13 +13,27 @@ import org.intellivim.inject.UnsupportedClientException;
  */
 public interface AsyncRunner {
 
+    public enum OutputType {
+        STDOUT,
+        STDERR,
+        SYSTEM;
+
+        static HashMap<Key, OutputType> map = new HashMap<Key, OutputType>();
+        static {
+            map.put(ProcessOutputTypes.STDOUT, STDOUT);
+            map.put(ProcessOutputTypes.STDERR, STDERR);
+            map.put(ProcessOutputTypes.SYSTEM, SYSTEM);
+        }
+
+        static OutputType from(Key key) {
+            return map.get(key);
+        }
+    }
+
+
     void prepare() throws UnsupportedClientException;
 
-    void sendOut(String line);
-
-    void sendErr(String line);
-
-    void sendSys(String line);
+    void sendLine(OutputType type, String line);
 
     void terminate();
 }

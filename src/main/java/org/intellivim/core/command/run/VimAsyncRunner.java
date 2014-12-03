@@ -19,17 +19,7 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
     }
 
     @Override
-    public void sendOut(String line) {
-        // FIXME
-    }
-
-    @Override
-    public void sendErr(String line) {
-        // FIXME
-    }
-
-    @Override
-    public void sendSys(String line) {
+    public void sendLine(OutputType type, String line) {
         // FIXME
     }
 

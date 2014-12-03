@@ -22,7 +22,11 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import org.intellivim.*;
+import org.intellivim.Command;
+import org.intellivim.ProjectCommand;
+import org.intellivim.Required;
+import org.intellivim.Result;
+import org.intellivim.SimpleResult;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.UnsupportedClientException;
@@ -32,11 +36,6 @@ import org.intellivim.inject.UnsupportedClientException;
  */
 @Command("run")
 public class RunCommand extends ProjectCommand {
-
-    /* key names for output types */
-    private static final String KEY_STDOUT = "stdout";
-    private static final String KEY_STDERR = "stderr";
-    private static final String KEY_SYSTEM = "system";
 
     @Required @Inject AsyncRunner asyncRunner;
 
@@ -126,7 +125,7 @@ public class RunCommand extends ProjectCommand {
                 System.out.println("Started!" + descriptor);
                 ProcessHandler handler = descriptor.getProcessHandler();
                 if (handler == null) {
-                    System.out.println("NO HANDLER!"); // what does this even mean?
+                    System.out.println("NO HANDLER!"); // what would this even mean?
                     return;
                 }
 
@@ -141,15 +140,10 @@ public class RunCommand extends ProjectCommand {
 
                     @Override
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
-                        String typeName = outputType.toString();
-
-                        final String text = event.getText().trim();
-                        if (KEY_STDOUT.equals(typeName))
-                            asyncRunner.sendOut(text);
-                        else if (KEY_STDERR.equals(typeName))
-                            asyncRunner.sendErr(text);
-                        else if (KEY_SYSTEM.equals(typeName))
-                            asyncRunner.sendSys(text);
+                        final AsyncRunner.OutputType type =
+                                AsyncRunner.OutputType.from(outputType);
+                        if (type != null)
+                            asyncRunner.sendLine(type, event.getText().trim());
                     }
                 });
             }

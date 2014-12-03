@@ -20,7 +20,9 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -133,24 +135,23 @@ public class RunTest extends BaseTestCase {
         List<String> stderr = new ArrayList<String>();
         List<String> system = new ArrayList<String>();
 
+        final Map<OutputType, List<String>> sink =
+                new HashMap<OutputType, List<String>>();
+
+        LoggingRunner() {
+            sink.put(OutputType.STDOUT, stdout);
+            sink.put(OutputType.STDERR, stderr);
+            sink.put(OutputType.SYSTEM, system);
+        }
+
         @Override
         public void prepare() throws UnsupportedClientException {
 
         }
 
         @Override
-        public void sendOut(String line) {
-            stdout.add(line);
-        }
-
-        @Override
-        public void sendErr(String line) {
-            stderr.add(line);
-        }
-
-        @Override
-        public void sendSys(String line) {
-            system.add(line);
+        public void sendLine(OutputType type, String line) {
+            sink.get(type).add(line);
         }
 
         @Override
