@@ -59,7 +59,9 @@ public abstract class VimSpecific {
         final StringBuilder call = new StringBuilder()
                 .append(function).append('(');
         for (int i = 0; i < args.length; i++){
-            call.append('"').append(args[i]).append('"');
+            call.append('"')
+                .append(args[i].replace("\"", "\\\""))
+                .append('"');
             if (i < args.length - 1){
                 call.append(',');
             }

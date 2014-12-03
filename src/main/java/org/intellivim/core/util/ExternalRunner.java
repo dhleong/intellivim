@@ -6,6 +6,7 @@ import org.apache.log4j.lf5.util.StreamUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -16,7 +17,9 @@ import java.util.concurrent.TimeoutException;
 public class ExternalRunner {
 
     private static final long JOIN_TIMEOUT = 1000;
-    private static final long DEFAULT_RUN_TIMEOUT = 500;
+    private static final long DEFAULT_RUN_TIMEOUT = 1500;
+
+    private static final boolean DEBUG = false;
 
     private final String[] cmdArray;
     private boolean interrupted;
@@ -60,23 +63,35 @@ public class ExternalRunner {
     void run() {
         final Runtime runtime = Runtime.getRuntime();
         try {
-            Process proc = runtime.exec(cmdArray);
+            if (DEBUG) {
+                System.out.println("Execute: " + Arrays.asList(cmdArray));
+            }
+
+            final Process proc = runtime.exec(cmdArray);
+
+            // nothing to see here
+            proc.getOutputStream().close();
 
             Thread out = readStreamInto(proc.getInputStream(), stdout);
             Thread err = readStreamInto(proc.getErrorStream(), stderr);
 
+            long now = System.currentTimeMillis();
             exitValue = proc.waitFor();
 
-            long now = System.currentTimeMillis();
-            System.out.println("Start");
+            if (DEBUG) {
+                System.out.println("Waited on proc for "
+                        + (System.currentTimeMillis() - now));
+            }
+
+            now = System.currentTimeMillis();
             out.join(JOIN_TIMEOUT);
             err.join(JOIN_TIMEOUT);
 
-            System.out.println("Thread2: " + out.isAlive());
-            System.out.println("Thread2: " + err.isAlive());
-            System.out.println("Stop: " + (System.currentTimeMillis() - now));
-            System.out.println("out=" + stdout.toString());
-            System.out.println("err=" + stderr.toString());
+            if (DEBUG) {
+                System.out.println("Join2: " + (System.currentTimeMillis() - now));
+                System.out.println("out=" + stdout.toString());
+                System.out.println("err=" + stderr.toString());
+            }
 
             finished = true;
 
@@ -96,16 +111,20 @@ public class ExternalRunner {
         final Thread thread = new Thread() {
             @Override
             public void run() {
+                long start = System.currentTimeMillis();
                 try {
                     StreamUtils.copy(in, out);
                 } catch (IOException e) {
                     onError(e);
                 }
-                System.out.println("Copied: " + isAlive());
+
+                if (DEBUG) {
+                    System.out.println("Copied in " +
+                            (System.currentTimeMillis() - start));
+                }
             }
         };
         thread.start();
-        System.out.println("Thread: " + thread.isAlive());
         return thread;
     }
 
@@ -120,7 +139,13 @@ public class ExternalRunner {
         thread.start();
 
         try {
+            long start = System.currentTimeMillis();
             thread.join(timeout);
+
+            if (DEBUG) {
+                System.out.println("Joined for: " + (System.currentTimeMillis() - start)
+                        + " alive=" + thread.isAlive());
+            }
 
             if (!finished) {
                 // I guess?
