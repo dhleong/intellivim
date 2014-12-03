@@ -102,12 +102,20 @@ public class RunTest extends BaseTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
+        assertThat(LaunchManager.get("runnable-project:RunnableMain"))
+                .isNotNull();
+
         try {
             runner.awaitTermination(5000);
         } catch (InterruptedException e) {
             fail("RunnableProject did not finish execution within 5s");
         }
 
+        // launch manager should clear it
+        assertThat(LaunchManager.get("runnable-project:RunnableMain"))
+                .isNull();
+
+        // make sure we got our output
         assertThat(runner.stdout).contains("Standard Output");
         assertThat(runner.stderr).contains("Standard Error");
         assertThat(runner.system)
@@ -118,6 +126,8 @@ public class RunTest extends BaseTestCase {
     public void testCompileError() {
         // FIXME try to run JAVA_PROJECT or something
     }
+
+    // FIXME test termination of spin-looping projects
 
     static ModuleRootManagerImpl getModuleRoot(Project project) {
         RunnerAndConfigurationSettings settings =
@@ -145,8 +155,7 @@ public class RunTest extends BaseTestCase {
         }
 
         @Override
-        public void prepare() throws UnsupportedClientException {
-
+        public void prepare(String launchId) throws UnsupportedClientException {
         }
 
         @Override

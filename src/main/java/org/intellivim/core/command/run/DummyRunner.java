@@ -13,7 +13,7 @@ import org.intellivim.inject.UnsupportedClientException;
 public class DummyRunner extends VimAsyncRunner {
 
     @Override
-    public void prepare() throws UnsupportedClientException {
+    public void prepare(String launchId) throws UnsupportedClientException {
         throw new UnsupportedClientException("Unknown client does not support project running");
     }
 

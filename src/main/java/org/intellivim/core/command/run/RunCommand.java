@@ -76,13 +76,14 @@ public class RunCommand extends ProjectCommand {
             return SimpleResult.error(e);
         }
 
+        final String launchId = pickLaunchId(setting);
         final Runnable startRunnable = new Runnable() {
             @Override
             public void run() {
                 // run in unit test mode so it doesn't try to do dumb stuff with the UI
                 try {
                     IntelliVimUtil.setUnitTestMode();
-                    execute(runner, env);
+                    execute(launchId, runner, env);
                 } catch (ExecutionException e) {
                     // TODO do something with this
                     e.printStackTrace();
@@ -94,8 +95,14 @@ public class RunCommand extends ProjectCommand {
 
         try {
             // make sure we can do it
-            asyncRunner.prepare();
+            asyncRunner.prepare(launchId);
         } catch (UnsupportedClientException e) {
+            System.err.println(e.getMessage());
+            LaunchManager.terminate(launchId);
+            return SimpleResult.error(e);
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+            LaunchManager.terminate(launchId);
             return SimpleResult.error(e);
         }
 
@@ -116,7 +123,11 @@ public class RunCommand extends ProjectCommand {
         return SimpleResult.success();
     }
 
-    void execute(ProgramRunner runner, ExecutionEnvironment env)
+    private String pickLaunchId(RunnerAndConfigurationSettings setting) {
+        return LaunchManager.allocateId(project, setting);
+    }
+
+    void execute(final String launchId, ProgramRunner runner, ExecutionEnvironment env)
             throws ExecutionException {
         // borrowed from ExecutionManagerImpl so we can get to the RunContentDescriptor
         runner.execute(env, new ProgramRunner.Callback() {
@@ -128,6 +139,8 @@ public class RunCommand extends ProjectCommand {
                     System.out.println("NO HANDLER!"); // what would this even mean?
                     return;
                 }
+
+                LaunchManager.register(launchId, handler);
 
                 handler.addProcessListener(new ProcessAdapter() {
                     @Override

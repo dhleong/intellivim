@@ -31,7 +31,7 @@ public interface AsyncRunner {
     }
 
 
-    void prepare() throws UnsupportedClientException;
+    void prepare(String launchId) throws UnsupportedClientException;
 
     void sendLine(OutputType type, String line);
 

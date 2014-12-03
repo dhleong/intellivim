@@ -17,7 +17,9 @@ public abstract class VimSpecific {
     String instance;
 
     public String getExe() {
-        return exe;
+        return StringUtils.isEmpty(exe)
+            ? "vim" // I guess?
+            : exe;
     }
 
     public String getInstanceName() {
@@ -33,4 +35,29 @@ public abstract class VimSpecific {
             throw new UnsupportedClientException("Vim --servername support is required");
     }
 
+    /** Execute a --remote-expr command */
+    protected String remoteExpr(String expr) {
+        final ExternalRunner exec = ExternalRunner.run(
+                getExe(),
+                "--servername", instance,
+                "--remote-expr", expr
+        );
+
+        return exec.getStdOut();
+    }
+
+    /** Call a function remotely using --remote-expr to get the result */
+    protected String remoteFunctionExpr(String function, String...args) {
+        final StringBuilder call = new StringBuilder()
+                .append(function).append('(');
+        for (int i = 0; i < args.length; i++){
+            call.append('"').append(args[i]).append('"');
+            if (i < args.length - 1){
+                call.append(',');
+            }
+        }
+        call.append(')')
+            .append(" | redraw!"); // special for func calls
+        return remoteExpr(call.toString());
+    }
 }
