@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author dhleong
  */
-public class UsableSdkTestCase extends BaseTestCase {
+public abstract class UsableSdkTestCase extends BaseTestCase {
 
     private String currentProjectName = null;
 

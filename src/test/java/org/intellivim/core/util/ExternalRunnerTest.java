@@ -1,6 +1,7 @@
 package org.intellivim.core.util;
 
 import junit.framework.TestCase;
+import org.intellivim.BaseTestCase;
 
 import java.util.concurrent.TimeoutException;
 
@@ -10,7 +11,12 @@ import static org.intellivim.IVAssertions.assertThat;
 /**
  * @author dhleong
  */
-public class ExternalRunnerTest extends TestCase {
+public class ExternalRunnerTest extends BaseTestCase {
+
+    @Override
+    protected String getProjectPath() {
+        return getProjectPath(JAVA_PROJECT);
+    }
 
     public void testEcho() {
         ExternalRunner runner = ExternalRunner.run("echo", "echo chamber");
@@ -33,5 +39,4 @@ public class ExternalRunnerTest extends TestCase {
                 .hasNoError()
                 .hasExitCode(1);
     }
-
 }

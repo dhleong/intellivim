@@ -165,7 +165,7 @@ public class RunCommand extends ProjectCommand {
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
                         final AsyncRunner.OutputType type =
                                 AsyncRunner.OutputType.from(outputType);
-//                        System.out.println(type + "> " + event.getText().trim());
+                        System.out.println(type + "> " + event.getText().trim());
                         if (type != null)
                             asyncRunner.sendLine(type, event.getText().trim());
 

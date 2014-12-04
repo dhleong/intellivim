@@ -45,13 +45,7 @@ if buf:
 
 PYEOF
 
-    let winnr = bufwinnr(bufnr)
-    if winnr != -1
-        let lastwin = winnr()
-        exe winnr . 'winc w'
-        redraw!
-        exe lastwin . 'winc w'
-    endif
+    redraw!
 
 endfunction " }}}
 " }}}

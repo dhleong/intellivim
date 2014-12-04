@@ -1,12 +1,17 @@
 package org.intellivim.core.util;
 
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import org.apache.log4j.lf5.util.StreamUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -72,8 +77,8 @@ public class ExternalRunner {
             // nothing to see here
             proc.getOutputStream().close();
 
-            Thread out = readStreamInto(proc.getInputStream(), stdout);
-            Thread err = readStreamInto(proc.getErrorStream(), stderr);
+            Future<?> out = readStreamInto(proc.getInputStream(), stdout);
+            Future<?> err = readStreamInto(proc.getErrorStream(), stderr);
 
             long now = System.currentTimeMillis();
             exitValue = proc.waitFor();
@@ -81,11 +86,11 @@ public class ExternalRunner {
             if (DEBUG) {
                 System.out.println("Waited on proc for "
                         + (System.currentTimeMillis() - now));
+                now = System.currentTimeMillis();
             }
 
-            now = System.currentTimeMillis();
-            out.join(JOIN_TIMEOUT);
-            err.join(JOIN_TIMEOUT);
+            out.get(JOIN_TIMEOUT, TimeUnit.MILLISECONDS);
+            err.get(JOIN_TIMEOUT, TimeUnit.MILLISECONDS);
 
             if (DEBUG) {
                 System.out.println("Join2: " + (System.currentTimeMillis() - now));
@@ -99,6 +104,10 @@ public class ExternalRunner {
             onError(e);
         } catch (InterruptedException e) {
             onError(e);
+        } catch (ExecutionException e) {
+            onError(e);
+        } catch (TimeoutException e) {
+            onError(e);
         }
     }
 
@@ -106,9 +115,9 @@ public class ExternalRunner {
         error = e;
     }
 
-    private Thread readStreamInto(final InputStream in,
+    private Future<?> readStreamInto(final InputStream in,
               final ByteArrayOutputStream out) {
-        final Thread thread = new Thread() {
+        final Runnable thread = new Runnable() {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
@@ -124,27 +133,29 @@ public class ExternalRunner {
                 }
             }
         };
-        thread.start();
-        return thread;
+
+        return ApplicationManager.getApplication()
+                .executeOnPooledThread(thread);
     }
 
     ExternalRunner start(long timeout) {
-        final Thread thread = new Thread() {
+        final Runnable thread = new Runnable() {
+            @Override
             public void run() {
                 ExternalRunner.this.run();
             }
         };
 
         // go
-        thread.start();
+        final Future<?> future = ApplicationManager.getApplication()
+                .executeOnPooledThread(thread);
 
         try {
             long start = System.currentTimeMillis();
-            thread.join(timeout);
+            future.get(timeout, TimeUnit.MILLISECONDS);
 
             if (DEBUG) {
-                System.out.println("Joined for: " + (System.currentTimeMillis() - start)
-                        + " alive=" + thread.isAlive());
+                System.out.println("Joined for: " + (System.currentTimeMillis() - start));
             }
 
             if (!finished) {
@@ -154,6 +165,10 @@ public class ExternalRunner {
         } catch (InterruptedException e) {
             e.printStackTrace();
             interrupted = true;
+        } catch (ExecutionException e) {
+            onError(e);
+        } catch (TimeoutException e) {
+            onError(e);
         }
 
         return this;
