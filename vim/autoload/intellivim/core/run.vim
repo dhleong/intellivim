@@ -33,6 +33,7 @@ if buf:
     buf.options['modifiable'] = False
 
     # find windows for this buffer
+    scrollWin = None
     for tab in vim.tabpages:
         for win in tab.windows:
             if win.buffer.number == buf.number:
@@ -40,9 +41,18 @@ if buf:
                 row, col = win.cursor
                 if row == oldEnd:
                     win.cursor = [len(buf), col]
+                    scrollWin = win
+
 PYEOF
 
-    redraw!
+    let winnr = bufwinnr(bufnr)
+    if winnr != -1
+        let lastwin = winnr()
+        exe winnr . 'winc w'
+        redraw!
+        exe lastwin . 'winc w'
+    endif
+
 endfunction " }}}
 " }}}
 
@@ -134,15 +144,18 @@ function! intellivim#core#run#onOutput(bufNo, type, line) " {{{
     endif
 endfunction " }}}
 
+function! intellivim#core#run#onCancelled(bufNo) " {{{
+    call s:append(a:bufno, "system", "Launch Cancelled")
+    call intellivim#core#run#onTerminated(a:bufNo)
+endfunction " }}}
+
 function! intellivim#core#run#onTerminated(bufNo) " {{{
     if !has('python')
         return
     endif
 
-    call s:append(a:bufno, "out", "<terminated>")
-
     " rename the buffer
-    let bufnr = a:bufno
+    let bufnr = a:bufNo
 
 py << PYEOF
 import vim
@@ -157,3 +170,4 @@ endfunction " }}}
 
 
 " vim:ft=vim:fdm=marker
+"

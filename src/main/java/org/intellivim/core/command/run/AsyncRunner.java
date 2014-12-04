@@ -35,5 +35,7 @@ public interface AsyncRunner {
 
     void sendLine(OutputType type, String line);
 
+    void cancel();
+
     void terminate();
 }

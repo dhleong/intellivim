@@ -117,6 +117,7 @@ public class RunCommand extends ProjectCommand {
                 @Override
                 public void run() {
                     System.out.println("CANCEL");
+                    asyncRunner.cancel();
                 }
             });
         }
@@ -151,20 +152,6 @@ public class RunCommand extends ProjectCommand {
                 LaunchManager.register(launchId, handler);
 
                 handler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void startNotified(ProcessEvent event) {
-                        System.out.println("Started: " + event.getText());
-                        System.out.println("      -  " + handler.isProcessTerminated());
-                        System.out.println("      -  " + handler.isProcessTerminating());
-                    }
-
-                    @Override
-                    public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-                        System.out.println("Soonjpg: " + event.getText());
-                        System.out.println("      -  " + handler.isProcessTerminated());
-                        System.out.println("      -  " + handler.isProcessTerminating());
-                        System.out.println("      -  " + willBeDestroyed);
-                    }
 
                     @Override
                     public void processTerminated(ProcessEvent event) {
@@ -178,14 +165,10 @@ public class RunCommand extends ProjectCommand {
                     public void onTextAvailable(ProcessEvent event, Key outputType) {
                         final AsyncRunner.OutputType type =
                                 AsyncRunner.OutputType.from(outputType);
-                        System.out.println(type + "> " + event.getText().trim());
+//                        System.out.println(type + "> " + event.getText().trim());
                         if (type != null)
                             asyncRunner.sendLine(type, event.getText().trim());
 
-                        System.out.println("exit:" + event.getExitCode());
-                        System.out.println("term?" + handler.isProcessTerminated());
-                        System.out.println("term!" + handler.isProcessTerminating());
-                        System.out.println("proc=" + ((OSProcessHandler) handler).getProcess());
                     }
                 });
             }

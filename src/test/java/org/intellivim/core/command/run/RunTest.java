@@ -42,13 +42,26 @@ public class RunTest extends UsableSdkTestCase {
     }
 
     public void testCompileError() throws Exception {
-        // FIXME try to run JAVA_PROJECT or something
+        // NB not a proper test because compileAndRun refuses to
+        //  work inside a unit test (for whatever reason)
+        //  so we don't get the "cancelled" callback
+
         Project project = prepareProject(JAVA_PROJECT);
 
         LoggingRunner runner = new LoggingRunner();
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
+        try {
+            runner.awaitTermination(5000);
+        } catch (InterruptedException e) {
+            fail("RunnableProject did not finish execution within 5s");
+        }
+
+        assertThat(runner.stderr)
+                .isNotEmpty();
+        assertThat(runner.system)
+                .contains("Process finished with exit code 1");
 
     }
 
@@ -76,6 +89,13 @@ public class RunTest extends UsableSdkTestCase {
         @Override
         public void sendLine(OutputType type, String line) {
             sink.get(type).add(line);
+        }
+
+        @Override
+        public synchronized void cancel() {
+            // NB: because calling compileAndRun doesn't really work,
+            //  there's no real way to test this, unfortunately
+            notify();
         }
 
         @Override

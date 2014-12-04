@@ -40,6 +40,11 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
     }
 
     @Override
+    public void cancel() {
+        remoteFunctionExpr("intellivim#core#run#onCancelled", bufNo);
+    }
+
+    @Override
     public void terminate() {
         remoteFunctionExpr("intellivim#core#run#onTerminated", bufNo);
     }
