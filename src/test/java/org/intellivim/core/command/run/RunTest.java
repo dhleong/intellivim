@@ -16,6 +16,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class RunTest extends UsableSdkTestCase {
 
+    @Override
+    protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+        // DON'T run on Swing dispatch thread; some of the compile
+        //  stuff wants to run there, and we'll never get the results
+        //  if we do, too
+        System.out.println("Invoke: " + runnable);
+        runnable.run();
+    }
+
+    @Override
+    protected boolean runInDispatchThread() {
+        return false;
+    }
+
     public void testRun() throws Exception {
         Project project = prepareProject(RUNNABLE_PROJECT);
 
@@ -34,8 +48,8 @@ public class RunTest extends UsableSdkTestCase {
                 .isNull();
 
         // make sure we got our output
-        assertThat(runner.stdout).contains("Standard Output");
         assertThat(runner.stderr).contains("Standard Error");
+        assertThat(runner.stdout).contains("Standard Output");
         assertThat(runner.system)
                 .hasSize(2) // first one is the command line
                 .contains("Process finished with exit code 0");
@@ -60,8 +74,11 @@ public class RunTest extends UsableSdkTestCase {
 
         assertThat(runner.stderr)
                 .isNotEmpty();
-        assertThat(runner.system)
-                .contains("Process finished with exit code 1");
+//        assertThat(runner.system)
+//                .contains("Process finished with exit code 1");
+        assertThat(runner.cancelled)
+                .describedAs("Build Cancelled")
+                .isTrue();
 
     }
 
@@ -72,6 +89,8 @@ public class RunTest extends UsableSdkTestCase {
         List<String> stdout = new ArrayList<String>();
         List<String> stderr = new ArrayList<String>();
         List<String> system = new ArrayList<String>();
+
+        boolean cancelled = false;
 
         final Map<OutputType, List<String>> sink =
                 new HashMap<OutputType, List<String>>();
@@ -93,8 +112,7 @@ public class RunTest extends UsableSdkTestCase {
 
         @Override
         public synchronized void cancel() {
-            // NB: because calling compileAndRun doesn't really work,
-            //  there's no real way to test this, unfortunately
+            cancelled = true;
             notify();
         }
 

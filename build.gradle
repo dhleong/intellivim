@@ -54,6 +54,7 @@ dependencies {
     }
 
     testCompile 'org.assertj:assertj-core:1.7.0'
+    testCompile 'org.mockito:mockito-all:1.9.5'
 
     // platform stuff
     testRuntime fileTree(dir: "${System.properties['java.home']}/../lib/", include: "tools.jar")

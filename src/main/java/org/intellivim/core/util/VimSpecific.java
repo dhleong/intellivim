@@ -10,6 +10,9 @@ import org.intellivim.inject.UnsupportedClientException;
  */
 public abstract class VimSpecific {
 
+    /** basically, never timeout */
+    static final long TIMEOUT = 10000;
+
     /** full path to Vim executable */
     String exe;
 
@@ -37,7 +40,7 @@ public abstract class VimSpecific {
 
     /** Execute a --remote-expr command */
     protected String remoteExpr(String expr) {
-        final ExternalRunner exec = ExternalRunner.run(
+        final ExternalRunner exec = ExternalRunner.run(TIMEOUT,
                 getExe(),
                 "--servername", instance,
                 "--remote-expr", expr

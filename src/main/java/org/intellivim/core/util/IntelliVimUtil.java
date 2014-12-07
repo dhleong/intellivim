@@ -3,6 +3,7 @@ package org.intellivim.core.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.util.ui.UIUtil;
 
 /**
  * @author dhleong
@@ -56,4 +57,17 @@ public class IntelliVimUtil {
         sTemporarilyUnitTest = false;
     }
 
+    /**
+     * Wrap the runnable to ensure it's run on the
+     *  Swing dispatch thread
+     */
+    public static Runnable onSwingThread(final Runnable runnable) {
+        return new Runnable() {
+
+            @Override
+            public void run() {
+                UIUtil.invokeAndWaitIfNeeded(runnable);
+            }
+        };
+    }
 }

@@ -1,7 +1,6 @@
 package org.intellivim.core.command.run;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.ExecutionTargetManager;
 import com.intellij.execution.Executor;
@@ -12,7 +11,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -20,6 +18,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +30,7 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.UnsupportedClientException;
@@ -78,7 +81,8 @@ public class RunCommand extends ProjectCommand {
         }
 
         final String launchId = pickLaunchId(setting);
-        final Runnable startRunnable = new Runnable() {
+        final Runnable startRunnable = IntelliVimUtil.onSwingThread(
+                new Runnable() {
             @Override
             public void run() {
                 // run in unit test mode so it doesn't try to do dumb stuff with the UI
@@ -92,7 +96,7 @@ public class RunCommand extends ProjectCommand {
                     IntelliVimUtil.unsetUnitTestMode();
                 }
             }
-        };
+        });
 
         try {
             // make sure we can do it
@@ -107,20 +111,46 @@ public class RunCommand extends ProjectCommand {
             return SimpleResult.error(e);
         }
 
-        if (IntelliVimUtil.isUnitTestMode()) {
-            startRunnable.run();
-        } else {
-            final ExecutionManager mgr = ExecutionManager.getInstance(project);
-            mgr.compileAndRun(startRunnable,
-                    env, state,
-                    new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println("CANCEL");
-                    asyncRunner.cancel();
-                }
-            });
-        }
+//        if (IntelliVimUtil.isUnitTestMode()) {
+//            startRunnable.run();
+            BuildUtil.compileProject(project, setting.getConfiguration(),
+                new CompileStatusNotification() {
+                    @Override
+                    public void finished(final boolean aborted, final int errors,
+                            final int warnings,
+                            final CompileContext compileContext) {
+                        System.out.println("aborted=" + aborted +
+                                        "errors=" + errors +
+                                        "warnings=" + warnings
+                        );
+                        if (aborted || errors > 0) {
+                            for (CompilerMessage msg :  compileContext
+                                    .getMessages(CompilerMessageCategory.ERROR)) {
+
+                                System.out.println(msg.getMessage());
+                                asyncRunner.sendLine(AsyncRunner.OutputType.STDERR,
+                                        msg.getMessage());
+                            }
+
+                            asyncRunner.cancel();
+                            return;
+                        }
+
+                        startRunnable.run();
+                    }
+                });
+//        } else {
+//            final ExecutionManager mgr = ExecutionManager.getInstance(project);
+//            mgr.compileAndRun(startRunnable,
+//                    env, state,
+//                    new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            System.out.println("CANCEL");
+//                            asyncRunner.cancel();
+//                        }
+//                    });
+//        }
 
         return SimpleResult.success();
     }
@@ -175,8 +205,8 @@ public class RunCommand extends ProjectCommand {
         });
     }
 
-    static RunnerAndConfigurationSettings pickRunSetting(Project project,
-             String configuration) {
+    public static RunnerAndConfigurationSettings pickRunSetting(Project project,
+            String configuration) {
 
         final RunManager manager = RunManager.getInstance(project);
 

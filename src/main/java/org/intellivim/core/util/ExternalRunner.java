@@ -2,7 +2,6 @@ package org.intellivim.core.util;
 
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import org.apache.log4j.lf5.util.StreamUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -16,6 +15,9 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * For running an external program and gathering its output
+ *
+ * TODO Look into OSProcessHandler and GeneralCommandLine
+ * They may be more reliable
  *
  * @author dhleong
  */
