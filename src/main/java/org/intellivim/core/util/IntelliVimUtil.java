@@ -11,6 +11,7 @@ import com.intellij.util.ui.UIUtil;
 public class IntelliVimUtil {
 
     private static boolean sTemporarilyUnitTest = false;
+    private static boolean sTemporarilyNotUnitTest = false;
 
     /**
      * Sometimes a command will not cooperate unless it thinks
@@ -70,4 +71,5 @@ public class IntelliVimUtil {
             }
         };
     }
+
 }

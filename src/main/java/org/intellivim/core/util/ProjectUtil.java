@@ -277,7 +277,7 @@ public class ProjectUtil {
         mgr.addContentManagerListener(new ContentManagerListener() {
             @Override
             public void contentAdded(final ContentManagerEvent event) {
-                System.out.println("ADD: " + event);
+                System.out.println("ADD: " + event.getContent());
             }
 
             @Override

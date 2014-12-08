@@ -47,6 +47,7 @@ public class BuildUtil {
                 (RunProfileWithCompileBeforeLaunchOption)configuration;
         final CompileScope scope;
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+
         if (Boolean.valueOf(System.getProperty(MAKE_PROJECT_ON_RUN_KEY,
                 Boolean.FALSE.toString()))) {
             // user explicitly requested whole-project make

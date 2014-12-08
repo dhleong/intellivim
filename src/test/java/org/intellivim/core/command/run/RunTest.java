@@ -1,6 +1,7 @@
 package org.intellivim.core.command.run;
 
 import com.intellij.openapi.project.Project;
+import org.assertj.core.api.SoftAssertions;
 import org.intellivim.SimpleResult;
 import org.intellivim.inject.UnsupportedClientException;
 
@@ -48,11 +49,15 @@ public class RunTest extends UsableSdkTestCase {
                 .isNull();
 
         // make sure we got our output
-        assertThat(runner.stderr).contains("Standard Error");
-        assertThat(runner.stdout).contains("Standard Output");
-        assertThat(runner.system)
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(runner.cancelled).as("Run Cancelled").isFalse();
+        softly.assertThat(runner.stderr).as("stderr").contains("Standard Error");
+        softly.assertThat(runner.stdout).as("stdout").contains("Standard Output");
+        softly.assertThat(runner.system).as("system")
                 .hasSize(2) // first one is the command line
                 .contains("Process finished with exit code 0");
+
+        softly.assertAll();
     }
 
     public void testCompileError() throws Exception {

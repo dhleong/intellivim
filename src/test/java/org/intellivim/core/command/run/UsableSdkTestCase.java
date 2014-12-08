@@ -1,8 +1,11 @@
 package org.intellivim.core.command.run;
 
+import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
@@ -13,10 +16,12 @@ import com.intellij.openapi.roots.impl.ModuleJdkOrderEntryImpl;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
+import org.apache.commons.lang.StringUtils;
 import org.intellivim.BaseTestCase;
 import org.intellivim.core.util.ProjectUtil;
 import org.mockito.Mockito;
 
+import java.io.File;
 import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,8 +92,11 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
 
             // manufacture a usable spy
             RootModelImpl model = root.getRootModel();
+//            fixtureSdk.ge
+            System.out.println("Use " + fixtureSdk.getVersionString()
+                    + ":" + fixtureSdk.getName());
             ModuleJdkOrderEntryImpl entry = new ModuleJdkOrderEntryImpl(
-                    "1.7", "JavaSDK",
+                    fixtureSdk.getVersionString(), fixtureSdk.getName(),
                     model, ProjectRootManagerImpl.getInstanceImpl(project));
             ModuleJdkOrderEntryImpl spy = Mockito.spy(entry);
             Mockito.when(spy.getJdk()).thenReturn(new MockJdkWrapper(
@@ -118,7 +126,36 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
             // make sure it worked
             assertTrue(getModuleRoot(project) == getModuleRoot(project));
             assertThat(root.getSdk()).isNotNull();
+
+//            // use in-process so it sees our sdk (?)
+//            CompilerWorkspaceConfiguration.getInstance(project)
+//                    .USE_OUT_OF_PROCESS_BUILD = false;
         }
+
+        // I... don't even.
+        CompilerManagerImpl.testSetup();
+
+        if (StringUtils.isEmpty(System.getProperty(PathManager.PROPERTY_CONFIG_PATH))) {
+            String pluginsPath = System.getProperty(PathManager.PROPERTY_PLUGINS_PATH);
+            final File systemParent;
+            if (!StringUtils.isEmpty(pluginsPath)) {
+                File pluginsFile = new File(pluginsPath);
+                systemParent = pluginsFile.getParentFile();
+
+            } else {
+                File compilePath = BuildManager.getInstance().getBuildSystemDirectory();
+                systemParent = compilePath.getParentFile() //  ./system
+                                          .getParentFile(); // ./
+            }
+            System.setProperty(PathManager.PROPERTY_CONFIG_PATH,
+                    new File(systemParent, "config").getAbsolutePath());
+
+            System.clearProperty(PathManager.PROPERTY_HOME_PATH);
+        }
+
+        Field isUnitTestMode = BuildManager.class.getDeclaredField("IS_UNIT_TEST_MODE");
+        isUnitTestMode.setAccessible(true);
+        isUnitTestMode.setBoolean(BuildManager.getInstance(), false);
 
         return project;
     }
