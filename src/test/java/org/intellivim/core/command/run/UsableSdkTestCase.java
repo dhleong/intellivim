@@ -1,30 +1,20 @@
 package org.intellivim.core.command.run;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.ModuleJdkOrderEntryImpl;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
-import org.apache.commons.lang.StringUtils;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.intellivim.BaseTestCase;
 import org.intellivim.core.util.ProjectUtil;
-import org.mockito.Mockito;
 
-import java.io.File;
-import java.lang.reflect.Field;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.IOException;
 
 /**
  * Wacky test case tweaks the project configs
@@ -40,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class UsableSdkTestCase extends BaseTestCase {
 
     private String currentProjectName = null;
+    private byte[] projectFileContents;
+    private byte[] compilerFileContents;
 
     @Override
     protected String getProjectPath() {
@@ -71,97 +63,67 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         final Project project =
                 ProjectUtil.ensureProject(getProjectPath(projectName));
 
-        // get a usable SDK from the fixture's module
-        ModuleRootManagerImpl fixtureRoot =
-                (ModuleRootManagerImpl) ModuleRootManager
-                        .getInstance(myFixture.getModule());
-        Sdk fixtureSdk = fixtureRoot.getSdk();
-        assertThat(fixtureSdk).isNotNull();
+        // NB The following stuff modifies stuff on disk. We'll want to restore
+        //  all that when we're done
+        final Module module = getModule(project);
+        VirtualFile projectFile = module.getModuleFile();
+        VirtualFile rootDir = projectFile.getParent();
+        VirtualFile compilerFile = rootDir.findChild("compiler.xml");
 
-        // do we already have a good SDK?
-        ModuleRootManagerImpl root = getModuleRoot(project);
-        if (root == null) {
-            // no run config, probably. hopefully we know what we're doing
-            return project;
-        }
+        projectFileContents = projectFile.contentsToByteArray();
+        compilerFileContents = compilerFile.contentsToByteArray();
 
-        if (root.getSdk() == null) {
-            // nope, no SDK in unit test, as expected :(
-            // Let's fix that.
-            // There may be a better way to do this, but...
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
 
-            // manufacture a usable spy
-            RootModelImpl model = root.getRootModel();
-//            fixtureSdk.ge
-            System.out.println("Use " + fixtureSdk.getVersionString()
-                    + ":" + fixtureSdk.getName());
-            ModuleJdkOrderEntryImpl entry = new ModuleJdkOrderEntryImpl(
-                    fixtureSdk.getVersionString(), fixtureSdk.getName(),
-                    model, ProjectRootManagerImpl.getInstanceImpl(project));
-            ModuleJdkOrderEntryImpl spy = Mockito.spy(entry);
-            Mockito.when(spy.getJdk()).thenReturn(new MockJdkWrapper(
-                    System.getProperty("java.home"),
-                    fixtureSdk
-            ));
-
-            // sneakily make the model editable
-            Field myWritable = RootModelImpl.class.getDeclaredField("myWritable");
-            myWritable.setAccessible(true);
-            myWritable.setBoolean(model, true);
-
-            // strip out any boring and useless guys
-            for (OrderEntry e : model.getOrderEntries()) {
-                if (e instanceof JdkOrderEntry
-                        && ((JdkOrderEntry) e).getJdk() == null) {
-                    model.removeOrderEntry(e);
-                }
+            @Override
+            public void run() {
+                JavaTestUtil.setupTestJDK();
+                ModuleRootModificationUtil.setModuleSdk(
+                        module, JavaTestUtil.getTestJdk());
             }
-
-            // inject our useful spy
-            model.addOrderEntry(spy);
-
-            // restore
-            myWritable.setBoolean(model, false);
-
-            // make sure it worked
-            assertTrue(getModuleRoot(project) == getModuleRoot(project));
-            assertThat(root.getSdk()).isNotNull();
-
-//            // use in-process so it sees our sdk (?)
-//            CompilerWorkspaceConfiguration.getInstance(project)
-//                    .USE_OUT_OF_PROCESS_BUILD = false;
-        }
+        });
 
         // I... don't even.
         CompilerManagerImpl.testSetup();
 
-        if (StringUtils.isEmpty(System.getProperty(PathManager.PROPERTY_CONFIG_PATH))) {
-            String pluginsPath = System.getProperty(PathManager.PROPERTY_PLUGINS_PATH);
-            final File systemParent;
-            if (!StringUtils.isEmpty(pluginsPath)) {
-                File pluginsFile = new File(pluginsPath);
-                systemParent = pluginsFile.getParentFile();
-
-            } else {
-                File compilePath = BuildManager.getInstance().getBuildSystemDirectory();
-                systemParent = compilePath.getParentFile() //  ./system
-                                          .getParentFile(); // ./
-            }
-            System.setProperty(PathManager.PROPERTY_CONFIG_PATH,
-                    new File(systemParent, "config").getAbsolutePath());
-
-            System.clearProperty(PathManager.PROPERTY_HOME_PATH);
-        }
-
-        Field isUnitTestMode = BuildManager.class.getDeclaredField("IS_UNIT_TEST_MODE");
-        isUnitTestMode.setAccessible(true);
-        isUnitTestMode.setBoolean(BuildManager.getInstance(), false);
+        CompilerTestUtil.setupJavacForTests(project);
+        CompilerTestUtil.enableExternalCompiler(project);
+        CompilerTestUtil.scanSourceRootsToRecompile(project);
 
         return project;
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
 
-    static ModuleRootManagerImpl getModuleRoot(Project project) {
+        if (projectFileContents == null || compilerFileContents == null)
+            fail("Missing project/compiler file contents");
+
+        final Project project =
+                ProjectUtil.ensureProject(getProjectPath(currentProjectName));
+
+        // NB The following stuff modifies stuff on disk. We'll want to restore
+        //  all that when we're done
+        final Module module = getModule(project);
+        final VirtualFile projectFile = module.getModuleFile();
+        final VirtualFile rootDir = projectFile.getParent();
+        final VirtualFile compilerFile = rootDir.findChild("compiler.xml");
+
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    projectFile.setBinaryContent(projectFileContents);
+                    compilerFile.setBinaryContent(compilerFileContents);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    static Module getModule(Project project) {
         RunnerAndConfigurationSettings settings =
                 RunCommand.pickRunSetting(project, null);
         if (settings == null)
@@ -170,8 +132,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         ApplicationConfiguration config =
                 (ApplicationConfiguration) settings.getConfiguration();
         JavaRunConfigurationModule configurationModule = config.getConfigurationModule();
-        return (ModuleRootManagerImpl) ModuleRootManager
-                .getInstance(configurationModule.getModule());
+        return configurationModule.getModule();
     }
 
 }

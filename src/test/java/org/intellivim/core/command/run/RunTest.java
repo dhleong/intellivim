@@ -1,6 +1,7 @@
 package org.intellivim.core.command.run;
 
 import com.intellij.openapi.project.Project;
+import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.intellivim.SimpleResult;
 import org.intellivim.inject.UnsupportedClientException;
@@ -56,15 +57,10 @@ public class RunTest extends UsableSdkTestCase {
         softly.assertThat(runner.system).as("system")
                 .hasSize(2) // first one is the command line
                 .contains("Process finished with exit code 0");
-
         softly.assertAll();
     }
 
     public void testCompileError() throws Exception {
-        // NB not a proper test because compileAndRun refuses to
-        //  work inside a unit test (for whatever reason)
-        //  so we don't get the "cancelled" callback
-
         Project project = prepareProject(JAVA_PROJECT);
 
         LoggingRunner runner = new LoggingRunner();
@@ -77,14 +73,23 @@ public class RunTest extends UsableSdkTestCase {
             fail("RunnableProject did not finish execution within 5s");
         }
 
-        assertThat(runner.stderr)
-                .isNotEmpty();
-//        assertThat(runner.system)
-//                .contains("Process finished with exit code 1");
-        assertThat(runner.cancelled)
-                .describedAs("Build Cancelled")
-                .isTrue();
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(runner.cancelled).as("Run Cancelled").isTrue();
+        softly.assertThat(runner.stderr).as("stderr")
+            .haveAtLeast(3, containing("cannot find symbol"))
+            .haveAtLeastOne(containing("is not abstract and does not override"));
+        softly.assertThat(runner.stdout).as("stdout").isEmpty();
+        softly.assertThat(runner.system).as("system").isEmpty();
+        softly.assertAll();
+    }
 
+    private static Condition<String> containing(final String substring) {
+        return new Condition<String>("contains substring `" + substring + "`") {
+            @Override
+            public boolean matches(final String s) {
+                return s.contains(substring);
+            }
+        };
     }
 
     // FIXME test termination of spin-looping projects

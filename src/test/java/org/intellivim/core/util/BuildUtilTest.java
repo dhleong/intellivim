@@ -60,6 +60,8 @@ public class BuildUtilTest extends UsableSdkTestCase {
                 });
 
         assertTrue("Expected build to have started", status);
-        assertTrue("Timeout on compile :(", latch.await(2, TimeUnit.SECONDS));
+        if (!latch.await(2, TimeUnit.SECONDS)) {
+            assertTrue("Timeout on compile :(", latch.await(2, TimeUnit.SECONDS));
+        }
     }
 }
