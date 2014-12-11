@@ -50,6 +50,11 @@ function! intellivim#core#Setup() " {{{
         command -nargs=0 Implement
             \ call intellivim#core#impl#ShowImplementables()
     endif
+
+    if !exists(":Run")
+        command -nargs=? Run
+            \ call intellivim#core#run#Run('<args>')
+    endif
     " }}}
 
 endfunction " }}}

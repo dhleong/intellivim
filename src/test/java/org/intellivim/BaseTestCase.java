@@ -4,7 +4,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -25,6 +24,8 @@ public abstract class BaseTestCase extends UsefulTestCase {
     private static final String ULTIMATE_MARKER_CLASS = "com.intellij.psi.css.CssFile";
 
     protected static final String JAVA_PROJECT = "java-project";
+    protected static final String RUNNABLE_PROJECT = "runnable-project";
+    protected static final String LOOPING_PROJECT = "looping-project";
     protected static final String PROBLEMATIC_FILE_PATH = "src/org/intellivim/javaproject/Problematic.java";
 
     protected JavaCodeInsightTestFixture myFixture;
@@ -56,8 +57,9 @@ public abstract class BaseTestCase extends UsefulTestCase {
 //        myFixture.setCaresAboutInjection(true);
         myFixture.setUp();
 
-        String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
-        myFixture.setTestDataPath(communityPath + "/projects");
+//        String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
+//        myFixture.setTestDataPath(communityPath + "/projects");
+
 //        myFixture.addClass(
 //                "package org.intellivim.javaproject.subpackage;\n\n" +
 //                        "public class NotImported2 {}");
@@ -116,6 +118,10 @@ public abstract class BaseTestCase extends UsefulTestCase {
     }
 
     protected Project getProject() {
-        return ProjectUtil.ensureProject(getProjectPath());
+        final String path = getProjectPath();
+        if (path != null)
+            return ProjectUtil.ensureProject(path);
+
+        return myFixture.getProject();
     }
 }

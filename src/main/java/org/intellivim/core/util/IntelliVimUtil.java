@@ -3,6 +3,7 @@ package org.intellivim.core.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.util.ui.UIUtil;
 
 /**
  * @author dhleong
@@ -10,6 +11,7 @@ import com.intellij.openapi.command.CommandProcessor;
 public class IntelliVimUtil {
 
     private static boolean sTemporarilyUnitTest = false;
+    private static boolean sTemporarilyNotUnitTest = false;
 
     /**
      * Sometimes a command will not cooperate unless it thinks
@@ -36,6 +38,11 @@ public class IntelliVimUtil {
         });
     }
 
+    /** Convenience */
+    public static boolean isUnitTestMode() {
+        return ApplicationManager.getApplication().isUnitTestMode();
+    }
+
     public static void setUnitTestMode() {
         ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
         sTemporarilyUnitTest = !app.isUnitTestMode();
@@ -50,4 +57,19 @@ public class IntelliVimUtil {
             app.setUnitTestMode(false);
         sTemporarilyUnitTest = false;
     }
+
+    /**
+     * Wrap the runnable to ensure it's run on the
+     *  Swing dispatch thread
+     */
+    public static Runnable onSwingThread(final Runnable runnable) {
+        return new Runnable() {
+
+            @Override
+            public void run() {
+                UIUtil.invokeAndWaitIfNeeded(runnable);
+            }
+        };
+    }
+
 }
