@@ -86,8 +86,9 @@ public class RunTest extends UsableSdkTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
-        if (!runner.awaitOutput(5000))
-            fail("LoopingProject did not have stdout within 5s");
+        // be extra lenient here
+        if (!runner.awaitOutput(15000))
+            fail("LoopingProject did not have stdout within 15s");
 
         // should still be there
         assertThat(LaunchManager.get(runner.launchId))

@@ -46,7 +46,7 @@ import java.util.List;
  * Lots of stuff imported from ProjectManagerImpl to
  *  prevent extraneous UI from appearing
  *
- * @author dhleong 
+ * @author dhleong
  */
 public class ProjectUtil {
 
