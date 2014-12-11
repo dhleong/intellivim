@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,14 +41,11 @@ public class RunTest extends UsableSdkTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
-        try {
-            runner.awaitTermination(5000);
-        } catch (InterruptedException e) {
+        if (!runner.awaitTermination(5000))
             fail("RunnableProject did not finish execution within 5s");
-        }
 
         // launch manager should clear it
-        assertThat(LaunchManager.get("runnable-project:RunnableMain"))
+        assertThat(LaunchManager.get(runner.launchId))
                 .isNull();
 
         // make sure we got our output
@@ -67,11 +66,8 @@ public class RunTest extends UsableSdkTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
-        try {
-            runner.awaitTermination(5000);
-        } catch (InterruptedException e) {
+        if (!runner.awaitTermination(5000))
             fail("RunnableProject did not finish execution within 5s");
-        }
 
         SoftAssertions softly = new SoftAssertions();
         softly.assertThat(runner.cancelled).as("Run Cancelled").isTrue();
@@ -83,6 +79,47 @@ public class RunTest extends UsableSdkTestCase {
         softly.assertAll();
     }
 
+    public void testTerminate() throws Exception {
+        Project project = prepareProject(LOOPING_PROJECT);
+
+        LoggingRunner runner = new LoggingRunner();
+        SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
+        assertSuccess(result);
+
+        if (!runner.awaitOutput(5000))
+            fail("LoopingProject did not have stdout within 5s");
+
+        // should still be there
+        assertThat(LaunchManager.get(runner.launchId))
+                .isNotNull();
+
+        // make sure we got our output
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(runner.cancelled).as("Run Cancelled").isFalse();
+        softly.assertThat(runner.stderr).as("stderr").isEmpty();
+        softly.assertThat(runner.stdout).as("stdout").contains("Loop #1");
+        softly.assertThat(runner.system).as("system")
+                .doNotHave(containing("Process finished with exit code"));
+        softly.assertAll();
+
+        // terminate
+        SimpleResult termination =
+                (SimpleResult) new TerminateCommand(project, runner.launchId)
+                        .execute();
+        assertSuccess(termination);
+
+        // gone, now
+        assertThat(LaunchManager.get(runner.launchId))
+                .isNull();
+
+        if (!runner.awaitTermination(5000))
+            fail("LoopingProject did not finish execution within 5s");
+
+        assertThat(runner.system).as("system")
+                .hasSize(2) // first one is the command line
+                .haveExactly(1, containing("Process finished with exit code"));
+    }
+
     private static Condition<String> containing(final String substring) {
         return new Condition<String>("contains substring `" + substring + "`") {
             @Override
@@ -92,18 +129,21 @@ public class RunTest extends UsableSdkTestCase {
         };
     }
 
-    // FIXME test termination of spin-looping projects
-
     static class LoggingRunner implements AsyncRunner {
 
         List<String> stdout = new ArrayList<String>();
         List<String> stderr = new ArrayList<String>();
         List<String> system = new ArrayList<String>();
 
+        String launchId;
+
         boolean cancelled = false;
 
         final Map<OutputType, List<String>> sink =
                 new HashMap<OutputType, List<String>>();
+
+        private Semaphore outputLock = new Semaphore(0);
+        private Semaphore terminationLock = new Semaphore(0);
 
         LoggingRunner() {
             sink.put(OutputType.STDOUT, stdout);
@@ -113,26 +153,34 @@ public class RunTest extends UsableSdkTestCase {
 
         @Override
         public void prepare(String launchId) throws UnsupportedClientException {
+            this.launchId = launchId;
         }
 
         @Override
         public void sendLine(OutputType type, String line) {
             sink.get(type).add(line);
+
+            if (type == OutputType.STDOUT)
+                outputLock.release();
         }
 
         @Override
-        public synchronized void cancel() {
+        public void cancel() {
             cancelled = true;
-            notify();
+            terminationLock.release(999);
         }
 
         @Override
-        public synchronized void terminate() {
-            notify();
+        public void terminate() {
+            terminationLock.release(999);
         }
 
-        synchronized void awaitTermination(long timeout) throws InterruptedException {
-            wait(timeout);
+        boolean awaitTermination(long timeout) throws InterruptedException {
+            return terminationLock.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+        }
+
+        boolean awaitOutput(long timeout) throws InterruptedException {
+            return outputLock.tryAcquire(timeout, TimeUnit.MILLISECONDS);
         }
     }
 }

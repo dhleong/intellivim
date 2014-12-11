@@ -25,6 +25,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
 
     protected static final String JAVA_PROJECT = "java-project";
     protected static final String RUNNABLE_PROJECT = "runnable-project";
+    protected static final String LOOPING_PROJECT = "looping-project";
     protected static final String PROBLEMATIC_FILE_PATH = "src/org/intellivim/javaproject/Problematic.java";
 
     protected JavaCodeInsightTestFixture myFixture;
