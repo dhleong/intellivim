@@ -46,7 +46,7 @@ import java.util.List;
  * Lots of stuff imported from ProjectManagerImpl to
  *  prevent extraneous UI from appearing
  *
- * Created by dhleong on 11/5/14.
+ * @author dhleong 
  */
 public class ProjectUtil {
 
@@ -233,7 +233,7 @@ public class ProjectUtil {
     private static void allocateFrame(final Project project) {
         WindowManager mgr = WindowManager.getInstance();
         if (null != mgr.getFrame(project)) {
-            System.out.println("Frame already allocated");
+//            System.out.println("Frame already allocated");
             return; // already done
         }
 
@@ -255,7 +255,7 @@ public class ProjectUtil {
         WindowManager mgr = WindowManager.getInstance();
         IdeFrameImpl frame = (IdeFrameImpl) mgr.getFrame(project);
         if (null == frame) {
-            System.out.println("Frame already deallocated");
+//            System.out.println("Frame already deallocated");
             return; // already done
         }
 
