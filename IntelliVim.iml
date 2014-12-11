@@ -17,6 +17,7 @@
     <orderEntry type="library" name="org.assertj:assertj-core:1.7.0" level="project" />
     <orderEntry type="library" name="io.netty:netty-all:4.0.23.Final" level="application" />
     <orderEntry type="library" name="org.mockito:mockito-all:1.9.5" level="project" />
+    <orderEntry type="library" scope="TEST" name="idea-junit" level="project" />
   </component>
 </module>
 

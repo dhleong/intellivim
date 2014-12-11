@@ -1,17 +1,38 @@
 package org.intellivim.core.util;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RuntimeConfigFinderDelegate;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.ui.UIUtil;
+import org.intellivim.core.model.VimDataContext;
+import org.intellivim.core.model.VimEditor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author dhleong
@@ -87,4 +108,77 @@ public class BuildUtil {
 
         return true;
     }
+
+    public static RunnerAndConfigurationSettings findConfigurationFor(
+            final Project project, final PsiFile file, final int offset) {
+        Editor editor = new VimEditor(project, file, offset);
+        PsiElement element = file.findElementAt(offset);
+        if (element == null) {
+            return null;
+        }
+
+        Location<?> loc = new PsiLocation<PsiElement>(project, element);
+        System.out.println("loc=" + loc);
+        DataContext context = new VimDataContext(project, editor, loc);
+        ConfigurationContext configContext =
+                ConfigurationContext.getFromContext(context);
+        System.out.println("context=" + configContext);
+
+        RunnerAndConfigurationSettings configuration =
+                RuntimeConfigFinderDelegate.createConfiguration(loc, configContext);
+//        assertThat(configuration)
+//                .isNotNull();
+        System.out.println(configuration);
+
+        List<ConfigurationFromContext> configs =
+                RuntimeConfigFinderDelegate
+                        .getConfigurationsFromContext(loc, configContext);
+        System.out.println("configs: " + configs);
+        for (ConfigurationFromContext config : configs) {
+            System.out.println(" --> " + config);
+        }
+        return configuration;
+    }
+
+    public static final <T extends RunConfiguration> T createConfiguration(
+            @NotNull Project project, @NotNull PsiFile file, int offset) {
+        PsiElement element = file.findElementAt(offset);
+        while (element != null &&
+                !(element instanceof PsiClass
+                    || element instanceof PsiMethod)) {
+            element = element.getParent();
+        }
+        return createConfiguration(project, element, new MapDataContext());
+    }
+
+
+    public static final <T extends RunConfiguration> T createConfiguration(
+            @NotNull Project project, @NotNull PsiElement psiElement) {
+        return createConfiguration(project, psiElement, new MapDataContext());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends RunConfiguration> T createConfiguration(
+            @NotNull Project project, @NotNull PsiElement psiElement,
+            @NotNull MapDataContext dataContext) {
+        ConfigurationContext context = createContext(project, psiElement, dataContext);
+        RunnerAndConfigurationSettings settings = context.getConfiguration();
+        T configuration = settings == null
+                ? null
+                : (T) settings.getConfiguration();
+        return configuration;
+    }
+
+    public static ConfigurationContext createContext(
+            @NotNull Project project, @NotNull PsiElement psiClass,
+            @NotNull MapDataContext dataContext) {
+        dataContext.put(CommonDataKeys.PROJECT, project);
+        if (LangDataKeys.MODULE.getData(dataContext) == null) {
+            dataContext.put(LangDataKeys.MODULE,
+                    ModuleUtilCore.findModuleForPsiElement(psiClass));
+        }
+        dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
+        return ConfigurationContext.getFromContext(dataContext);
+    }
+
 }

@@ -15,6 +15,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.Injector;
@@ -29,7 +30,13 @@ import org.reflections.util.FilterBuilder;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.reflections.ReflectionUtils.withAnnotation;
 
@@ -55,6 +62,7 @@ public class IVGson {
                 .registerTypeAdapter(Project.class, new ProjectTypeAdapter())
                 .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
                 .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
+                .registerTypeAdapterFactory(new OnlyInjectableTypesAdapterFactory())
                 .create();
     }
 
@@ -222,6 +230,37 @@ public class IVGson {
         public JsonElement serialize(HighlightSeverity highlightSeverity,
                  Type type, JsonSerializationContext jsonSerializationContext) {
             return new JsonPrimitive(highlightSeverity.getName());
+        }
+    }
+
+    /** Basically always returns "null" for types that need to be @Injected */
+    private static class OnlyInjectableTypesAdapterFactory
+            implements TypeAdapterFactory {
+
+        // NB Could/should probably build this with Reflections and
+        //  an annotation on the Injector
+        HashSet<Class<?>> types = new HashSet<Class<?>>(Arrays.asList(
+            PsiFile.class
+        ));
+
+        @Override
+        public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> typeToken) {
+            if (!types.contains(typeToken.getRawType()))
+                return null;
+
+            return new TypeAdapter<T>() {
+                @Override
+                public void write(final JsonWriter jsonWriter, final T t) throws
+                        IOException {
+                    jsonWriter.value(t.toString()); // ?!
+                }
+
+                @Override
+                public T read(final JsonReader jsonReader) throws IOException {
+                    jsonReader.skipValue();
+                    return null; // ALWAYS
+                }
+            };
         }
     }
 }
