@@ -89,6 +89,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         CompilerTestUtil.setupJavacForTests(project);
         CompilerTestUtil.enableExternalCompiler(project);
         CompilerTestUtil.scanSourceRootsToRecompile(project);
+        CompilerTestUtil.saveApplicationSettings();
 
         return project;
     }
