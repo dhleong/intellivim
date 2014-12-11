@@ -55,6 +55,12 @@ endfunction " }}}
 " Public functions
 "
 
+function! intellivim#core#run#CompleteRunConfigs(argLead, cmdLine, cursorPos) " {{{
+    let configs = s:GetRunConfigs()
+    let configs = map(configs, 'v:val.name')
+    return filter(configs, 'v:val =~ "^' . a:argLead . '"')
+endfunction " }}}
+
 function! intellivim#core#run#Run(configuration) " {{{
     let command = intellivim#NewCommand("run")
     if !empty(a:configuration)
@@ -63,6 +69,27 @@ function! intellivim#core#run#Run(configuration) " {{{
 
     let result = intellivim#client#Execute(command)
     call intellivim#ShowErrorResult(result)
+endfunction " }}}
+
+function! intellivim#core#run#RunList() " {{{
+    let configs = s:GetRunConfigs()
+    if len(configs) == 0
+        call intellivim#util#Echo("No launch configs found")
+        return
+    endif
+    
+    let pad = 0
+    for config in configs
+        let pad = len(config.name) > pad ? len(config.name) : pad
+    endfor
+
+    let output = []
+    for config in configs
+        call add(output,
+            \ intellivim#util#Pad(config.name, pad) . ' - ' . config.type)
+    endfor
+    call eclim#util#Echo(join(output, "\n"))
+
 endfunction " }}}
 
 function! intellivim#core#run#TerminateAllLaunches() " {{{
@@ -162,6 +189,24 @@ PYEOF
     redraw!
 endfunction " }}}
 
+"
+" Private functions
+"
+
+function! s:GetRunConfigs() " {{{
+
+    if !intellivim#InProject()
+        call intellivim#ShowErrorResult("No project found")
+        return []
+    endif
+
+    let command = intellivim#NewCommand("run_list")
+    let result = intellivim#client#Execute(command)
+    if intellivim#ShowErrorResult(result)
+        return []
+    endif
+
+    return result.result
+endfunction " }}}
 
 " vim:ft=vim:fdm=marker
-"

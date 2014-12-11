@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.intellivim.SimpleResult;
+import org.intellivim.UsableSdkTestCase;
 import org.intellivim.inject.UnsupportedClientException;
 
 import java.util.ArrayList;

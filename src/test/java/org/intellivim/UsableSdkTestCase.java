@@ -1,4 +1,4 @@
-package org.intellivim.core.command.run;
+package org.intellivim;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.intellivim.BaseTestCase;
+import org.intellivim.core.command.run.RunCommand;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;

@@ -43,6 +43,13 @@ of thing to locate:
  - `file` Search by file name/path (default)
  - `class` Search by class name
 
+`:Run [config]` Builds and runs the current project, opening a split to contain
+the output. Closing the split will terminate the execution, as will calling 
+`:Terminate` from inside that window. Optionally pass `config` to specify which
+configuration to launch. Tab-completion is supported
+
+`:RunList` List run configurations and their types
+
 #### Mappings
 
 With the exception of setting the `omnifunc` per-buffer, IntelliVim does not come with

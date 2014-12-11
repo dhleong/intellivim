@@ -7,7 +7,7 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
 import org.intellivim.core.command.run.RunCommand;
-import org.intellivim.core.command.run.UsableSdkTestCase;
+import org.intellivim.UsableSdkTestCase;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
