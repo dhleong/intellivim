@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class RunTest extends UsableSdkTestCase {
 
+    static final long TIMEOUT = 10000;
+
     @Override
     protected void invokeTestRunnable(final Runnable runnable) throws Exception {
         // DON'T run on Swing dispatch thread; some of the compile
@@ -41,8 +43,8 @@ public class RunTest extends UsableSdkTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
-        if (!runner.awaitTermination(5000))
-            fail("RunnableProject did not finish execution within 5s");
+        if (!runner.awaitTermination(TIMEOUT))
+            fail("RunnableProject did not finish execution in time");
 
         // launch manager should clear it
         assertThat(LaunchManager.get(runner.launchId))
@@ -66,8 +68,8 @@ public class RunTest extends UsableSdkTestCase {
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();
         assertSuccess(result);
 
-        if (!runner.awaitTermination(5000))
-            fail("RunnableProject did not finish execution within 5s");
+        if (!runner.awaitTermination(TIMEOUT))
+            fail("RunnableProject did not finish execution in time");
 
         SoftAssertions softly = new SoftAssertions();
         softly.assertThat(runner.cancelled).as("Run Cancelled").isTrue();
@@ -87,8 +89,8 @@ public class RunTest extends UsableSdkTestCase {
         assertSuccess(result);
 
         // be extra lenient here
-        if (!runner.awaitOutput(15000))
-            fail("LoopingProject did not have stdout within 15s");
+        if (!runner.awaitOutput(3 * TIMEOUT))
+            fail("LoopingProject did not have stdout in time");
 
         // should still be there
         assertThat(LaunchManager.get(runner.launchId))
@@ -113,8 +115,8 @@ public class RunTest extends UsableSdkTestCase {
         assertThat(LaunchManager.get(runner.launchId))
                 .isNull();
 
-        if (!runner.awaitTermination(5000))
-            fail("LoopingProject did not finish execution within 5s");
+        if (!runner.awaitTermination(TIMEOUT))
+            fail("LoopingProject did not finish execution in time");
 
         assertThat(runner.system).as("system")
                 .hasSize(2) // first one is the command line

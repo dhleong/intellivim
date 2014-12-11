@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class BuildUtilTest extends UsableSdkTestCase {
 
+    static final long TIMEOUT = 10;
+
     @Override
     protected void invokeTestRunnable(final Runnable runnable) throws Exception {
         // DON'T run on Swing dispatch thread; some of the compile
@@ -60,8 +62,8 @@ public class BuildUtilTest extends UsableSdkTestCase {
                 });
 
         assertTrue("Expected build to have started", status);
-        if (!latch.await(2, TimeUnit.SECONDS)) {
-            assertTrue("Timeout on compile :(", latch.await(2, TimeUnit.SECONDS));
+        if (!latch.await(TIMEOUT, TimeUnit.SECONDS)) {
+            assertTrue("Timeout on compile :(", latch.await(TIMEOUT, TimeUnit.SECONDS));
         }
     }
 }
