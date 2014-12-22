@@ -63,6 +63,24 @@ public class TestTest extends UsableSdkTestCase {
 
     static final long TIMEOUT = 10000;
 
+    static final String JUNIT_EP_NAME = "com.intellij.junitListener";
+    static final String JUNIT_BEAN_NAME =  "com.intellij.rt.execution.junit.IDEAJUnitListener";
+
+    @Override
+    protected void invokeTestRunnable(final Runnable runnable) throws Exception {
+        // DON'T run on Swing dispatch thread; some of the compile
+        //  stuff wants to run there, and we'll never get the results
+        //  if we do, too
+        System.out.println("Invoke: " + runnable);
+        runnable.run();
+    }
+
+    @Override
+    protected boolean runInDispatchThread() {
+        return false;
+    }
+
+
     public void setUp() throws Exception {
         super.setUp();
 
@@ -179,9 +197,17 @@ public class TestTest extends UsableSdkTestCase {
                 (NotNullLazyKey<JavaPsiFacade, Project>) INSTANCE_KEY.get(null);
         key.set(project, spy);
 
+        if (!hasJunitExtensionPoint()) {
+            Extensions.getRootArea().registerExtensionPoint(JUNIT_EP_NAME,
+                    JUNIT_BEAN_NAME);
+        }
 
         // make sure it worked
         SoftAssertions softly = new SoftAssertions();
+
+        softly.assertThat(hasJunitExtensionPoint())
+                .as("Has JUnit EP")
+                .isTrue();
 
         GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
         softly.assertThat(JavaPsiFacade.getInstance(project)
@@ -196,6 +222,17 @@ public class TestTest extends UsableSdkTestCase {
         softly.assertAll();
 
         return element;
+    }
+
+    static boolean hasJunitExtensionPoint() {
+
+        try {
+            Extensions.getExtensions(JUNIT_EP_NAME);
+            return true;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
