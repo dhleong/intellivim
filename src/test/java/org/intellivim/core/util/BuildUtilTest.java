@@ -6,7 +6,6 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
-import org.intellivim.core.command.run.RunCommand;
 import org.intellivim.UsableSdkTestCase;
 
 import java.util.concurrent.CountDownLatch;
@@ -36,7 +35,7 @@ public class BuildUtilTest extends UsableSdkTestCase {
     public void testBuildRunnable() throws Exception {
         Project project = prepareProject(RUNNABLE_PROJECT);
         RunnerAndConfigurationSettings settings =
-                RunCommand.pickRunSetting(project, null);
+                CompileAndRunner.pickRunSetting(project, null);
 
         final CountDownLatch latch = new CountDownLatch(1);
         final boolean status = BuildUtil.compileProject(

@@ -133,7 +133,7 @@ public class RunTest extends UsableSdkTestCase {
         };
     }
 
-    static class LoggingRunner implements AsyncRunner {
+    public static class LoggingRunner implements AsyncRunner {
 
         List<String> stdout = new ArrayList<String>();
         List<String> stderr = new ArrayList<String>();
@@ -149,7 +149,7 @@ public class RunTest extends UsableSdkTestCase {
         private Semaphore outputLock = new Semaphore(0);
         private Semaphore terminationLock = new Semaphore(0);
 
-        LoggingRunner() {
+        public LoggingRunner() {
             sink.put(OutputType.STDOUT, stdout);
             sink.put(OutputType.STDERR, stderr);
             sink.put(OutputType.SYSTEM, system);
@@ -179,11 +179,11 @@ public class RunTest extends UsableSdkTestCase {
             terminationLock.release(999);
         }
 
-        boolean awaitTermination(long timeout) throws InterruptedException {
+        public boolean awaitTermination(long timeout) throws InterruptedException {
             return terminationLock.tryAcquire(timeout, TimeUnit.MILLISECONDS);
         }
 
-        boolean awaitOutput(long timeout) throws InterruptedException {
+        public boolean awaitOutput(long timeout) throws InterruptedException {
             return outputLock.tryAcquire(timeout, TimeUnit.MILLISECONDS);
         }
     }

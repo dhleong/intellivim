@@ -2,6 +2,9 @@ package org.intellivim.inject;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.intellivim.ICommand;
 import org.reflections.Reflections;
@@ -13,6 +16,8 @@ import org.reflections.util.FilterBuilder;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Client name constants holder. Also the Injector
@@ -46,6 +51,18 @@ public class Client implements Injector<Object> {
         );
         reflector = newInstance;
         return newInstance;
+    }
+
+    public static <T> Collection<Class<? extends T>> candidates(final Class<T> parentType) {
+        final Set<Class<? extends T>> base = reflections().getSubTypesOf(parentType);
+        return ContainerUtil.filter(base, new Condition<Class<? extends T>>() {
+            @Override
+            public boolean value(final Class<? extends T> aClass) {
+                final Class<?>[] interfaces = aClass.getInterfaces();
+                return ArrayUtil.contains(parentType, interfaces)
+                    || aClass.getSuperclass() == parentType;
+            }
+        });
     }
 
     @Override
@@ -95,7 +112,7 @@ public class Client implements Injector<Object> {
 
     private static Class<?> pickClientImplementation(Class<?> parentType, String clientName) {
         // TODO caching?
-        for (Class<?> implementation : reflections().getSubTypesOf(parentType)) {
+        for (Class<?> implementation : candidates(parentType)) {
             String implClient = getHandledClient(implementation);
             if (SPEC.equals(implClient)) {
                 throw new IllegalArgumentException(implementation +
@@ -112,8 +129,9 @@ public class Client implements Injector<Object> {
         return gson.fromJson(json, implementation);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> T inflateDefaultFor(Gson gson, Class<T> klass, JsonObject json) {
-        for (Class<?> implementation : reflections().getSubTypesOf(klass)) {
+        for (Class<?> implementation : candidates(klass)) {
             if (DEFAULT.equals(getHandledClient(implementation)))
                 return (T) inflate(gson, implementation, json);
         }

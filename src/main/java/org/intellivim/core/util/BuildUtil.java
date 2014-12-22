@@ -98,6 +98,8 @@ public class BuildUtil {
                 public void run() {
 //                    compilerManager.make(scope, callback);
 
+                    System.out.println("Compiling...");
+
                     // NB We should prefer "make" since (I think)
                     //  it doesn't use "forceCompile," but it also just
                     //  doesn't work at all, so....

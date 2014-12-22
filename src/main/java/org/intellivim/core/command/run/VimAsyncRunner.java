@@ -12,13 +12,33 @@ import org.intellivim.inject.UnsupportedClientException;
 @ClientSpecific(Client.VIM)
 public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
 
+    private static final String PREPARE_COMMAND = "intellivim#core#run#onPrepareOutput";
+    private static final String OUTPUT_COMMAND = "intellivim#core#run#onOutput";
+    private static final String CANCEL_COMMAND =  "intellivim#core#run#onCancelled";
+    private static final String TERMINATE_COMMAND =  "intellivim#core#run#onTerminated";
+
+    private final String prepareCommand, outputCommand;
+    private final String cancelCommand, terminateCommand;
+
     private String bufNo;
+
+    public VimAsyncRunner() {
+        this(PREPARE_COMMAND, OUTPUT_COMMAND, CANCEL_COMMAND, TERMINATE_COMMAND);
+    }
+
+    protected VimAsyncRunner(String prepareCommand, String outputCommand,
+            String cancelCommand, String terminateCommand) {
+        this.prepareCommand = prepareCommand;
+        this.outputCommand = outputCommand;
+        this.cancelCommand = cancelCommand;
+        this.terminateCommand = terminateCommand;
+    }
 
     @Override
     public void prepare(String launchId) throws UnsupportedClientException {
         ensureSupportsRemoteExecution();
 
-        final String raw = remoteFunctionExpr("intellivim#core#run#onPrepareOutput",
+        final String raw = remoteFunctionExpr(prepareCommand,
                 launchId);
         if (StringUtils.isEmpty(raw))
             throw new RuntimeException("Timeout preparing output");
@@ -33,7 +53,7 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
                 .replaceAll("\t", "    ");
 
         // functionExpr is safer, in case they're in input mode
-        remoteFunctionExpr("intellivim#core#run#onOutput",
+        remoteFunctionExpr(outputCommand,
                 bufNo,
                 type.name().toLowerCase(),
                 clean);
@@ -41,12 +61,12 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
 
     @Override
     public void cancel() {
-        remoteFunctionExpr("intellivim#core#run#onCancelled", bufNo);
+        remoteFunctionExpr(cancelCommand, bufNo);
     }
 
     @Override
     public void terminate() {
-        remoteFunctionExpr("intellivim#core#run#onTerminated", bufNo);
+        remoteFunctionExpr(terminateCommand, bufNo);
     }
 
 }

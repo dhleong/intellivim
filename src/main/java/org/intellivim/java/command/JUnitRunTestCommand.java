@@ -1,16 +1,16 @@
 package org.intellivim.java.command;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
-import org.intellivim.Required;
-import org.intellivim.Result;
 import org.intellivim.core.command.test.AbstractRunTestCommand;
+import org.intellivim.core.command.test.AsyncTestRunner;
 import org.intellivim.core.util.BuildUtil;
-import org.intellivim.core.util.ProjectUtil;
-import org.intellivim.inject.Inject;
 
 /**
  * @author dhleong
@@ -18,25 +18,9 @@ import org.intellivim.inject.Inject;
 @Command("junit")
 public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
-    @Required @Inject PsiFile file;
-    @Required int offset;
-
-    public JUnitRunTestCommand(final Project project, String file) {
-        super(project);
-
-        this.file = ProjectUtil.getPsiFile(project, file);
-    }
-
-    @Override
-    public Result execute() {
-
-        System.out.println("Config2=" +
-                BuildUtil.createConfiguration(project, file, offset));
-
-        System.out.println("Config=" +
-                BuildUtil.findConfigurationFor(project, file, offset));
-
-        return super.execute();
+    public JUnitRunTestCommand(final Project project,
+           AsyncTestRunner runner, PsiFile file, int offset) {
+        super(project, runner, file, offset);
     }
 
     @Override
@@ -47,7 +31,14 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
     @Override
     protected TestConsoleProperties createProperties(final Project project,
             final Executor executor) {
-//        return new JUnitConsoleProperties();
-        return null;
+        RunConfiguration configuration =
+                BuildUtil.createConfiguration(project, file, offset);
+        if (!(configuration instanceof JUnitConfiguration)) {
+            System.err.println("Got " + configuration);
+            return null;
+        }
+
+        JUnitConfiguration config = (JUnitConfiguration) configuration;
+        return new JUnitConsoleProperties(config, executor);
     }
 }

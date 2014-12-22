@@ -11,8 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import org.intellivim.BaseTestCase;
-import org.intellivim.core.command.run.RunCommand;
+import org.intellivim.core.util.CompileAndRunner;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;
@@ -127,7 +126,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
 
     static Module getModule(Project project) {
         RunnerAndConfigurationSettings settings =
-                RunCommand.pickRunSetting(project, null);
+                CompileAndRunner.pickRunSetting(project, null);
         if (settings == null)
             return null;
 
