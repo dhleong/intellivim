@@ -23,6 +23,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -224,11 +225,17 @@ public class CompileAndRunner {
                 }
 
                 handler.addProcessListener(new ProcessAdapter() {
-
                     @Override
                     public void processTerminated(ProcessEvent event) {
-                        // everybody do your share
-                        descriptor.dispose();
+                        // this dispose whines if not on dispatch thread
+                        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                // everybody do your share
+                                descriptor.dispose();
+                            }
+                        });
                     }
                 });
             }

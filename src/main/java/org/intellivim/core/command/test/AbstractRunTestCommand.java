@@ -111,7 +111,6 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
                     asyncRunner.cancel();
                     return;
                 }
-                System.out.println("Compiled?" + aborted + " / " + errors);
             }
 
             @Override public void onCompileFailed() { }
@@ -121,11 +120,7 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
             }
 
             @Override
-            public void onCompileSucceeded() {
-                System.out.println("Compiled!");
-
-                // TODO
-            }
+            public void onCompileSucceeded() { }
 
             @Override
             public void onProcessStarted(final RunContentDescriptor descriptor,
@@ -253,6 +248,11 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
         }
 
         @Override
+        public void onFinishTesting() {
+            runner.onFinishTesting();
+        }
+
+        @Override
         public void onCustomProgressTestsCategory(@Nullable final String categoryName,
                 final int testCount) {
             // ???
@@ -278,10 +278,6 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
         @Override
         public void addEventsListener(@NotNull final SMTRunnerEventsListener viewer) {
-        }
-
-        @Override
-        public void onFinishTesting() {
         }
 
         @Override

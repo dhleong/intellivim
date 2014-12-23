@@ -32,6 +32,7 @@ public class VimAsyncTestRunner extends VimAsyncRunner implements AsyncTestRunne
     @Override
     public void onStartTesting() {
         // FIXME implement these
+        System.out.println("Start testing!");
     }
 
     @Override
@@ -41,7 +42,7 @@ public class VimAsyncTestRunner extends VimAsyncRunner implements AsyncTestRunne
 
     @Override
     public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-
+        System.out.println("STarted " + testStartedEvent);
     }
 
     @Override
@@ -88,6 +89,6 @@ public class VimAsyncTestRunner extends VimAsyncRunner implements AsyncTestRunne
 
     @Override
     public void onFinishTesting() {
-
+        System.out.println("Stop testing!");
     }
 }

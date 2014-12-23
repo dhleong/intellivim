@@ -8,3 +8,4 @@ public class JavaMain {
         System.out.println("Output");
     }
 }
+    
