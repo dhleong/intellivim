@@ -23,11 +23,13 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.testIntegration.TestLocationProvider;
+import org.apache.log4j.Level;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
@@ -93,6 +95,7 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
         // FIXME asyncRunner.prepare()
 
+        Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher").setLevel(Level.ALL);
         runner.addListener(new CompileAndRunner.Listener() {
             @Override
             public void onCompileComplete(final boolean aborted, final int errors,
@@ -125,30 +128,7 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
             @Override
             public void onProcessStarted(final RunContentDescriptor descriptor,
                     final ProcessHandler handler) {
-
-                handler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void startNotified(final ProcessEvent event) {
-                        processor.onStartTesting();
-                    }
-
-                    @Override
-                    public void processTerminated(final ProcessEvent event) {
-                        outputConsumer.flushBufferBeforeTerminating();
-                        processor.onFinishTesting();
-                        asyncRunner.terminate();
-
-                        Disposer.dispose(outputConsumer);
-                    }
-
-                    @Override
-                    public void onTextAvailable(final ProcessEvent event,
-                            final Key outputType) {
-
-                        System.out.println(event.getText());
-                        outputConsumer.process(event.getText(), outputType);
-                    }
-                });
+                handleProcessStarted(descriptor, handler, outputConsumer, processor);
             }
 
             @Override
@@ -175,6 +155,38 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
      */
     protected abstract TestConsoleProperties createProperties(Project project,
             final Executor executor);
+
+    protected void handleProcessStarted(final RunContentDescriptor descriptor,
+            final ProcessHandler handler,
+            final OutputToGeneralTestEventsConverter outputConsumer,
+            final GeneralTestEventsProcessor processor) {
+
+        handler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void startNotified(final ProcessEvent event) {
+                processor.onStartTesting();
+            }
+
+            @Override
+            public void processTerminated(final ProcessEvent event) {
+                System.out.println("Terminated! ``" + event.getText() + "''");
+                outputConsumer.flushBufferBeforeTerminating();
+                processor.onFinishTesting();
+                asyncRunner.terminate();
+
+                Disposer.dispose(outputConsumer);
+            }
+
+            @Override
+            public void onTextAvailable(final ProcessEvent event,
+                    final Key outputType) {
+
+                System.out.println("onTextAvailable! (" + outputType
+                    + "): ``" + event.getText() + "''");
+                outputConsumer.process(event.getText(), outputType);
+            }
+        });
+    }
 
     /**
      * Delegate from the GeneralTestEventsProcessor directly to

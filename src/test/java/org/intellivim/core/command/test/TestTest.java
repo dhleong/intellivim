@@ -38,7 +38,7 @@ import org.intellivim.UsableSdkTestCase;
 import org.intellivim.core.command.run.RunTest;
 import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.ProjectUtil;
-import org.intellivim.java.command.JUnitRunTestCommand;
+import org.intellivim.java.command.junit.JUnitRunTestCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
