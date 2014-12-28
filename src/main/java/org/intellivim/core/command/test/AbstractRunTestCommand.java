@@ -68,19 +68,12 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
     @Override
     public Result execute() {
 
-        Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-        TestConsoleProperties properties = createProperties(project, executor);
+        final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+        final TestConsoleProperties properties = createProperties(project, executor);
         if (properties == null) {
             return SimpleResult.error("Couldn't create properties for "
                     + getTestFrameworkName());
         }
-
-        final ProcessorDelegate processor = new ProcessorDelegate(asyncRunner);
-        final OutputToGeneralTestEventsConverter outputConsumer =
-                new OutputToGeneralTestEventsConverter(
-                    getTestFrameworkName(),
-                    properties);
-        outputConsumer.setProcessor(processor);
 
         RunConfiguration configuration =
                 BuildUtil.createConfiguration(project, file, offset);
@@ -128,7 +121,7 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
             @Override
             public void onProcessStarted(final RunContentDescriptor descriptor,
                     final ProcessHandler handler) {
-                handleProcessStarted(descriptor, handler, outputConsumer, processor);
+                handleProcessStarted(descriptor, handler, properties, asyncRunner);
             }
 
             @Override
@@ -158,8 +151,16 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
     protected void handleProcessStarted(final RunContentDescriptor descriptor,
             final ProcessHandler handler,
-            final OutputToGeneralTestEventsConverter outputConsumer,
-            final GeneralTestEventsProcessor processor) {
+            final TestConsoleProperties properties,
+            final AsyncTestRunner asyncRunner) {
+
+        final ProcessorDelegate processor = new ProcessorDelegate(asyncRunner);
+        final OutputToGeneralTestEventsConverter outputConsumer =
+                new OutputToGeneralTestEventsConverter(
+                        getTestFrameworkName(),
+                        properties);
+
+        outputConsumer.setProcessor(processor);
 
         handler.addProcessListener(new ProcessAdapter() {
             @Override
@@ -202,61 +203,64 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
         @Override
         public void onStartTesting() {
-            runner.onStartTesting();
+            runner.onStartTesting(null); // FIXME
         }
 
         @Override
         public void onTestsCountInSuite(final int count) {
-            runner.onTestsCountInSuite(count);
+            // ?
         }
 
         @Override
         public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-            runner.onTestStarted(testStartedEvent);
+            // FIXME
         }
 
         @Override
         public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
-            runner.onTestFinished(testFinishedEvent);
+            // FIXME
         }
 
         @Override
         public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
-            runner.onTestFailure(testFailedEvent);
+            // FIXME
         }
 
         @Override
         public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
-            runner.onTestIgnored(testIgnoredEvent);
+            // FIXME
         }
 
         @Override
         public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
-            runner.onTestOutput(testOutputEvent);
+            runner.onTestOutput(null, testOutputEvent.getText(),
+                    testOutputEvent.isStdOut()
+                            ? AsyncRunner.OutputType.STDOUT
+                            : AsyncRunner.OutputType.STDERR);
         }
 
         @Override
         public void onSuiteStarted(
                 @NotNull final TestSuiteStartedEvent suiteStartedEvent) {
-            runner.onSuiteStarted(suiteStartedEvent);
+            // ?
         }
 
         @Override
         public void onSuiteFinished(
                 @NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
-            runner.onSuiteFinished(suiteFinishedEvent);
+            // ?
         }
 
         @Override
         public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
-            runner.onUncapturedOutput(text, outputType);
+            // ?
         }
 
         @Override
         public void onError(@NotNull final String localizedMessage,
                 @Nullable final String stackTrace,
                 final boolean isCritical) {
-            runner.onError(localizedMessage, stackTrace, isCritical);
+            // ?
         }
 
         @Override

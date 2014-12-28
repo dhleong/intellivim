@@ -10,18 +10,10 @@ import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassConfigurationProducer;
 import com.intellij.execution.junit.TestMethodConfigurationProducer;
-import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -39,8 +31,6 @@ import org.intellivim.core.command.run.RunTest;
 import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.java.command.junit.JUnitRunTestCommand;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
@@ -240,70 +230,23 @@ public class TestTest extends UsableSdkTestCase {
      */
     static class LoggingTestRunner
             extends RunTest.LoggingRunner
-            implements AsyncTestRunner{
+            implements AsyncTestRunner {
+        
         @Override
-        public void onStartTesting() {
-            System.out.println("START");
+        public void onStartTesting(TestNode root) {
+            System.out.println("START " + root);
         }
 
         @Override
-        public void onTestsCountInSuite(final int count) {
+        public void onTestOutput(final TestNode owner, final String output,
+                final OutputType type) {
 
-            System.out.println("COUNT " + count);
+            System.out.println("OUTPUT[" + owner + "]=" + output);
         }
 
         @Override
-        public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-
-            System.out.println("START " + testStartedEvent);
-        }
-
-        @Override
-        public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
-
-            System.out.println("FINISH " + testFinishedEvent);
-        }
-
-        @Override
-        public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
-
-            System.out.println("FAIL " + testFailedEvent);
-        }
-
-        @Override
-        public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
-
-        }
-
-        @Override
-        public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
-
-        }
-
-        @Override
-        public void onSuiteStarted(
-                @NotNull final TestSuiteStartedEvent suiteStartedEvent) {
-
-            System.out.println("SUITE START" + suiteStartedEvent);
-        }
-
-        @Override
-        public void onSuiteFinished(
-                @NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
-
-            System.out.println("SUITE STOP" + suiteFinishedEvent);
-        }
-
-        @Override
-        public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
-
-        }
-
-        @Override
-        public void onError(@NotNull final String localizedMessage,
-                @Nullable final String stackTrace, final boolean isCritical) {
-
-            System.out.println("ERROR " + localizedMessage);
+        public void onTestStateChanged(final TestNode node) {
+            System.out.println("STATE CHANGE:" + node);
         }
 
         @Override

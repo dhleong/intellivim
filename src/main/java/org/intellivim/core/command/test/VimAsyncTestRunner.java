@@ -1,18 +1,8 @@
 package org.intellivim.core.command.test;
 
-import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
-import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
-import com.intellij.openapi.util.Key;
 import org.intellivim.core.command.run.VimAsyncRunner;
 import org.intellivim.inject.Client;
 import org.intellivim.inject.ClientSpecific;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dhleong
@@ -30,62 +20,22 @@ public class VimAsyncTestRunner extends VimAsyncRunner implements AsyncTestRunne
     }
 
     @Override
-    public void onStartTesting() {
+    public void onStartTesting(TestNode node) {
         // FIXME implement these
         System.out.println("Start testing!");
     }
 
     @Override
-    public void onTestsCountInSuite(final int count) {
+    public void onTestOutput(final TestNode owner, final String output,
+            final OutputType type) {
 
     }
 
     @Override
-    public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-        System.out.println("STarted " + testStartedEvent);
-    }
-
-    @Override
-    public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
+    public void onTestStateChanged(final TestNode node) {
 
     }
 
-    @Override
-    public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
-
-    }
-
-    @Override
-    public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
-
-    }
-
-    @Override
-    public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
-
-    }
-
-    @Override
-    public void onSuiteStarted(@NotNull final TestSuiteStartedEvent suiteStartedEvent) {
-
-    }
-
-    @Override
-    public void onSuiteFinished(
-            @NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
-
-    }
-
-    @Override
-    public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
-
-    }
-
-    @Override
-    public void onError(@NotNull final String localizedMessage,
-            @Nullable final String stackTrace, final boolean isCritical) {
-
-    }
 
     @Override
     public void onFinishTesting() {

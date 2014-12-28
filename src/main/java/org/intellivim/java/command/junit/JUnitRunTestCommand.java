@@ -6,14 +6,13 @@ import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
-import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import org.intellivim.Command;
+import org.intellivim.core.command.run.AsyncRunner;
 import org.intellivim.core.command.test.AbstractRunTestCommand;
 import org.intellivim.core.command.test.AsyncTestRunner;
 import org.intellivim.core.command.test.TestNode;
@@ -30,6 +29,8 @@ import java.lang.reflect.InvocationTargetException;
 @Command("junit")
 public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
+    private static final boolean DEBUG = false;
+
     static final String JUNIT_CONFIG_CLASSNAME =
             "com.intellij.execution.junit.JUnitConfiguration";
     static final String JUNIT_CONSOLE_PROPS_CLASSNAME =
@@ -39,8 +40,6 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
     private TestObjectManager mObjects = new TestObjectManager();
     private ClassLoader mClassLoader;
-
-//    private InputObjectRegistry myObjectRegistry;
 
     public JUnitRunTestCommand(final Project project,
            AsyncTestRunner runner, PsiFile file, int offset) {
@@ -81,11 +80,11 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
     @Override
     protected void handleProcessStarted(final RunContentDescriptor descriptor,
             final ProcessHandler handler,
-            final OutputToGeneralTestEventsConverter outputConsumer,
-            final GeneralTestEventsProcessor processor) {
+            final TestConsoleProperties properties,
+            final AsyncTestRunner asyncRunner) {
 
         if (!(handler instanceof JUnitProcessHandler)) {
-            super.handleProcessStarted(descriptor, handler, outputConsumer, processor);
+            super.handleProcessStarted(descriptor, handler, properties, asyncRunner);
             return;
         }
 
@@ -109,7 +108,7 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
             @Override
             public void processPacket(final String packet) {
                 try {
-                    JUnitRunTestCommand.this.processPacket(packet, processor);
+                    JUnitRunTestCommand.this.processPacket(packet, asyncRunner);
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
@@ -118,11 +117,11 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
     }
 
     // see TestsPacketsReceiver
-    void processPacket(final String packet, final GeneralTestEventsProcessor processor)
+    void processPacket(final String packet, final AsyncTestRunner runner)
             throws Exception {
 
         if (packet.startsWith(PoolOfDelimiters.TREE_PREFIX)) {
-            notifyStart(readNode(
+            runner.onStartTesting(readNode(
                     new JunitObjectReader(packet, PoolOfDelimiters.TREE_PREFIX)));
 
         }  else if (packet.startsWith(PoolOfDelimiters.INPUT_COSUMER)) {
@@ -130,12 +129,14 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
                     PoolOfDelimiters.INPUT_COSUMER));
 
         }  else if (packet.startsWith(PoolOfDelimiters.CHANGE_STATE)) {
-            notifyTestResult(new JunitObjectReader(packet,
-                    PoolOfDelimiters.CHANGE_STATE));
+            changeNodeState(new JunitObjectReader(packet,
+                    PoolOfDelimiters.CHANGE_STATE),
+                runner);
 
         }  else if (packet.startsWith(PoolOfDelimiters.TESTS_DONE)) {
-            notifyFinish(new JunitObjectReader(packet,
-                    PoolOfDelimiters.TESTS_DONE));
+//            notifyFinish(new JunitObjectReader(packet,
+//                    PoolOfDelimiters.TESTS_DONE));
+            runner.onFinishTesting();
 
         } else if (packet.startsWith(PoolOfDelimiters.OBJECT_PREFIX)) {
             readObject(new JunitObjectReader(packet, PoolOfDelimiters.OBJECT_PREFIX));
@@ -144,32 +145,41 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
     }
 
-    void notifyStart(TestNode node) {
-        System.out.println("Start: " + node);
-    }
-
     void notifyTestStart(JunitObjectReader in) {
         TestNode node = readNodeReference(in);
-        System.out.println(" * notifyTestStart:" + node);
+
+        if (DEBUG) {
+            // I think the state change is sufficient?
+            System.out.println(" * notifyTestStart:" + node);
+        }
     }
 
-    void notifyTestResult(JunitObjectReader in) {
+    void changeNodeState(JunitObjectReader in, final AsyncTestRunner runner) {
         TestNode node = readNodeReference(in);
         final int state = in.readInt();
         TestState newState = JunitUtil.getStateFromIndex(state);
 
-        System.out.println(" * * TestState: " + node + " -> " + newState);
-//        System.out.println("      [" + in.in + "]");
+        if (DEBUG) {
+            System.out.println(" * * TestState: " + node + " -> " + newState);
+            System.out.println("      [" + in.in + "]");
+        }
         switch (newState) {
         case FAILED:
         case ERROR:
             String message = in.readLimitedString();
             String stack = in.readLimitedString();
-            System.out.println("    " + message);
-            System.out.println(stack);
-            System.out.println();
+            runner.onTestOutput(node, message, AsyncRunner.OutputType.STDERR);
+            runner.onTestOutput(node, stack, AsyncRunner.OutputType.STDERR);
+
+            if (DEBUG) {
+                System.out.println("    " + message);
+                System.out.println(stack);
+                System.out.println();
+            }
             break;
         }
+
+        runner.onTestStateChanged(node);
     }
 
     void notifyFinish(JunitObjectReader in) {
