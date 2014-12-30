@@ -136,6 +136,16 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
         }
     }
 
+    protected void notifyStartTesting(TestNode root) {
+        ActiveTestManager.setActiveTestRoot(project, root);
+        asyncRunner.onStartTesting(root);
+    }
+
+    protected void notifyFinishTesting() {
+        ActiveTestManager.setActiveTestRoot(project, null);
+        asyncRunner.onFinishTesting();
+    }
+
     protected abstract String getTestFrameworkName();
 
     /**

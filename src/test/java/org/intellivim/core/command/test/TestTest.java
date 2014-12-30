@@ -141,6 +141,11 @@ public class TestTest extends UsableSdkTestCase {
         junit.processPacket("O1:2 TM5 test137 org.intellivim.runnable.test.Testable1 :",
                 runner);
 
+        // no active test yet
+        assertThat(ActiveTestManager.getActiveTestRoot(project))
+                .as("Active test node")
+                .isNull();
+
         // start testing
         assertThat(runner.testingRoot).as("TestingRoot (before)").isNull();
         junit.processPacket("T0:2 1:0 2:0 \n", runner);
@@ -151,6 +156,11 @@ public class TestTest extends UsableSdkTestCase {
                 .hasKidsCount(2)
                 .hasKidWithId("1")
                 .hasKidWithId("2");
+
+        // now active test
+        assertThat(ActiveTestManager.getActiveTestRoot(project))
+                .as("Active test node")
+                .isNotNull();
 
         // start running a test
         junit.processPacket("S1:3 ", runner);
@@ -196,6 +206,11 @@ public class TestTest extends UsableSdkTestCase {
         junit.processPacket("D7 ", runner);
         assertThat(runner.finished).as("Testing Finished")
                 .isTrue();
+
+        // no more active test
+        assertThat(ActiveTestManager.getActiveTestRoot(project))
+                .as("Active test node")
+                .isNull();
 
     }
 
@@ -351,26 +366,23 @@ public class TestTest extends UsableSdkTestCase {
         @Override
         public void onStartTesting(TestNode root) {
             testingRoot = root;
-            System.out.println("START " + root);
         }
 
         @Override
         public void onTestOutput(final TestNode owner, final String output,
                 final OutputType type) {
 
+            // TODO
             System.out.println("OUTPUT[" + owner + "]=" + output);
         }
 
         @Override
         public void onTestStateChanged(final TestNode node) {
-            System.out.println("STATE CHANGE:" + node);
             lastStateChangedNode = node;
         }
 
         @Override
         public void onFinishTesting() {
-
-            System.out.println("FINISH TESTING");
             finished = true;
         }
     }

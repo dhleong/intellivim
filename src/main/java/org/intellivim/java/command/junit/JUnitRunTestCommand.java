@@ -142,11 +142,15 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
     @SuppressWarnings("JavadocReference")
     public final void processPacket(final String packet, final AsyncTestRunner runner)
             throws Exception {
-        System.out.println("<<" + packet + "((END))");
+
+        if (DEBUG) {
+            System.out.println("<<" + packet + "((END))");
+        }
 
         if (packet.startsWith(PoolOfDelimiters.TREE_PREFIX)) {
-            runner.onStartTesting(readNode(
-                    new JunitObjectReader(packet, PoolOfDelimiters.TREE_PREFIX)));
+            TestNode node = readNode(
+                    new JunitObjectReader(packet, PoolOfDelimiters.TREE_PREFIX));
+            notifyStartTesting(node);
 
         }  else if (packet.startsWith(PoolOfDelimiters.INPUT_COSUMER)) {
             notifyTestStart(new JunitObjectReader(packet,
@@ -158,9 +162,12 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
                 runner);
 
         }  else if (packet.startsWith(PoolOfDelimiters.TESTS_DONE)) {
+            // do we need to bother with the duration?
 //            notifyFinish(new JunitObjectReader(packet,
 //                    PoolOfDelimiters.TESTS_DONE));
-            runner.onFinishTesting();
+//            final int duration = in.readInt();
+//            System.out.println(" * * * TestFinished in: " + duration);
+            notifyFinishTesting();
 
         } else if (packet.startsWith(PoolOfDelimiters.OBJECT_PREFIX)) {
             readObject(new JunitObjectReader(packet, PoolOfDelimiters.OBJECT_PREFIX));
@@ -174,7 +181,7 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
         if (DEBUG) {
             // I think the state change is sufficient?
-            System.out.println(" * notifyTestStart:" + node);
+            System.out.println(" * notifyStartTesting:" + node);
         }
     }
 
@@ -222,11 +229,6 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
         }
 
         runner.onTestStateChanged(node);
-    }
-
-    void notifyFinish(JunitObjectReader in) {
-        final int duration = in.readInt();
-        System.out.println(" * * * TestFinished in: " + duration);
     }
 
     private void readObject(final JunitObjectReader in) {
