@@ -23,13 +23,11 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.testIntegration.TestLocationProvider;
-import org.apache.log4j.Level;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
@@ -88,7 +86,6 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
         // FIXME asyncRunner.prepare()
 
-        Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher").setLevel(Level.ALL);
         runner.addListener(new CompileAndRunner.Listener() {
             @Override
             public void onCompileComplete(final boolean aborted, final int errors,

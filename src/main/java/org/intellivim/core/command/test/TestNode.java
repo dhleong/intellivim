@@ -15,7 +15,7 @@ public class TestNode {
 
     public final List<TestNode> kids = new ArrayList<TestNode>();
 
-    public TestState state;
+    public TestState state = TestState.NOT_RUN;
 
     public TestNode(String id, String name) {
         this.id = id;

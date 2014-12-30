@@ -34,6 +34,7 @@ public class JunitObjectReader {
     }
 
     String advanceTo(int end) {
+        end = Math.min(in.length(), end); // safety first
         final String read = in.substring(position, end);
         position = end;
         return read;

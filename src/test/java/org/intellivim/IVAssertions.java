@@ -1,5 +1,7 @@
 package org.intellivim;
 
+import org.intellivim.core.command.test.TestNode;
+import org.intellivim.core.command.test.TestNodeAssert;
 import org.intellivim.core.util.ExternalRunner;
 import org.intellivim.core.util.ExternalRunnerAssert;
 
@@ -12,4 +14,7 @@ public class IVAssertions {
         return new ExternalRunnerAssert(actual);
     }
 
+    public static TestNodeAssert assertThat(TestNode actual) {
+        return new TestNodeAssert(actual);
+    }
 }

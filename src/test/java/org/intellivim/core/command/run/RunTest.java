@@ -135,13 +135,13 @@ public class RunTest extends UsableSdkTestCase {
 
     public static class LoggingRunner implements AsyncRunner {
 
-        List<String> stdout = new ArrayList<String>();
-        List<String> stderr = new ArrayList<String>();
-        List<String> system = new ArrayList<String>();
+        public List<String> stdout = new ArrayList<String>();
+        public List<String> stderr = new ArrayList<String>();
+        public List<String> system = new ArrayList<String>();
 
-        String launchId;
+        public String launchId;
 
-        boolean cancelled = false;
+        public boolean cancelled = false;
 
         final Map<OutputType, List<String>> sink =
                 new HashMap<OutputType, List<String>>();

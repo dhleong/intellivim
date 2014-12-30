@@ -24,8 +24,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.SoftAssertions;
-import org.intellivim.SimpleResult;
 import org.intellivim.UsableSdkTestCase;
 import org.intellivim.core.command.run.RunTest;
 import org.intellivim.core.util.BuildUtil;
@@ -35,7 +35,9 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.intellivim.IVAssertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -61,7 +63,6 @@ public class TestTest extends UsableSdkTestCase {
         // DON'T run on Swing dispatch thread; some of the compile
         //  stuff wants to run there, and we'll never get the results
         //  if we do, too
-        System.out.println("Invoke: " + runnable);
         runnable.run();
     }
 
@@ -85,6 +86,7 @@ public class TestTest extends UsableSdkTestCase {
                         .getExtensionPoint(RunConfigurationProducer.EP_NAME);
         runEp.registerExtension(new TestClassConfigurationProducer());
         runEp.registerExtension(new TestMethodConfigurationProducer());
+
     }
 
     /** make sure some pre-requisites work */
@@ -114,8 +116,9 @@ public class TestTest extends UsableSdkTestCase {
         softly.assertAll();
     }
 
-    public void testClass() throws Exception {
-        final int offset = 132;
+    public void testOutputHandling() throws Exception {
+
+        final int offset = 115;
 
         Project project = prepareProject(RUNNABLE_PROJECT);
         PsiFile file = ProjectUtil.getPsiFile(project, TESTABLE);
@@ -123,14 +126,123 @@ public class TestTest extends UsableSdkTestCase {
         prepareElement(project, file, offset);
 
         final LoggingTestRunner runner = new LoggingTestRunner();
-        final SimpleResult result = (SimpleResult)
-                new JUnitRunTestCommand(project, runner, file, offset).execute();
-        assertSuccess(result);
+        final JUnitRunTestCommand junit =
+                new JUnitRunTestCommand(project, runner, file, offset);
 
-        if (!runner.awaitTermination(TIMEOUT))
-            fail("Unit test did not finish execution in time");
+        // NB: DON'T execute; just feed output to handler. It'd be nice
+        //  to test actual junit execution, but it doesn't want to cooperate
+        //  in our unit test environment. There's a to-do below for making it work
 
-        // TODO test output
+        // object declarations
+        junit.processPacket("O2:2 TM5 test237 org.intellivim.runnable.test.Testable1 :",
+                runner);
+        junit.processPacket("O0:2 TC37 org.intellivim.runnable.test.Testable2 :",
+                runner);
+        junit.processPacket("O1:2 TM5 test137 org.intellivim.runnable.test.Testable1 :",
+                runner);
+
+        // start testing
+        assertThat(runner.testingRoot).as("TestingRoot (before)").isNull();
+        junit.processPacket("T0:2 1:0 2:0 \n", runner);
+        assertThat(runner.testingRoot).as("TestingRoot")
+                .isNotNull()
+                .hasId("0")
+                .hasName("org.intellivim.runnable.test.Testable")
+                .hasKidsCount(2)
+                .hasKidWithId("1")
+                .hasKidWithId("2");
+
+        // start running a test
+        junit.processPacket("S1:3 ", runner);
+        junit.processPacket("I1:", runner);
+        assertThat(runner.lastStateChangedNode)
+                .hasId("1")
+                .hasState(TestState.RUNNING);
+
+        // finish running a test
+        junit.processPacket("S1:1 1 3469944 3469944 ", runner);
+        assertThat(runner.lastStateChangedNode)
+                .hasId("1")
+                .hasState(TestState.PASSED);
+
+        // start a failing test
+        junit.processPacket("S2:3 ", runner);
+        junit.processPacket("I2:", runner);
+        assertThat(runner.lastStateChangedNode)
+                .hasId("2")
+                .hasState(TestState.RUNNING);
+
+        // fail the test
+        junit.processPacket("S2:6 51 junit.framework.AssertionFailedError: test2 failed\n" +
+                "869 \tat org.intellivim.runnable.test.Testable.test2(Testable.java:12)\n" +
+                "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
+                "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)\n" +
+                "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n" +
+                "\tat com.intellij.junit3.JUnit3IdeaTestRunner.doRun(JUnit3IdeaTestRunner.java:141)\n" +
+                "\tat com.intellij.junit3.JUnit3IdeaTestRunner.startRunnerWithArgs(JUnit3IdeaTestRunner.java:52)\n" +
+                "\tat com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:211)\n" +
+                "\tat com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:67)\n" +
+                "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)", runner);
+        assertThat(runner.lastStateChangedNode)
+                .hasId("2")
+                .hasState(TestState.FAILED);
+
+        junit.processPacket("S2:1 1 3469944 3469944 ", runner);
+        assertThat(runner.lastStateChangedNode)
+                .hasId("2")
+                .hasState(TestState.FAILED); // still failed, please
+
+        // finish testing
+        junit.processPacket("D7 ", runner);
+        assertThat(runner.finished).as("Testing Finished")
+                .isTrue();
+
+    }
+
+    // TODO get executing the test in junit environment to work
+//    public void testClass() throws Exception {
+//        final int offset = 132;
+//
+//        Project project = prepareProject(RUNNABLE_PROJECT);
+//        PsiFile file = ProjectUtil.getPsiFile(project, TESTABLE);
+//
+//        prepareElement(project, file, offset);
+//
+//        final LoggingTestRunner runner = new LoggingTestRunner();
+//        final SimpleResult result = (SimpleResult)
+//                new JUnitRunTestCommand(project, runner, file, offset).execute();
+//        assertSuccess(result);
+//
+//        if (!runner.awaitTermination(TIMEOUT))
+//            fail("Unit test did not finish execution in time");
+//
+//        SoftAssertions softly = new SoftAssertions();
+//        softly.assertThat(runner.cancelled).as("Run Cancelled").isFalse();
+//
+//        // TODO test output
+//
+//        softly.assertAll();
+//    }
+
+    @Override
+    public Project prepareProject(final String projectName) throws Exception {
+        final Project project = super.prepareProject(projectName);
+//        final Module module = getModule(project);
+
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+
+            @Override
+            public void run() {
+                // TODO force-add junit runtime libs so it compiles
+                // (they're omitted by default for unit tests, I guess)
+//                ModuleRootModificationUtil.addModuleLibrary(module,
+//                        "path/to/junit.jar");
+            }
+        });
+
+//        CompilerTestUtil.saveApplicationSettings();
+
+        return project;
     }
 
     /**
@@ -220,7 +332,7 @@ public class TestTest extends UsableSdkTestCase {
             Extensions.getExtensions(JUNIT_EP_NAME);
             return true;
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return false;
         }
     }
@@ -231,9 +343,14 @@ public class TestTest extends UsableSdkTestCase {
     static class LoggingTestRunner
             extends RunTest.LoggingRunner
             implements AsyncTestRunner {
-        
+
+        TestNode testingRoot;
+        TestNode lastStateChangedNode;
+        boolean finished = false;
+
         @Override
         public void onStartTesting(TestNode root) {
+            testingRoot = root;
             System.out.println("START " + root);
         }
 
@@ -247,12 +364,14 @@ public class TestTest extends UsableSdkTestCase {
         @Override
         public void onTestStateChanged(final TestNode node) {
             System.out.println("STATE CHANGE:" + node);
+            lastStateChangedNode = node;
         }
 
         @Override
         public void onFinishTesting() {
 
             System.out.println("FINISH TESTING");
+            finished = true;
         }
     }
 }

@@ -4,10 +4,13 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
@@ -113,12 +116,33 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
                     e.printStackTrace();
                 }
             }
+
         }, new DeferredActionsQueueImpl());
+
+        // also attach a ProcessListener since we're overriding
+        //  the default behavior
+        handler.addProcessListener(new ProcessAdapter() {
+
+            @Override
+            public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+                System.out.println("TEXT: " + event.getText());
+            }
+
+            @Override
+            public void processTerminated(final ProcessEvent event) {
+                asyncRunner.terminate();
+            }
+        });
     }
 
-    // see TestsPacketsReceiver
-    void processPacket(final String packet, final AsyncTestRunner runner)
+    /**
+     * NB Public for testing
+     * @see com.intellij.execution.junit2.ui.TestsPacketsReceiver
+     */
+    @SuppressWarnings("JavadocReference")
+    public final void processPacket(final String packet, final AsyncTestRunner runner)
             throws Exception {
+        System.out.println("<<" + packet + "((END))");
 
         if (packet.startsWith(PoolOfDelimiters.TREE_PREFIX)) {
             runner.onStartTesting(readNode(
@@ -176,7 +200,25 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
                 System.out.println(stack);
                 System.out.println();
             }
+
+            // We could just fall through and let it get set in the default block,
+            //  but that's just a little too hard to follow, so we'll be explicit
+            node.setState(newState);
             break;
+
+        case PASSED:
+            if (node.state == TestState.FAILED || node.state == TestState.ERROR) {
+                // it's already set to failed or error; this problem occurs because
+                // IntelliJ decided that "passed" and "completed" were the same,
+                //  and that "failed" or "error" don't imply "completed" :/
+                break;
+            }
+
+            // NB fall through
+        default:
+
+            // in most cases, just go ahead and set
+            node.setState(newState);
         }
 
         runner.onTestStateChanged(node);

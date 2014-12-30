@@ -124,7 +124,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         });
     }
 
-    static Module getModule(Project project) {
+    protected static Module getModule(Project project) {
         RunnerAndConfigurationSettings settings =
                 CompileAndRunner.pickRunSetting(project, null);
         if (settings == null)
