@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellivim.core.command.run.LaunchManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -133,6 +134,14 @@ public class CompileAndRunner {
     }
 
     /**
+     * Allocate a launch id for use with the selected settings
+     * @return
+     */
+    public String allocateLaunchId() {
+        return LaunchManager.allocateId(project, getSettings());
+    }
+
+    /**
      * Begin the compile and run process
      */
     public void execute() throws ExecutionException {
@@ -201,6 +210,13 @@ public class CompileAndRunner {
 
     void execute(final ProgramRunner runner, final ExecutionEnvironment env)
             throws ExecutionException {
+        // FIXME is it possible to invoke OFF the dispatch thread?
+        //  It seems like being on the dispatch thread is blocking it---which
+        //  means we can't process any commands until it's done!
+        //  Alternatively, it may be possible for the json parsing to be done
+        //   from a non-dispatch thread, and Commands can declare if they
+        //   should be executed from that non-dispatch thread
+
         // borrowed from ExecutionManagerImpl so we can get to the RunContentDescriptor
         runner.execute(env, new ProgramRunner.Callback() {
             @Override

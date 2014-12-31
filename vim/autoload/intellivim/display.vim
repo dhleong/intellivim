@@ -106,4 +106,59 @@ function! intellivim#display#TempWindow(name, contents, ...) " {{{
 
 endfunction " }}}
 
+function! intellivim#display#ScrollBuffer(bufNo, ...) " {{{
+    " Scroll some other buffer to the end, or to a specific line
+    " This is a nop if python is not available
+    " Options:
+    "  target (default: "end"): Where to scroll to. May be "start",
+    "    "end", or a line number
+    "  ifAt (default: -1): If >= 0, a line number that the cursor
+    "    must currently be on for this operation to proceed
+
+    if !has('python')
+        return
+    endif
+
+    let target = a:0 > 0 ? a:1 : "end"
+    let ifAt = a:0 > 1 ? a:2 : -1
+    let bufno = a:bufNo
+
+py << PYEOF
+import vim
+bufno = int(vim.eval('bufno'))
+buf = vim.buffers[bufno]
+if buf:
+    target = vim.eval('target')
+    ifAt = vim.eval('ifAt')
+
+    line = 0
+    if 'end' == target:
+        line = len(buf)
+    elif 'start' == target:
+        line = 0
+    else:
+        line = int(target)
+
+    # find windows for this buffer
+    scrollWin = None
+    for tab in vim.tabpages:
+        for win in tab.windows:
+            if win.buffer.number == buf.number:
+                # scroll to bottom if still there
+                row, col = win.cursor
+                if ifAt >= 0 or row == ifAt:
+                    win.cursor = [line, col]
+                    scrollWin = win
+
+    vim.command("redraw!")
+
+    if scrollWin:
+        # sometimes needed
+        vim.command("%dwinc w" % scrollWin.number)
+        vim.command("winc p")
+
+PYEOF
+
+endfunction " }}}
+
 " vim:ft=vim:fdm=marker

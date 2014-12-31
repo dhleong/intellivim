@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -103,6 +104,9 @@ public class JUnitRunTestCommand extends AbstractRunTestCommand {
             // no idea how this could be null, but...
             mObjects = new TestObjectManager();
         }
+
+        System.out.println("*** On Dispatch!? " +
+                ApplicationManager.getApplication().isDispatchThread());
 
         // sigh. replace the packet dispatcher and handle everything by hand.
         // see above for why we can't just attach a listener, even if

@@ -73,14 +73,14 @@ class IVClient(object):
         except socket.timeout:
             return IVClient.ERROR_TIMEOUT
 
-    def _execute(self, command):
+    def _execute(self, command, timeout=None):
         """Execute a command
 
-        :commad: Command Dictionary
+        :command: Command Dictionary
         :returns: Result Dictionary
 
         """
-        return self._makeRequest('command', command)
+        return self._makeRequest('command', command, timeout)
 
     @classmethod
     def get(cls):
@@ -96,7 +96,7 @@ class IVClient(object):
         return newInstance
 
     @classmethod
-    def execute(cls, command):
+    def execute(cls, command, timeout=None):
         """Shortcut for IVClient.get()._execute()
         """
-        return cls.get()._execute(command)
+        return cls.get()._execute(command, timeout)

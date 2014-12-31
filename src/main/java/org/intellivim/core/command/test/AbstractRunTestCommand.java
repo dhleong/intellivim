@@ -33,9 +33,11 @@ import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.command.run.AsyncRunner;
+import org.intellivim.core.command.run.LaunchManager;
 import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.CompileAndRunner;
 import org.intellivim.inject.Inject;
+import org.intellivim.inject.UnsupportedClientException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +86,19 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
                 .withExecutor(executor)
                 .build();
 
-        // FIXME asyncRunner.prepare()
+        final String launchId = runner.allocateLaunchId();
+        try {
+            // make sure we can do it
+            asyncRunner.prepare(launchId);
+        } catch (UnsupportedClientException e) {
+            System.err.println(e.getMessage());
+            LaunchManager.terminate(launchId);
+            return SimpleResult.error(e);
+        } catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+            LaunchManager.terminate(launchId);
+            return SimpleResult.error(e);
+        }
 
         runner.addListener(new CompileAndRunner.Listener() {
             @Override
@@ -118,6 +132,7 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
             @Override
             public void onProcessStarted(final RunContentDescriptor descriptor,
                     final ProcessHandler handler) {
+                LaunchManager.register(launchId, handler);
                 handleProcessStarted(descriptor, handler, properties, asyncRunner);
             }
 

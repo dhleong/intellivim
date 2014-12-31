@@ -10,6 +10,8 @@ import org.intellivim.inject.UnsupportedClientException;
  */
 public abstract class VimSpecific {
 
+    private static final boolean DEBUG = false;
+
     /** basically, never timeout */
     static final long TIMEOUT = 10000;
 
@@ -45,6 +47,8 @@ public abstract class VimSpecific {
                 "--servername", instance,
                 "--remote-expr", expr
         );
+
+        if (DEBUG) System.out.println("VIM> --remote-expr " + expr);
 
         if (!exec.isSuccess()) {
             // tell me why

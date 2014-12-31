@@ -66,6 +66,11 @@ public class Client implements Injector<Object> {
     }
 
     @Override
+    public int getPriority() {
+        return 0;
+    }
+
+    @Override
     public boolean canInject(Field field, ICommand command) {
         return isPossiblyClientSpecific(field.getType());
     }

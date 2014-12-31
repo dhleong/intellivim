@@ -14,10 +14,19 @@ elseif has('python3')
   execute 'py3file ' . fnameescape(s:script)
 endif
 
-function! intellivim#client#Execute(command)
+function! intellivim#client#Execute(command, ...)
+    " Options:
+    "  timeout (default: 1.5): Timeout in seconds
+
+    let timeout = a:0 > 0 ? a:1 : -1
+
 python << PYEOF
 command = vim.eval('a:command')
-result = IVClient.execute(command)
+timeout = float(vim.eval('timeout'))
+if timeout == -1:
+    timeout = None
+
+result = IVClient.execute(command, timeout)
 if result is None:
     vim.command("let result = ''")
 else:

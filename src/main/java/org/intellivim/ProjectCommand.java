@@ -1,13 +1,14 @@
 package org.intellivim;
 
 import com.intellij.openapi.project.Project;
+import org.intellivim.inject.Inject;
 
 /**
- * Created by dhleong on 11/16/14.
+ * @author dhleong
  */
 public abstract class ProjectCommand implements ICommand {
 
-    @Required protected final Project project;
+    @Required @Inject protected final Project project;
 
     public ProjectCommand(Project project) {
         this.project = project;

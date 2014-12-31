@@ -18,6 +18,11 @@ public class PsiFileInjector implements Injector<PsiFile> {
     static final String DEFAULT_FIELD_NAME = "file";
 
     @Override
+    public int getPriority() {
+        return 0;
+    }
+
+    @Override
     public boolean canInject(final Field field, final ICommand command) {
         return field.getType().isAssignableFrom(PsiFile.class)
                 && command instanceof ProjectCommand;

@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Created by dhleong on 11/9/14.
+ * @author dhleong
  */
 public class CommandExecutor {
 
@@ -82,14 +82,15 @@ public class CommandExecutor {
     public Future<Result> execute(final Reader json) {
         final CommandResult result = new CommandResult();
 
-        // we must execute on the event dispatcher thread
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        final IVGson.RawCommand rawCommand = gson.fromJson(json, IVGson.RawCommand.class);
+
+        final Runnable execution = new Runnable() {
 
             @Override
             public void run() {
 
                 try {
-                    final ICommand command = gson.fromJson(json, ICommand.class);
+                    final ICommand command = rawCommand.init();
                     if (command == null) {
                         result.setResult(SimpleResult.error("Invalid command"));
                         return;
@@ -105,7 +106,16 @@ public class CommandExecutor {
                     result.setResult(handleError(e));
                 }
             }
-        }, ModalityState.any());
+        };
+
+        // NB: we could make this a bit more granular if we need to....
+        if (rawCommand.needsInitOnDispatch() || rawCommand.needsExecuteOnDispatch()) {
+            // we must execute on the event dispatcher thread
+            ApplicationManager.getApplication().invokeAndWait(
+                    execution, ModalityState.any());
+        } else {
+            execution.run();
+        }
 
         return result;
     }

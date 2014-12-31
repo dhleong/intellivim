@@ -14,6 +14,12 @@ import java.lang.reflect.Field;
  */
 public interface Injector<T> {
 
+    /**
+     * Lazy substitute for proper dependency graph.
+     *  Lower is higher
+     */
+    public int getPriority();
+
     public boolean canInject(Field field, ICommand command);
 
     /** @returns True if it was able to inject */

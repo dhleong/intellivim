@@ -12,14 +12,14 @@ function! s:append(bufno, type, line) " {{{
     endif
 
     " prepare vars so python can pick them up
-    let bufnr = a:bufno
+    let bufno = a:bufno
     let ltype = a:type
     let lines = split(a:line, '\r', 1)
 
 py << PYEOF
 import vim
-bufnr = int(vim.eval('bufnr')) # NB int() is crucial
-buf = vim.buffers[bufnr]
+bufno = int(vim.eval('bufno')) # NB int() is crucial
+buf = vim.buffers[bufno]
 if buf:
     lines = vim.eval('lines')
     ltype = vim.eval('ltype')
@@ -32,20 +32,10 @@ if buf:
     buf.options['readonly'] = True
     buf.options['modifiable'] = False
 
-    # find windows for this buffer
-    scrollWin = None
-    for tab in vim.tabpages:
-        for win in tab.windows:
-            if win.buffer.number == buf.number:
-                # scroll to bottom if still there
-                row, col = win.cursor
-                if row == oldEnd:
-                    win.cursor = [len(buf), col]
-                    scrollWin = win
-
+    vim.command("call intellivim#display#ScrollBuffer(%d, 'end', %d)" 
+        % (bufno, oldEnd))
 PYEOF
 
-    redraw!
 
 endfunction " }}}
 " }}}
@@ -88,7 +78,7 @@ function! intellivim#core#run#RunList() " {{{
         call add(output,
             \ intellivim#util#Pad(config.name, pad) . ' - ' . config.type)
     endfor
-    call eclim#util#Echo(join(output, "\n"))
+    call intellivim#util#Echo(join(output, "\n"))
 
 endfunction " }}}
 
@@ -110,7 +100,10 @@ endfunction " }}}
 " Callbacks
 "
 
-function! intellivim#core#run#onPrepareOutput(launchId) " {{{
+function! intellivim#core#run#onPrepareOutput(launchId, ...) " {{{
+
+    let contents = a:0 ? a:1 : []
+
     let current = winnr()
 
     " is there a terminated launch window?
@@ -122,7 +115,7 @@ function! intellivim#core#run#onPrepareOutput(launchId) " {{{
         exe 'bdelete ' . terminatedBuf
     endif
 
-    call intellivim#display#TempWindow('[' . a:launchId . ' Output]', [])
+    call intellivim#display#TempWindow('[' . a:launchId . ' Output]', contents)
     let no = bufnr('%')
     let b:launch_id = a:launchId
 

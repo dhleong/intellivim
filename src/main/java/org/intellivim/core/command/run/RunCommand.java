@@ -1,7 +1,6 @@
 package org.intellivim.core.command.run;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -47,7 +46,7 @@ public class RunCommand extends ProjectCommand {
         final CompileAndRunner runner = CompileAndRunner.forProject(project)
                 .usingConfigurationName(configuration)
                 .build();
-        final String launchId = pickLaunchId(runner.getSettings());
+        final String launchId = runner.allocateLaunchId();
 
         try {
             // make sure we can do it
@@ -130,10 +129,6 @@ public class RunCommand extends ProjectCommand {
         } catch (ExecutionException e) {
             return SimpleResult.error(e);
         }
-    }
-
-    private String pickLaunchId(RunnerAndConfigurationSettings setting) {
-        return LaunchManager.allocateId(project, setting);
     }
 
 }

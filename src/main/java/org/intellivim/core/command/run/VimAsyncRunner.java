@@ -20,7 +20,7 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
     private final String prepareCommand, outputCommand;
     private final String cancelCommand, terminateCommand;
 
-    private String bufNo;
+    protected String bufNo;
 
     public VimAsyncRunner() {
         this(PREPARE_COMMAND, OUTPUT_COMMAND, CANCEL_COMMAND, TERMINATE_COMMAND);
@@ -48,9 +48,7 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
 
     @Override
     public void sendLine(OutputType type, String line) {
-        final String clean = line.trim()
-                .replaceAll("\n", "\\\\r")
-                .replaceAll("\t", "    ");
+        final String clean = cleanLines(line);
 
         // functionExpr is safer, in case they're in input mode
         remoteFunctionExpr(outputCommand,
@@ -69,4 +67,12 @@ public class VimAsyncRunner extends VimSpecific implements AsyncRunner {
         remoteFunctionExpr(terminateCommand, bufNo);
     }
 
+    /**
+     * Clean some text that may contain multiple lines
+     */
+    protected String cleanLines(String in) {
+        return in.trim()
+                .replaceAll("\n", "\\\\r")
+                .replaceAll("\t", "    ");
+    }
 }

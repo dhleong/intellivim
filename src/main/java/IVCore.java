@@ -64,7 +64,15 @@ public class IVCore implements ApplicationComponent {
 
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            final Future<Result> future = executor.execute(httpExchange.getRequestBody());
+            final Future<Result> future;
+            try {
+                future = executor.execute(httpExchange.getRequestBody());
+            } catch (Exception e) {
+                // catch any troublemakers
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+
             final Result result = collectResult(future);
             final String json = gson.toJson(result);
             final int code = result.isSuccess() ? 200 : 400;
@@ -82,6 +90,7 @@ public class IVCore implements ApplicationComponent {
             try {
                 return future.get();
             } catch (Exception e) {
+                e.printStackTrace();
                 return SimpleResult.error(e);
             }
         }

@@ -32,6 +32,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,117 +50,78 @@ import static org.reflections.ReflectionUtils.withAnnotation;
  */
 public class IVGson {
 
-    static Map<String, Class<?>> commandMap;
-    static List<Injector<?>> injectors;
-
-    public static Gson newInstance() {
-        if (commandMap == null) {
-            init();
-        }
-
-        // FIXME booleans may need to be serialized as 1/0 since vim
-        //  doesn't understand true/false....
-        return new GsonBuilder()
-                .registerTypeAdapter(Project.class, new ProjectTypeAdapter())
-                .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
-                .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
-                .registerTypeAdapterFactory(new OnlyInjectableTypesAdapterFactory())
-                .create();
-    }
-
-    private static void init() {
-        final Reflections ref = new Reflections(new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forPackage("org.intellivim"))
-                .setScanners(
-                        new SubTypesScanner(),
-                        new TypeAnnotationsScanner())
-                .addClassLoader(ICommand.class.getClassLoader())
-                .filterInputsBy(new FilterBuilder().include("org.intellivim.*"))
-        );
-
-        commandMap = initCommands(ref);
-        injectors = initInjectors(ref);
-    }
-
-    private static Map<String, Class<?>> initCommands(Reflections ref) {
-        final HashMap<String, Class<?>> map = new HashMap<String, Class<?>>();
-
-        final Set<Class<?>> commands = ref.getTypesAnnotatedWith(Command.class);
-        for (Class<?> commandClass : commands) {
-            final Command meta = commandClass.getAnnotation(Command.class);
-            final String name = meta.value();
-            map.put(name, commandClass);
-        }
-
-        return map;
-    }
-
-    private static List<Injector<?>> initInjectors(Reflections ref) {
-        final Set<Class<? extends Injector>> set = ref.getSubTypesOf(Injector.class);
-        final List<Injector<?>> list = new ArrayList<Injector<?>>(set.size());
-        for (Class<? extends Injector> type : set) {
-            try {
-                list.add(type.newInstance());
-            } catch (Exception e) {
-                throw new IllegalStateException("Could not inflate Injector " + type);
-            }
-        }
-
-        return list;
-    }
-
-    private static Class<?> getCommandClass(String commandName) {
-        final Class<?> klass = commandMap.get(commandName);
-        if (klass != null)
-            return klass;
-
-        throw new IllegalArgumentException("Unknown command `" + commandName + "`");
-    }
-
-    private static class CommandTypeAdapterFactory implements TypeAdapterFactory {
+    /** Wraps the input ICommand for multi-stage parsing */
+    @SuppressWarnings("unchecked")
+    public static class RawCommand {
 
         private static Map<Field, Injector<?>> sFieldInjectors = new HashMap<Field, Injector<?>>();
 
-        @Override
-        public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> typeToken) {
-            if (!ICommand.class.isAssignableFrom(typeToken.getRawType()))
-                return null;
+        private Class<?> commandClass;
+        final Gson gson;
+        final JsonObject obj;
+        final ICommand raw;
+        final Set<Field> fieldsToInject;
 
-            final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, typeToken);
-            final TypeAdapter<JsonObject> jsonAdapter = gson.getAdapter(JsonObject.class);
+        private RawCommand(final Gson gson, Class<?> commandClass, JsonObject obj,
+                ICommand raw) {
+            this.gson = gson;
+            this.commandClass = commandClass;
+            this.obj = obj;
+            this.raw = raw;
 
-            return new TypeAdapter<T>() {
-                @Override
-                public void write(JsonWriter jsonWriter, T t) throws IOException {
-                    // probably shouldn't need to serialize a command, but....
-                    defaultAdapter.write(jsonWriter, t);
-                }
+            fieldsToInject = ReflectionUtils
+                    .getAllFields(commandClass, withAnnotation(Inject.class));
+            Class<?> superClass = commandClass.getSuperclass();
+            while (superClass != null && superClass != Object.class) {
 
-                @Override
-                @SuppressWarnings("unchecked")
-                public T read(JsonReader jsonReader) throws IOException {
-                    final JsonObject obj = jsonAdapter.read(jsonReader);
-                    final String commandName = obj.get("command").getAsString();
-                    final Class<?> commandClass = getCommandClass(commandName);
-                    T result = (T) gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
-                            TypeToken.get(commandClass)).fromJsonTree(obj);
+                Set<Field> superFields = ReflectionUtils
+                    .getAllFields(superClass, withAnnotation(Inject.class));
+                fieldsToInject.addAll(superFields);
 
-                    final Set<Field> injectedFields = ReflectionUtils
-                            .getAllFields(commandClass, withAnnotation(Inject.class));
-                    for (Field f : injectedFields) {
-                        injectField(gson, f, obj, (ICommand) result);
+                superClass = superClass.getSuperclass();
+            }
+        }
+
+        RawCommand(Gson gson, final Class<?> commandClass, JsonObject obj, final Object o) {
+            this(gson, commandClass, obj, (ICommand) o);
+        }
+
+        public boolean needsInitOnDispatch() {
+            return !fieldsToInject.isEmpty();
+        }
+
+        public ICommand init() throws IllegalAccessException {
+            // inject
+//            for (Field f : fieldsToInject) {
+//                injectField(gson, f, obj, raw);
+//            }
+
+            // iterate over injectors in order
+            for (Injector<?> injector : injectors) {
+                for (Field f : fieldsToInject) {
+                    if (!injector.canInject(f, raw)) {
+                        continue;
                     }
 
-                    final Set<Field> requiredFields = ReflectionUtils
-                            .getAllFields(commandClass, withAnnotation(Required.class));
-                    for (Field f : requiredFields) {
-                        ensureRequiredField(f, obj, result);
-                    }
-
-                    return result;
+                    // got it!
+                    f.setAccessible(true);
+                    injector.inject(gson, f, raw, obj);
                 }
+            }
 
-            };
+            final Set<Field> requiredFields = ReflectionUtils
+                    .getAllFields(commandClass, withAnnotation(Required.class));
+            for (Field f : requiredFields) {
+                ensureRequiredField(f, obj, raw);
+            }
+
+
+            return raw;
+        }
+
+        public boolean needsExecuteOnDispatch() {
+            // We could distinguish this better in the future
+            return needsInitOnDispatch();
         }
 
         static void injectField(Gson gson, Field f, JsonObject obj, ICommand result) {
@@ -207,6 +170,121 @@ public class IVGson {
         }
     }
 
+    static Map<String, Class<?>> commandMap;
+    static List<Injector<?>> injectors;
+
+    public static Gson newInstance() {
+        if (commandMap == null) {
+            init();
+        }
+
+        // FIXME booleans may need to be serialized as 1/0 since vim
+        //  doesn't understand true/false....
+        return new GsonBuilder()
+                .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
+                .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
+                .registerTypeAdapterFactory(new OnlyInjectableTypesAdapterFactory())
+                .create();
+    }
+
+    private static void init() {
+        final Reflections ref = new Reflections(new ConfigurationBuilder()
+                .setUrls(ClasspathHelper.forPackage("org.intellivim"))
+                .setScanners(
+                        new SubTypesScanner(),
+                        new TypeAnnotationsScanner())
+                .addClassLoader(ICommand.class.getClassLoader())
+                .filterInputsBy(new FilterBuilder().include("org.intellivim.*"))
+        );
+
+        commandMap = initCommands(ref);
+        injectors = initInjectors(ref);
+    }
+
+    private static Map<String, Class<?>> initCommands(Reflections ref) {
+        final HashMap<String, Class<?>> map = new HashMap<String, Class<?>>();
+
+        final Set<Class<?>> commands = ref.getTypesAnnotatedWith(Command.class);
+        for (Class<?> commandClass : commands) {
+            final Command meta = commandClass.getAnnotation(Command.class);
+            final String name = meta.value();
+            map.put(name, commandClass);
+        }
+
+        return map;
+    }
+
+    private static List<Injector<?>> initInjectors(Reflections ref) {
+        final Set<Class<? extends Injector>> set = ref.getSubTypesOf(Injector.class);
+        final List<Injector<?>> list = new ArrayList<Injector<?>>(set.size());
+        for (Class<? extends Injector> type : set) {
+            try {
+                list.add(type.newInstance());
+            } catch (Exception e) {
+                throw new IllegalStateException("Could not inflate Injector " + type);
+            }
+        }
+        Collections.sort(list, new Comparator<Injector<?>>() {
+            @Override
+            public int compare(final Injector<?> o1, final Injector<?> o2) {
+                // manual comparison lets us use Integer.MIN_VALUE without
+                //  fear of overflow
+                final int left = o1.getPriority();
+                final int right = o2.getPriority();
+                if (left < right)
+                    return -1;
+                else if (left == right)
+                    return 0;
+                else
+                    return 1;
+            }
+        });
+
+        return list;
+    }
+
+    private static Class<?> getCommandClass(String commandName) {
+        final Class<?> klass = commandMap.get(commandName);
+        if (klass != null)
+            return klass;
+
+        throw new IllegalArgumentException("Unknown command `" + commandName + "`");
+    }
+
+    private static class CommandTypeAdapterFactory implements TypeAdapterFactory {
+
+        @Override
+        public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> typeToken) {
+            if (!RawCommand.class.isAssignableFrom(typeToken.getRawType()))
+                return null;
+
+            final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, typeToken);
+            final TypeAdapter<JsonObject> jsonAdapter = gson.getAdapter(JsonObject.class);
+
+            return new TypeAdapter<T>() {
+                @Override
+                public void write(JsonWriter jsonWriter, T t) throws IOException {
+                    // probably shouldn't need to serialize a command, but....
+                    defaultAdapter.write(jsonWriter, t);
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public T read(JsonReader jsonReader) throws IOException {
+                    final JsonObject obj = jsonAdapter.read(jsonReader);
+                    final String commandName = obj.get("command").getAsString();
+                    final Class<?> commandClass = getCommandClass(commandName);
+                    return (T) new RawCommand(gson,
+                            commandClass,
+                            obj,
+                            gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
+                                TypeToken.get(commandClass)).fromJsonTree(obj));
+                }
+
+            };
+        }
+    }
+
     private static class ProjectTypeAdapter extends TypeAdapter<Project> {
         @Override
         public void write(JsonWriter jsonWriter, Project project) throws IOException {
@@ -240,7 +318,8 @@ public class IVGson {
         // NB Could/should probably build this with Reflections and
         //  an annotation on the Injector
         HashSet<Class<?>> types = new HashSet<Class<?>>(Arrays.asList(
-            PsiFile.class
+            PsiFile.class,
+            Project.class
         ));
 
         @Override

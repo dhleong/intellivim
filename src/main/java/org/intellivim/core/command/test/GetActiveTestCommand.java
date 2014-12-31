@@ -1,8 +1,7 @@
 package org.intellivim.core.command.test;
 
-import com.intellij.openapi.project.Project;
 import org.intellivim.Command;
-import org.intellivim.ProjectCommand;
+import org.intellivim.ICommand;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 
@@ -16,17 +15,23 @@ import org.intellivim.SimpleResult;
  * @author dhleong
  */
 @Command("get_active_test")
-public class GetActiveTestCommand extends ProjectCommand {
+public class GetActiveTestCommand implements ICommand {
 
-    public GetActiveTestCommand(final Project project) {
-        super(project);
-    }
+    /** if true, will return the "last" test if none active */
+    boolean lazy = false;
 
     @Override
     public Result execute() {
-        TestNode activeTest = ActiveTestManager.getActiveTestRoot(project);
-        if (activeTest != null)
+        final TestNode activeTest = ActiveTestManager.getActiveTestRoot(null);
+        if (activeTest != null) {
             return SimpleResult.success(activeTest);
+        }
+
+        final TestNode lastTest = ActiveTestManager.getLastTestRoot(null);
+        if (lazy && lastTest != null) {
+            System.out.println("Got lazy test! " + lastTest);
+            return SimpleResult.success(lastTest);
+        }
 
         return SimpleResult.error("No active test");
     }

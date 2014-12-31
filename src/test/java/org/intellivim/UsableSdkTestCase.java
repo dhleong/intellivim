@@ -80,6 +80,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
                 JavaTestUtil.setupTestJDK();
                 ModuleRootModificationUtil.setModuleSdk(
                         module, JavaTestUtil.getTestJdk());
+
             }
         });
 
