@@ -19,6 +19,8 @@ import com.intellij.psi.PsiFile;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.Injector;
+import org.intellivim.morph.PolymorphManager;
+import org.intellivim.morph.Polymorpher;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -29,6 +31,7 @@ import org.reflections.util.FilterBuilder;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -172,6 +175,7 @@ public class IVGson {
 
     static Map<String, Class<?>> commandMap;
     static List<Injector<?>> injectors;
+    static PolymorphManager polymorphManager;
 
     public static Gson newInstance() {
         if (commandMap == null) {
@@ -182,6 +186,7 @@ public class IVGson {
         //  doesn't understand true/false....
         return new GsonBuilder()
                 .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
+                .registerTypeAdapterFactory(new ICommandTypeAdapterFactory())
                 .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
                 .registerTypeAdapterFactory(new OnlyInjectableTypesAdapterFactory())
                 .create();
@@ -199,6 +204,7 @@ public class IVGson {
 
         commandMap = initCommands(ref);
         injectors = initInjectors(ref);
+        polymorphManager = new PolymorphManager(ref);
     }
 
     private static Map<String, Class<?>> initCommands(Reflections ref) {
@@ -211,6 +217,20 @@ public class IVGson {
             map.put(name, commandClass);
         }
 
+        return map;
+    }
+
+    private static Map<Class<?>, Polymorpher> initMorphers(Reflections ref) {
+        final HashMap<Class<?>, Polymorpher> map = new HashMap<Class<?>, Polymorpher>();
+
+        final Set<Class<? extends Polymorpher>> types = ref.getSubTypesOf(Polymorpher.class);
+        for (final Class<? extends Polymorpher> type : types) {
+            try {
+                map.put(type, type.newInstance());
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to instantiate Polymorpher " + type);
+            }
+        }
         return map;
     }
 
@@ -243,13 +263,19 @@ public class IVGson {
         return list;
     }
 
-    private static Class<?> getCommandClass(String commandName) {
+    private static Class<?> getCommandClass(final JsonObject obj, String commandName) {
         final Class<?> klass = commandMap.get(commandName);
-        if (klass != null)
-            return klass;
+        if (klass != null) {
+            if ((klass.getModifiers() & Modifier.ABSTRACT) != 0) {
+                return polymorphManager.getCommandImplementation(obj, klass, commandName);
+            } else {
+                return klass;
+            }
+        }
 
         throw new IllegalArgumentException("Unknown command `" + commandName + "`");
     }
+
 
     private static class CommandTypeAdapterFactory implements TypeAdapterFactory {
 
@@ -273,12 +299,47 @@ public class IVGson {
                 public T read(JsonReader jsonReader) throws IOException {
                     final JsonObject obj = jsonAdapter.read(jsonReader);
                     final String commandName = obj.get("command").getAsString();
-                    final Class<?> commandClass = getCommandClass(commandName);
+                    final Class<?> commandClass = getCommandClass(obj, commandName);
                     return (T) new RawCommand(gson,
                             commandClass,
                             obj,
                             gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
                                 TypeToken.get(commandClass)).fromJsonTree(obj));
+                }
+
+            };
+        }
+    }
+
+    /**
+     * NB: Only use for testing, so we don't have to
+     *  unwrap the RawCommand every time
+     */
+    private static class ICommandTypeAdapterFactory implements TypeAdapterFactory {
+
+        @Override
+        public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> typeToken) {
+            if (!ICommand.class.isAssignableFrom(typeToken.getRawType()))
+                return null;
+
+            final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, typeToken);
+            final TypeAdapter<JsonObject> jsonAdapter = gson.getAdapter(JsonObject.class);
+
+            return new TypeAdapter<T>() {
+                @Override
+                public void write(JsonWriter jsonWriter, T t) throws IOException {
+                    // probably shouldn't need to serialize a command, but....
+                    defaultAdapter.write(jsonWriter, t);
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public T read(JsonReader jsonReader) throws IOException {
+                    final JsonObject obj = jsonAdapter.read(jsonReader);
+                    final String commandName = obj.get("command").getAsString();
+                    final Class<?> commandClass = getCommandClass(obj, commandName);
+                    return (T) gson.getDelegateAdapter(ICommandTypeAdapterFactory.this,
+                            TypeToken.get(commandClass)).fromJsonTree(obj);
                 }
 
             };

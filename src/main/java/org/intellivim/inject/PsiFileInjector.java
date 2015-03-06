@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
  */
 public class PsiFileInjector implements Injector<PsiFile> {
 
-    static final String DEFAULT_FIELD_NAME = "file";
+    public static final String DEFAULT_FIELD_NAME = "file";
 
     @Override
     public int getPriority() {

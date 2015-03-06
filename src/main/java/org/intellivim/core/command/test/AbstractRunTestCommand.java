@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.testIntegration.TestLocationProvider;
+import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
@@ -38,6 +39,7 @@ import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.CompileAndRunner;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.UnsupportedClientException;
+import org.intellivim.morph.FileExtensionsMorpher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
  * @author dhleong
  * @see com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
  */
+@Command(value="run_test", morpher=FileExtensionsMorpher.class)
 public abstract class AbstractRunTestCommand extends ProjectCommand {
 
     @Required @Inject AsyncTestRunner asyncRunner;

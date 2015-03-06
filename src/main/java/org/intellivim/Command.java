@@ -1,5 +1,7 @@
 package org.intellivim;
 
+import org.intellivim.morph.Polymorpher;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -25,4 +27,11 @@ public @interface Command {
      * @return
      */
     String value();
+
+    /**
+     * Return the Polymorpher which should be used
+     *  to determine which @CommandImpl to inflate
+     *  for this command
+     */
+    Class<? extends Polymorpher> morpher() default Polymorpher.class;
 }

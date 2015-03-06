@@ -23,6 +23,7 @@ import org.intellivim.core.command.test.TestNode;
 import org.intellivim.core.command.test.TestObjectManager;
 import org.intellivim.core.command.test.TestState;
 import org.intellivim.core.util.BuildUtil;
+import org.intellivim.morph.CommandImpl;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
  * @author dhleong
  */
 @Command("junit")
+@CommandImpl(of="run_test", whenParams="java")
 public class JUnitRunTestCommand extends AbstractRunTestCommand {
 
     private static final boolean DEBUG = false;
