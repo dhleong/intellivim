@@ -43,12 +43,12 @@ of thing to locate:
  - `file` Search by file name/path (default)
  - `class` Search by class name
 
-`:Run [config]` Builds and runs the current project, opening a split to contain
+`:RunProject [config]` Builds and runs the current project, opening a split to contain
 the output. Closing the split will terminate the execution, as will calling 
 `:Terminate` from inside that window. Optionally pass `config` to specify which
-configuration to launch. Tab-completion is supported
+configuration to launch. Tab-completion is supported.
 
-`:RunList` List run configurations and their types
+`:RunList` List run configurations and their types.
 
 `:RunTest` Builds and runs the test case under the cursor, opening a split to contain
 the output with fancy test status visualization. Currently supports JUnit tests (See #5)

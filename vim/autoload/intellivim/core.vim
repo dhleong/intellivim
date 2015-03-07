@@ -51,10 +51,10 @@ function! intellivim#core#Setup() " {{{
             \ call intellivim#core#impl#ShowImplementables()
     endif
 
-    if !exists(":Run")
+    if !exists(":RunProject")
         command -nargs=?
             \ -complete=customlist,intellivim#core#run#CompleteRunConfigs
-            \ Run :call intellivim#core#run#Run('<args>')
+            \ RunProject :call intellivim#core#run#Run('<args>')
         command -nargs=0
             \ RunList :call intellivim#core#run#RunList()
     endif
