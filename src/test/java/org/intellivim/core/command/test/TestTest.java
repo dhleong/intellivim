@@ -94,7 +94,7 @@ public class TestTest extends UsableSdkTestCase {
     public void testMocksWorked() throws Exception {
         final int offset = 132;
 
-        Project project = prepareProject(RUNNABLE_PROJECT);
+        Project project = prepareProject(TESTABLE_PROJECT);
         PsiFile file = ProjectUtil.getPsiFile(project, TESTABLE);
 
         PsiElement element = prepareElement(project, file, offset);
@@ -123,7 +123,7 @@ public class TestTest extends UsableSdkTestCase {
 
         final int offset = 115;
 
-        Project project = prepareProject(RUNNABLE_PROJECT);
+        Project project = prepareProject(TESTABLE_PROJECT);
         PsiFile file = ProjectUtil.getPsiFile(project, TESTABLE);
 
         prepareElement(project, file, offset);

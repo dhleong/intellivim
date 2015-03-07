@@ -1,5 +1,7 @@
 package org.intellivim.core.command.run;
 
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.project.Project;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
@@ -39,6 +41,10 @@ public class RunTest extends UsableSdkTestCase {
 
     public void testRun() throws Exception {
         Project project = prepareProject(RUNNABLE_PROJECT);
+        final RunManager manager = RunManager.getInstance(project);
+        for (RunnerAndConfigurationSettings setting : manager.getAllSettings()) {
+            System.out.println(setting.getName());
+        }
 
         LoggingRunner runner = new LoggingRunner();
         SimpleResult result = (SimpleResult) new RunCommand(project, runner).execute();

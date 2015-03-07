@@ -6,6 +6,8 @@ import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -131,10 +133,17 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         if (settings == null)
             return null;
 
-        ApplicationConfiguration config =
-                (ApplicationConfiguration) settings.getConfiguration();
-        JavaRunConfigurationModule configurationModule = config.getConfigurationModule();
-        return configurationModule.getModule();
+        RunConfiguration raw = settings.getConfiguration();
+        if (raw instanceof ApplicationConfiguration) {
+            ApplicationConfiguration config = (ApplicationConfiguration) raw;
+            JavaRunConfigurationModule configurationModule = config.getConfigurationModule();
+            return configurationModule.getModule();
+        } else if (raw instanceof JUnitConfiguration) {
+            JUnitConfiguration config = (JUnitConfiguration) raw;
+            return config.getModules()[0]; // I guess...?
+        }
+
+        throw new IllegalStateException("Unable to get module for " + project);
     }
 
 }
