@@ -10,7 +10,9 @@ import org.intellivim.inject.UnsupportedClientException;
  * @author dhleong
  */
 @ClientSpecific(Client.DEFAULT)
-public class DummyTestRunner extends VimAsyncTestRunner {
+public class DummyTestRunner
+        extends VimAsyncTestRunner
+        implements AsyncTestRunner { // redundant to make a stronger hint to Client
 
     @Override
     public void prepare(String launchId) throws UnsupportedClientException {

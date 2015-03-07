@@ -11,6 +11,7 @@ def ideaPlatformZip = "ideaIC-${ideaPlatformVersion}.tar.gz"
 def ideaPlatformUrl = "http://download.jetbrains.com/idea/${ideaPlatformZip}"
 def ideaPlatformDir = "./intellij-platform"
 def ideaPlatformLibsDir = "${ideaPlatformDir}/lib"
+def junitLibDir = "plugins/junit/lib"
 
 repositories {
     mavenCentral()
@@ -39,7 +40,8 @@ task preparePlatformDependency {
         it.isDirectory()
     }
 
-    ideaPlatformLibsDir = new File(unzipDir.getSingleFile(), "lib").getAbsolutePath()
+    ideaPlatformDir = unzipDir.getSingleFile().getAbsolutePath()
+    ideaPlatformLibsDir = new File(ideaPlatformDir, "lib").getAbsolutePath()
     println "Using " + ideaPlatformLibsDir
 
     println "Done!"
@@ -59,6 +61,11 @@ dependencies {
     // platform stuff
     testRuntime fileTree(dir: "${System.properties['java.home']}/../lib/", include: "tools.jar")
     provided fileTree(dir: ideaPlatformLibsDir, include: '*.jar')
+
+    // junit support
+    def junitLib = new File(ideaPlatformDir, junitLibDir)
+    testRuntime fileTree(dir: junitLib, include: '*.jar')
+    provided fileTree(dir: junitLib, include: '*.jar')
 }
 
 sourceSets {

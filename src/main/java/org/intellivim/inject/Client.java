@@ -2,6 +2,9 @@ package org.intellivim.inject;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.intellivim.ICommand;
 import org.reflections.ReflectionUtils;
@@ -54,17 +57,17 @@ public class Client implements Injector<Object> {
 
     public static <T> Collection<Class<? extends T>> candidates(final Class<T> parentType) {
         // TODO cache?
-        final Set<Class<? extends T>> base = reflections().getSubTypesOf(parentType);
-        return ReflectionUtils.getAll(base,
-                ReflectionUtils.withAnnotation(ClientSpecific.class));
-//        return ContainerUtil.filter(base, new Condition<Class<? extends T>>() {
-//            @Override
-//            public boolean value(final Class<? extends T> aClass) {
-//                final Class<?>[] interfaces = aClass.getInterfaces();
-//                return ArrayUtil.contains(parentType, interfaces)
-//                    || aClass.getSuperclass() == parentType;
-//            }
-//        });
+        final Set<Class<? extends T>> base =
+                ReflectionUtils.getAll(reflections().getSubTypesOf(parentType),
+                    ReflectionUtils.withAnnotation(ClientSpecific.class));
+        return ContainerUtil.filter(base, new Condition<Class<? extends T>>() {
+            @Override
+            public boolean value(final Class<? extends T> aClass) {
+                final Class<?>[] interfaces = aClass.getInterfaces();
+                return ArrayUtil.contains(parentType, (Object[]) interfaces)
+                        || aClass.getSuperclass() == parentType;
+            }
+        });
     }
 
     @Override
