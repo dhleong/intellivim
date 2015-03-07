@@ -45,11 +45,11 @@ public class CompleteCommand extends ProjectCommand {
 
         final CompletionParameters params = CompletionParametersUtil.from(project, virtualFile, offset);
         final LookupElement[] results = performCompletion(params, null);
-        ArrayList<CompletionInfo> infos = new ArrayList<CompletionInfo>(results.length);
+        ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>(results.length);
         for (LookupElement el : results) {
 //            System.out.println("result: " + el.getPsiElement() + " / " + el + " / " + el.getClass());
 
-            CompletionInfo info = CompletionInfo.from(el);
+            CompletionInfo<?> info = CompletionInfo.from(el);
             if (info != null)
                 infos.add(info);
         }

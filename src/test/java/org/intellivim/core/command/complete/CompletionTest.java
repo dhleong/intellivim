@@ -30,19 +30,19 @@ public class CompletionTest extends BaseTestCase {
 
         CompletionInfo first = infoList.get(0);
         assertNotNull(first);
-        assertEquals("boring", first.body);
+        assertEquals("boring()", first.body);
         assertEquals("()-> void", first.detail);
         assertEquals("", first.doc);
 
         CompletionInfo second = infoList.get(1);
         assertNotNull(second);
-        assertEquals("notBoring", second.body);
+        assertEquals("notBoring(", second.body);
         assertEquals("(int number)-> void", second.detail);
         assertEquals("/** I promise it's not boring */", second.doc);
 
         CompletionInfo last = infoList.get(2);
         assertNotNull(last);
-        assertEquals("fluid", last.body);
+        assertEquals("fluid()", last.body);
         assertEquals("()-> Dummy", last.detail);
         assertEquals("", last.doc);
     }

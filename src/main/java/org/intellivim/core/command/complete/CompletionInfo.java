@@ -48,7 +48,7 @@ public abstract class CompletionInfo<T extends PsiElement> {
 
     protected abstract String formatDetail(final LookupElement lookup, final T el);
 
-    public static CompletionInfo from(LookupElement el) {
+    public static CompletionInfo<?> from(LookupElement el) {
         final PsiElement psi = el.getPsiElement();
         if (psi instanceof PsiMethod) {
             return new MethodCompletionInfo(el, (PsiMethod) psi);
