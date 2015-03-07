@@ -1,5 +1,6 @@
 package org.intellivim.core.util;
 
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -10,7 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
  * @author dhleong
  */
 public class FormatUtil {
-    public static String buildDocComment(PsiMethod method) {
+    public static String buildDocComment(PsiDocCommentOwner method) {
         PsiDocComment docComment = method.getDocComment();
         if (docComment == null)
             return ""; // never be null?
@@ -23,7 +24,7 @@ public class FormatUtil {
         builder.append('(');
 
         boolean first = true;
-        PsiParameterList parameterList = method.getParameterList();
+        final PsiParameterList parameterList = method.getParameterList();
         for (PsiParameter param : parameterList.getParameters()) {
             if (first) {
                 first = false;
