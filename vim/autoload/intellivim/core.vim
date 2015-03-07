@@ -58,6 +58,12 @@ function! intellivim#core#Setup() " {{{
         command -nargs=0
             \ RunList :call intellivim#core#run#RunList()
     endif
+
+    if !exists(":RunTest")
+        command -nargs=0
+            \ RunTest :call intellivim#core#test#RunTest()
+    endif
+
     " }}}
 
 endfunction " }}}

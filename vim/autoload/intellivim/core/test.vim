@@ -93,7 +93,11 @@ endfunction " }}}
 "
 
 function! intellivim#core#test#RunTest() " {{{
-    " TODO attempt to run appropriate test under cursor
+    " attempt to run appropriate test under cursor
+    let command = intellivim#NewCommand("run_test")
+    let command.offset = intellivim#GetOffset()
+    let result = intellivim#client#Execute(command)
+    call intellivim#ShowErrorResult(result)
 endfunction " }}}
 
 "
