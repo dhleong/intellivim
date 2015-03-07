@@ -150,6 +150,9 @@ public class BuildUtil {
                     || element instanceof PsiMethod)) {
             element = element.getParent();
         }
+        if (element == null) {
+            element = file;
+        }
         return createConfiguration(project, element, new MapDataContext());
     }
 
@@ -165,10 +168,9 @@ public class BuildUtil {
             @NotNull MapDataContext dataContext) {
         ConfigurationContext context = createContext(project, psiElement, dataContext);
         RunnerAndConfigurationSettings settings = context.getConfiguration();
-        T configuration = settings == null
+        return settings == null
                 ? null
                 : (T) settings.getConfiguration();
-        return configuration;
     }
 
     public static ConfigurationContext createContext(
