@@ -50,6 +50,9 @@ configuration to launch. Tab-completion is supported
 
 `:RunList` List run configurations and their types
 
+`:RunTest` Builds and runs the test case under the cursor, opening a split to contain
+the output with fancy test status visualization. Currently supports JUnit tests (See #5)
+
 #### Mappings
 
 With the exception of setting the `omnifunc` per-buffer, IntelliVim does not come with
@@ -62,6 +65,10 @@ nnoremap <leader>ji :Implement<cr>
 nnoremap <leader>jc :FixProblem<cr>
 " 'fix imports'
 nnoremap <leader>fi :JavaOptimizeImports<cr>
+" muscle memory from eclim ("ProjectRun")
+nnoremap <leader>pr :Run<cr>
+" muscle memory from vim-fireplace
+nnoremap cpr :RunTest<cr>
 nnoremap gd :GotoDeclaration<cr>
 nnoremap K :GetDocumentation<cr>
 ```
