@@ -186,7 +186,6 @@ public class IVGson {
         //  doesn't understand true/false....
         return new GsonBuilder()
                 .registerTypeAdapter(HighlightSeverity.class, new SeverityTypeAdapter())
-                .registerTypeAdapterFactory(new ICommandTypeAdapterFactory())
                 .registerTypeAdapterFactory(new CommandTypeAdapterFactory())
                 .registerTypeAdapterFactory(new OnlyInjectableTypesAdapterFactory())
                 .create();
@@ -305,41 +304,6 @@ public class IVGson {
                             obj,
                             gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
                                 TypeToken.get(commandClass)).fromJsonTree(obj));
-                }
-
-            };
-        }
-    }
-
-    /**
-     * NB: Only use for testing, so we don't have to
-     *  unwrap the RawCommand every time
-     */
-    private static class ICommandTypeAdapterFactory implements TypeAdapterFactory {
-
-        @Override
-        public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> typeToken) {
-            if (!ICommand.class.isAssignableFrom(typeToken.getRawType()))
-                return null;
-
-            final TypeAdapter<T> defaultAdapter = gson.getDelegateAdapter(this, typeToken);
-            final TypeAdapter<JsonObject> jsonAdapter = gson.getAdapter(JsonObject.class);
-
-            return new TypeAdapter<T>() {
-                @Override
-                public void write(JsonWriter jsonWriter, T t) throws IOException {
-                    // probably shouldn't need to serialize a command, but....
-                    defaultAdapter.write(jsonWriter, t);
-                }
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public T read(JsonReader jsonReader) throws IOException {
-                    final JsonObject obj = jsonAdapter.read(jsonReader);
-                    final String commandName = obj.get("command").getAsString();
-                    final Class<?> commandClass = getCommandClass(obj, commandName);
-                    return (T) gson.getDelegateAdapter(ICommandTypeAdapterFactory.this,
-                            TypeToken.get(commandClass)).fromJsonTree(obj);
                 }
 
             };

@@ -5,6 +5,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
@@ -107,7 +108,9 @@ public class TestTest extends UsableSdkTestCase {
               .as("Found element")
               .isNotNull();
 
-        softly.assertThat(BuildUtil.createConfiguration(project, element))
+        // separated to satisfy gradle, who thinks it's ambiguous
+        final RunConfiguration config = BuildUtil.createConfiguration(project, element);
+        softly.assertThat(config)
               .as("Created configuration")
               .isNotNull()
               .isInstanceOf(JUnitConfiguration.class);

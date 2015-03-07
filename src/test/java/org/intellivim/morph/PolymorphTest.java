@@ -1,16 +1,15 @@
 package org.intellivim.morph;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.intellivim.BaseTestCase;
 import org.intellivim.Command;
 import org.intellivim.ICommand;
-import org.intellivim.IVGson;
 import org.intellivim.Result;
 import org.intellivim.java.command.junit.JUnitRunTestCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.intellivim.IVGsonTest.inflateAndInject;
 
 /**
  * @author dhleong
@@ -33,24 +32,17 @@ public class PolymorphTest extends BaseTestCase {
         }
     }
 
-
-    Gson gson;
+    final String filePath = "src/org/intellivim/javaproject/Dummy.java";
 
     @Override
     protected String getProjectPath() {
         return null; // NB unused here
     }
 
-    public void setUp() throws Exception {
-        super.setUp();
-
-        gson = IVGson.newInstance();
-    }
 
     public void testNoMorpher() {
         try {
-            gson.fromJson("{command:'test__no_morpher', file:'foo.java'}",
-                    ICommand.class);
+            inflateAndInject("{command:'test__no_morpher', file:'foo.java'}");
             failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
         } catch (IllegalArgumentException e) {
             assertThat(e).hasMessageContaining("No morpher");
@@ -60,8 +52,7 @@ public class PolymorphTest extends BaseTestCase {
 
     public void testNoImpls() {
         try {
-            gson.fromJson("{command:'test__no_impls', file:'foo.java'}",
-                    ICommand.class);
+            inflateAndInject("{command:'test__no_impls', file:'foo.java'}");
             failBecauseExceptionWasNotThrown(IllegalStateException.class);
         } catch (JsonSyntaxException e) {
             assertThat(e.getCause())
@@ -72,8 +63,7 @@ public class PolymorphTest extends BaseTestCase {
 
     public void testUnsupported() {
         try {
-            gson.fromJson("{command:'run_test', file:'foo.superrandom'}",
-                    ICommand.class);
+            inflateAndInject("{command:'run_test', file:'foo.superrandom'}");
             failBecauseExceptionWasNotThrown(IllegalStateException.class);
         } catch (JsonSyntaxException e) {
             // TODO we could let the Polymorpher generate the error message
@@ -83,10 +73,11 @@ public class PolymorphTest extends BaseTestCase {
         }
     }
 
-
     public void testJunit() {
-        ICommand cmd = gson.fromJson("{command:'run_test', file:'foo.java'}",
-                ICommand.class);
+        final String projectPath = getProjectPath(JAVA_PROJECT);
+        final ICommand cmd = inflateAndInject("{command:'run_test'," +
+                "file:'" + filePath + "'," +
+                "project:'" + projectPath + "'}");
         assertThat(cmd).isInstanceOf(JUnitRunTestCommand.class);
     }
 

@@ -2,11 +2,9 @@ package org.intellivim.inject;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.intellivim.ICommand;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -15,7 +13,6 @@ import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Set;
 
@@ -33,7 +30,9 @@ public class Client implements Injector<Object> {
      */
     public static final String DEFAULT = "_";
 
-    static final String SPEC = "";
+    private static final String SPEC = "";
+
+    private static final String INTELLIVIM_PACKAGE = "org.intellivim";
 
     static Reflections reflector;
 
@@ -54,15 +53,18 @@ public class Client implements Injector<Object> {
     }
 
     public static <T> Collection<Class<? extends T>> candidates(final Class<T> parentType) {
+        // TODO cache?
         final Set<Class<? extends T>> base = reflections().getSubTypesOf(parentType);
-        return ContainerUtil.filter(base, new Condition<Class<? extends T>>() {
-            @Override
-            public boolean value(final Class<? extends T> aClass) {
-                final Class<?>[] interfaces = aClass.getInterfaces();
-                return ArrayUtil.contains(parentType, interfaces)
-                    || aClass.getSuperclass() == parentType;
-            }
-        });
+        return ReflectionUtils.getAll(base,
+                ReflectionUtils.withAnnotation(ClientSpecific.class));
+//        return ContainerUtil.filter(base, new Condition<Class<? extends T>>() {
+//            @Override
+//            public boolean value(final Class<? extends T> aClass) {
+//                final Class<?>[] interfaces = aClass.getInterfaces();
+//                return ArrayUtil.contains(parentType, interfaces)
+//                    || aClass.getSuperclass() == parentType;
+//            }
+//        });
     }
 
     @Override
@@ -77,25 +79,28 @@ public class Client implements Injector<Object> {
 
     @Override
     public boolean inject(Gson gson, Field field, ICommand command, JsonObject json) throws IllegalAccessException {
-        Object inflated = inflateFor(gson, field.getType(), json);
+        final Object inflated = inflateFor(gson, field.getType(), json);
         if (inflated != null)
             field.set(command, inflated);
         return false;
     }
 
     static boolean isPossiblyClientSpecific(Class<?> klass) {
-        return klass.isInterface() || Modifier.isAbstract(klass.getModifiers());
+        // just check if there are any candidates
+        return !candidates(klass).isEmpty();
     }
 
     @SuppressWarnings("unchecked")
     static <T> T inflateFor(Gson gson, Class<T> klass, JsonObject json) {
         String clientName = json.has("client") ? json.get("client").getAsString() : null;
         if (StringUtils.isEmpty(clientName)) {
-            T def = inflateDefaultFor(gson, klass, json);
-            if (def != null)
+            final T def = inflateDefaultFor(gson, klass, json);
+            if (def != null) {
                 return def;
+            }
 
-            throw new IllegalArgumentException("Client name must not be null or empty");
+            throw new IllegalArgumentException("Client name must not be null or empty; "
+                    + "Inflating " + klass);
         }
 
         final Class<?> implementation = pickClientImplementation(klass, clientName);
@@ -116,7 +121,6 @@ public class Client implements Injector<Object> {
     }
 
     private static Class<?> pickClientImplementation(Class<?> parentType, String clientName) {
-        // TODO caching?
         for (Class<?> implementation : candidates(parentType)) {
             String implClient = getHandledClient(implementation);
             if (SPEC.equals(implClient)) {
@@ -136,9 +140,16 @@ public class Client implements Injector<Object> {
 
     @SuppressWarnings("unchecked")
     private static <T> T inflateDefaultFor(Gson gson, Class<T> klass, JsonObject json) {
-        for (Class<?> implementation : candidates(klass)) {
-            if (DEFAULT.equals(getHandledClient(implementation)))
+        Collection<Class<? extends T>> candidates = candidates(klass);
+        if (candidates.size() == 0) {
+            throw new IllegalArgumentException(
+                    "No @ClientSpecific implementations for " + klass);
+        }
+
+        for (Class<?> implementation : candidates) {
+            if (DEFAULT.equals(getHandledClient(implementation))) {
                 return (T) inflate(gson, implementation, json);
+            }
         }
 
         // nope :(
