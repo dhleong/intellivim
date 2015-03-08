@@ -57,6 +57,8 @@ public class ProjectUtil {
         final Project project = getProject(projectPath);
         if (project == null)
             throw new IllegalArgumentException("Couldn't find project at " + projectPath);
+        if (project.isDisposed())
+            throw new IllegalArgumentException("Project " + project + " was already disposed!");
 
         return project;
     }
@@ -184,7 +186,7 @@ public class ProjectUtil {
                     }
                 });
 
-                startupManager.runPostStartupActivitiesFromExtensions();
+//                startupManager.runPostStartupActivitiesFromExtensions();
 
                 // this doesn't seem to do anything useful, and gunks up stderr
 //                UIUtil.invokeLaterIfNeeded(new Runnable() {
