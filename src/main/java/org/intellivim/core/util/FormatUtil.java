@@ -41,7 +41,10 @@ public class FormatUtil {
         return builder.toString();
     }
 
-    public static CharSequence getTypeName(PsiType type) {
+    public static CharSequence getTypeName(final PsiType type) {
+        if (type == null)
+            return "void";
+
         return type.getPresentableText();
     }
 

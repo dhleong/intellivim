@@ -6,8 +6,10 @@ import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import org.intellivim.core.command.complete.formatters.ClassCompletionInfo;
 import org.intellivim.core.command.complete.formatters.FieldCompletionInfo;
+import org.intellivim.core.command.complete.formatters.PackageCompletionInfo;
 import org.intellivim.core.command.complete.formatters.MethodCompletionInfo;
 import org.intellivim.core.util.FormatUtil;
 
@@ -19,6 +21,7 @@ public abstract class CompletionInfo<T extends PsiElement> {
     public static final int TYPE_METHOD = 0;
     public static final int TYPE_CLASS = 1;
     public static final int TYPE_FIELD = 2;
+    public static final int TYPE_PACKAGE = 3;
 
     public final int type;
 
@@ -56,6 +59,8 @@ public abstract class CompletionInfo<T extends PsiElement> {
             return new ClassCompletionInfo(el, (PsiClass) psi);
         } else if (psi instanceof PsiField) {
             return new FieldCompletionInfo(el, (PsiField) psi);
+        } else if (psi instanceof PsiPackage) {
+            return new PackageCompletionInfo(el, (PsiPackage) psi);
         }
 
         // any other (useful) info types?

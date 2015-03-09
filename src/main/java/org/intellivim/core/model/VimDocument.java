@@ -58,7 +58,7 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
         return super.getUserData(key);
     }
 
-    public static VimDocument getInstance(PsiFile originalFile) {
+    public static VimDocument getInstance(@NotNull PsiFile originalFile) {
         VirtualFile file = originalFile.getVirtualFile();
         final Document doc = FileDocumentManager.getInstance()
                 .getCachedDocument(file);

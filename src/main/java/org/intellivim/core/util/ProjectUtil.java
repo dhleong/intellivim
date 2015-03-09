@@ -131,12 +131,21 @@ public class ProjectUtil {
 
     public static VirtualFile getVirtualFile(Project project, String filePath) {
         final File file = new File(project.getBasePath(), filePath);
+        if (!file.exists()) {
+            throw new IllegalArgumentException("Couldn't find file " + file);
+        }
 
         // load the VirtualFile and ensure it's up to date
         final VirtualFile virtual = LocalFileSystem.getInstance()
                 .refreshAndFindFileByIoFile(file);
+        if (virtual == null || !virtual.exists()) {
+            throw new IllegalArgumentException("Couldn't locate virtual file @" + file);
+        }
         LocalFileSystem.getInstance().refreshFiles(Arrays.asList(virtual));
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtual);
+        if (psiFile == null) {
+            throw new IllegalArgumentException("Couldn't locate psi file for " + virtual);
+        }
 
         // we do this eagerly so FileDocumentManger#getCachedDocument will
         //  return the exact same instance that we want to use
