@@ -3,13 +3,10 @@ package org.intellivim.core.command.impl;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -149,8 +146,11 @@ public class Implementables extends ArrayList<Implementable> {
             range = new TextRange(offset, offset + member.getElement().getTextLength());
         }
 
-        // NB see the comments in this method
-        ((VimDocument) editor.getDocument()).setUncommited(true);
+        // NB: The setUncommited hack no longer works
+        //  in IntelliJ 14. The tests pass without it,
+        //  but now the complaint mentioned below is back....
+//        // NB see the comments in this method
+//        ((VimDocument) editor.getDocument()).setUncommited(true);
 
         new ReformatCodeProcessor(project,
                 targetClass.getContainingFile(),
@@ -158,12 +158,12 @@ public class Implementables extends ArrayList<Implementable> {
                 false)
             .runWithoutProgress();
 
-        // the above sometimes complains with:
-        // "Document and psi file texts should be equal"
-        //  even if they are. The `setUncommited` hack seems
-        //  to prevent that now
-
-        ((VimDocument) editor.getDocument()).setUncommited(false);
+//        // the above sometimes complains with:
+//        // "Document and psi file texts should be equal"
+//        //  even if they are. The `setUncommited` hack seems
+//        //  to prevent that now
+//
+//        ((VimDocument) editor.getDocument()).setUncommited(false);
     }
 
 

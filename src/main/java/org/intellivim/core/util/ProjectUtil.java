@@ -134,7 +134,7 @@ public class ProjectUtil {
         return getPsiFile(project, getVirtualFile(project, filePath));
     }
 
-    public static PsiFile getPsiFile(final Project project, final VirtualFile virtual) {
+    public static PsiFile getPsiFile(@NotNull final Project project, @NotNull final VirtualFile virtual) {
         return ApplicationManager.getApplication().runReadAction(
                 new Computable<PsiFile>() {
                     @Override

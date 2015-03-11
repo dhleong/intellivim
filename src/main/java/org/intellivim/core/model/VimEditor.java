@@ -37,6 +37,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import org.intellivim.core.util.ProjectUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,8 @@ import java.beans.PropertyChangeListener;
 public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     private Project project;
+    private PsiFile originalFile;
+
     private DocumentEx doc;
     private CaretModel caretModel;
     private SoftWrapModelEx softWrapModel;
@@ -68,6 +71,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     public VimEditor(Project project, PsiFile originalFile, int offset) {
         this.project = project;
+        this.originalFile = originalFile;
         doc = VimDocument.getInstance(originalFile);
         caretModel = new VimCaretModel(doc, offset);
         softWrapModel = new NullSoftWrapModel();
@@ -357,7 +361,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     @Override
     public VirtualFile getVirtualFile() {
-        return null;
+        return originalFile.getVirtualFile();
     }
 
     @Override
