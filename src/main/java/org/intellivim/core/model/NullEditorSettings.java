@@ -28,6 +28,36 @@ public class NullEditorSettings implements EditorSettings {
     }
 
     @Override
+    public boolean isLeadingWhitespaceShown() {
+        return false;
+    }
+
+    @Override
+    public void setLeadingWhitespaceShown(final boolean b) {
+
+    }
+
+    @Override
+    public boolean isInnerWhitespaceShown() {
+        return false;
+    }
+
+    @Override
+    public void setInnerWhitespaceShown(final boolean b) {
+
+    }
+
+    @Override
+    public boolean isTrailingWhitespaceShown() {
+        return false;
+    }
+
+    @Override
+    public void setTrailingWhitespaceShown(final boolean b) {
+
+    }
+
+    @Override
     public int getRightMargin(Project project) {
         return 0;
     }

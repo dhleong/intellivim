@@ -422,6 +422,11 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     }
 
     @Override
+    public void setShowPlaceholderWhenFocused(final boolean b) {
+
+    }
+
+    @Override
     public boolean isStickySelection() {
         return false;
     }

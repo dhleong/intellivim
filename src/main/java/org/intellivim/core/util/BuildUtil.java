@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOp
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -164,13 +166,19 @@ public class BuildUtil {
 
     @SuppressWarnings("unchecked")
     public static <T extends RunConfiguration> T createConfiguration(
-            @NotNull Project project, @NotNull PsiElement psiElement,
-            @NotNull MapDataContext dataContext) {
-        ConfigurationContext context = createContext(project, psiElement, dataContext);
-        RunnerAndConfigurationSettings settings = context.getConfiguration();
-        return settings == null
-                ? null
-                : (T) settings.getConfiguration();
+            @NotNull final Project project, @NotNull final PsiElement psiElement,
+            @NotNull final MapDataContext dataContext) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<T>() {
+            @Override
+            public T compute() {
+                ConfigurationContext context = createContext(
+                        project, psiElement, dataContext);
+                RunnerAndConfigurationSettings settings = context.getConfiguration();
+                return settings == null
+                        ? null
+                        : (T) settings.getConfiguration();
+            }
+        });
     }
 
     public static ConfigurationContext createContext(

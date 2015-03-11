@@ -2,6 +2,7 @@ package org.intellivim;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -37,6 +38,10 @@ public abstract class BaseTestCase extends UsefulTestCase {
         // XXX: IntelliJ IDEA Community and Ultimate 12+
         PlatformTestCase.initPlatformPrefix(ULTIMATE_MARKER_CLASS, "Idea");
         System.setProperty(PathManager.PROPERTY_HOME_PATH, "./");
+
+        // for whatever reason, the project is trying to load
+        //  charsets.jar from here. Make it happy
+        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home/jre");
     }
 
     /** Which project does this test reference? */

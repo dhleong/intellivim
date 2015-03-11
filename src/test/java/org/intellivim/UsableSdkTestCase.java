@@ -1,7 +1,6 @@
 package org.intellivim;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -87,10 +86,10 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         });
 
         // I... don't even.
-        CompilerManagerImpl.testSetup();
+//        CompilerManagerImpl.testSetup();
 
         CompilerTestUtil.setupJavacForTests(project);
-        CompilerTestUtil.enableExternalCompiler(project);
+        CompilerTestUtil.enableExternalCompiler();
         CompilerTestUtil.scanSourceRootsToRecompile(project);
         CompilerTestUtil.saveApplicationSettings();
 

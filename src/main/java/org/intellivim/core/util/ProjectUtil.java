@@ -2,6 +2,7 @@ package org.intellivim.core.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -12,6 +13,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +33,7 @@ import com.intellij.ui.content.MessageView;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellivim.core.model.VimDocument;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -94,7 +98,8 @@ public class ProjectUtil {
                 @Override
                 public void run() {
                     try {
-                        Project project = mgr.convertAndLoadProject(projectPath);
+//                        Project project = mgr.convertAndLoadProject(projectPath);
+                        Project project = mgr.loadAndOpenProject(projectPath);
                         projectRef.set(project);
 
                         DirectoryIndex index = DirectoryIndex.getInstance(project);
@@ -104,6 +109,10 @@ public class ProjectUtil {
                         allocateFrame(project);
                         mockMessageView(project);
                     } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (JDOMException e) {
+                        e.printStackTrace();
+                    } catch (InvalidDataException e) {
                         e.printStackTrace();
                     }
                 }
@@ -125,11 +134,18 @@ public class ProjectUtil {
         return getPsiFile(project, getVirtualFile(project, filePath));
     }
 
-    public static PsiFile getPsiFile(Project project, VirtualFile file) {
-        return PsiManager.getInstance(project).findFile(file);
+    public static PsiFile getPsiFile(final Project project, final VirtualFile virtual) {
+        return ApplicationManager.getApplication().runReadAction(
+                new Computable<PsiFile>() {
+                    @Override
+                    public PsiFile compute() {
+                        return PsiManager.getInstance(project).findFile(virtual);
+                    }
+                }
+        );
     }
 
-    public static VirtualFile getVirtualFile(Project project, String filePath) {
+    public static VirtualFile getVirtualFile(final Project project, String filePath) {
         final File file = new File(project.getBasePath(), filePath);
         if (!file.exists()) {
             throw new IllegalArgumentException("Couldn't find file " + file);
@@ -142,7 +158,7 @@ public class ProjectUtil {
             throw new IllegalArgumentException("Couldn't locate virtual file @" + file);
         }
         LocalFileSystem.getInstance().refreshFiles(Arrays.asList(virtual));
-        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtual);
+        final PsiFile psiFile = getPsiFile(project, virtual);
         if (psiFile == null) {
             throw new IllegalArgumentException("Couldn't locate psi file for " + virtual);
         }

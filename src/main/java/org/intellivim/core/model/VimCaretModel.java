@@ -1,9 +1,14 @@
 package org.intellivim.core.model;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,6 +161,12 @@ public class VimCaretModel implements CaretModel {
 
     }
 
+    @Override
+    public void setCaretsAndSelections(@NotNull final List<CaretState> list,
+            final boolean b) {
+
+    }
+
     @NotNull
     @Override
     public List<CaretState> getCaretsAndSelections() {
@@ -164,6 +175,11 @@ public class VimCaretModel implements CaretModel {
 
     @Override
     public void runForEachCaret(@NotNull CaretAction caretAction) {
+    }
+
+    @Override
+    public void runForEachCaret(@NotNull final CaretAction caretAction, final boolean b) {
+
     }
 
     @Override

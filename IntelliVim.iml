@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/intellij-platform" />
+      <excludeFolder url="file://$MODULE_DIR$/projects" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -20,4 +21,3 @@
     <orderEntry type="library" name="org.mockito:mockito-all:1.9.5" level="project" />
   </component>
 </module>
-
