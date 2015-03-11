@@ -68,10 +68,13 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-                for (PsiJavaCodeReferenceElement el
-                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-                    // TODO handle ambiguous imports somehow
-                    attemptAutoImport(editor, el);
+//                for (PsiJavaCodeReferenceElement el
+//                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
+//                    // TODO handle ambiguous imports somehow
+//                    attemptAutoImport(editor, el);
+//                }
+                for (final QuickFixDescriptor desc : findImportProblemFixes()) {
+                    desc.execute(project, editor, psiFile);
                 }
 
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
