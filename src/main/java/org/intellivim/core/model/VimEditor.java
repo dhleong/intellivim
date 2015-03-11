@@ -73,7 +73,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
         this.project = project;
         this.originalFile = originalFile;
         doc = VimDocument.getInstance(originalFile);
-        caretModel = new VimCaretModel(doc, offset);
+        caretModel = new VimCaretModel(this, doc, offset);
         softWrapModel = new NullSoftWrapModel();
         selectionModel = new NullSelectionModel();
         editorHighlighter = new NullEditorHighlighter();

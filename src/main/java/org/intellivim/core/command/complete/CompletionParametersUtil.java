@@ -32,7 +32,7 @@ public class CompletionParametersUtil {
     static Constructor<CompletionParameters> sConstructor;
 
     static CompletionParameters newInstance(PsiElement position, PsiFile originalFile,
-            CompletionType completionType, int offset, int invocationCount, Lookup lookup) {
+            CompletionType completionType, int offset, int invocationCount, Editor editor) {
 
         try {
 
@@ -43,7 +43,7 @@ public class CompletionParametersUtil {
                 ctor = CompletionParameters.class.getDeclaredConstructor(
                         PsiElement.class /* position */, PsiFile.class /* originalFile */,
                         CompletionType.class, int.class /* offset */, int.class /* invocationCount */,
-                        Lookup.class
+                        Editor.class
                 );
                 ctor.setAccessible(true);
                 sConstructor = ctor;
@@ -51,7 +51,7 @@ public class CompletionParametersUtil {
                 ctor = cached;
             }
 
-            return ctor.newInstance(position, originalFile, completionType, offset, invocationCount, lookup);
+            return ctor.newInstance(position, originalFile, completionType, offset, invocationCount, editor);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -66,7 +66,7 @@ public class CompletionParametersUtil {
         final CompletionType completionType = CompletionType.BASIC;
 
         final Editor editor = new VimEditor(project, psiFile, offset);
-        final Lookup lookup = new VimLookup(project, editor);
+//        final Lookup lookup = new VimLookup(project, editor);
 
         final int invocationCount = 0;
 
@@ -80,7 +80,7 @@ public class CompletionParametersUtil {
                 psiFile, position, editor);
 
         return newInstance(completionPosition, psiFile,
-                completionType, offset, invocationCount, lookup);
+                completionType, offset, invocationCount, editor);
     }
 
     /** based on CodeCompletionHandlerBase */

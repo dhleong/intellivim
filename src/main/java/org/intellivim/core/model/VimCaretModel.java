@@ -1,29 +1,29 @@
 package org.intellivim.core.model;
 
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.CaretState;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.impl.CaretImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by dhleong on 11/5/14.
+ * @author dhleong
  */
 public class VimCaretModel implements CaretModel {
 
+    private VimEditor editor;
     private Document doc;
     private int offset;
     private LogicalPosition logicalPosition;
 
-    public VimCaretModel(Document doc, int offset) {
+    public VimCaretModel(VimEditor editor, Document doc, int offset) {
+        this.editor = editor;
         this.doc = doc;
         this.offset = offset;
 
@@ -114,24 +114,24 @@ public class VimCaretModel implements CaretModel {
     @NotNull
     @Override
     public Caret getCurrentCaret() {
-        return null;
+        return new VimCaret(this, editor, getOffset());
     }
 
     @NotNull
     @Override
     public Caret getPrimaryCaret() {
-        return null;
+        return getCurrentCaret();
     }
 
     @Override
     public int getCaretCount() {
-        return 0;
+        return 1;
     }
 
     @NotNull
     @Override
     public List<Caret> getAllCarets() {
-        return null;
+        return Arrays.asList(getCurrentCaret());
     }
 
     @Nullable
@@ -175,6 +175,7 @@ public class VimCaretModel implements CaretModel {
 
     @Override
     public void runForEachCaret(@NotNull CaretAction caretAction) {
+        caretAction.perform(getCurrentCaret());
     }
 
     @Override
@@ -185,5 +186,187 @@ public class VimCaretModel implements CaretModel {
     @Override
     public void runBatchCaretOperation(@NotNull Runnable runnable) {
 
+    }
+
+    private class VimCaret extends UserDataHolderBase implements Caret {
+
+        private VimCaretModel model;
+        private final Editor editor;
+        private final int offset;
+
+        private VimCaret(VimCaretModel model, final Editor editor, final int offset) {
+            this.model = model;
+            this.editor = editor;
+            this.offset = offset;
+        }
+
+        @NotNull
+        @Override
+        public Editor getEditor() {
+            return editor;
+        }
+
+        @NotNull
+        @Override
+        public CaretModel getCaretModel() {
+            return model;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public void moveCaretRelatively(int columnShift, int lineShift, boolean withSelection, boolean scrollToCaret) {
+
+        }
+
+        @Override
+        public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
+
+        }
+
+        @Override
+        public void moveToVisualPosition(@NotNull VisualPosition pos) {
+
+        }
+
+        @Override
+        public void moveToOffset(int offset) {
+
+        }
+
+        @Override
+        public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
+
+        }
+
+        @Override
+        public boolean isUpToDate() {
+            return false;
+        }
+
+        @NotNull
+        @Override
+        public LogicalPosition getLogicalPosition() {
+            return null;
+        }
+
+        @NotNull
+        @Override
+        public VisualPosition getVisualPosition() {
+            return null;
+        }
+
+        @Override
+        public int getOffset() {
+            return offset;
+        }
+
+        @Override
+        public int getVisualLineStart() {
+            return 0;
+        }
+
+        @Override
+        public int getVisualLineEnd() {
+            return 0;
+        }
+
+        @Override
+        public int getSelectionStart() {
+            return 0;
+        }
+
+        @NotNull
+        @Override
+        public VisualPosition getSelectionStartPosition() {
+            return null;
+        }
+
+        @Override
+        public int getSelectionEnd() {
+            return 0;
+        }
+
+        @NotNull
+        @Override
+        public VisualPosition getSelectionEndPosition() {
+            return null;
+        }
+
+        @Nullable
+        @Override
+        public String getSelectedText() {
+            return null;
+        }
+
+        @Override
+        public int getLeadSelectionOffset() {
+            return 0;
+        }
+
+        @NotNull
+        @Override
+        public VisualPosition getLeadSelectionPosition() {
+            return null;
+        }
+
+        @Override
+        public boolean hasSelection() {
+            return false;
+        }
+
+        @Override
+        public void setSelection(int startOffset, int endOffset) {
+
+        }
+
+        @Override
+        public void setSelection(int startOffset, int endOffset, boolean updateSystemSelection) {
+
+        }
+
+        @Override
+        public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+
+        }
+
+        @Override
+        public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+
+        }
+
+        @Override
+        public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset, boolean updateSystemSelection) {
+
+        }
+
+        @Override
+        public void removeSelection() {
+
+        }
+
+        @Override
+        public void selectLineAtCaret() {
+
+        }
+
+        @Override
+        public void selectWordAtCaret(boolean honorCamelWordsSettings) {
+
+        }
+
+        @Nullable
+        @Override
+        public Caret clone(boolean above) {
+            return null;
+        }
+
+        @Override
+        public void dispose() {
+
+        }
     }
 }
