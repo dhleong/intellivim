@@ -3,14 +3,16 @@ package org.intellivim.core.command.impl;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellivim.core.model.VimDocument;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -149,6 +151,7 @@ public class Implementables extends ArrayList<Implementable> {
         // NB: The setUncommited hack no longer works
         //  in IntelliJ 14. The tests pass without it,
         //  but now the complaint mentioned below is back....
+        // TODO Can we remove the complaint another way?
 //        // NB see the comments in this method
 //        ((VimDocument) editor.getDocument()).setUncommited(true);
 

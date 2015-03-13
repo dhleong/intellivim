@@ -37,6 +37,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -80,10 +81,10 @@ public class ProjectUtil {
 
         final Project cached = sProjectCache.get(projectPath);
         if (cached != null) {
+//            return cached;
             // we can't use this as a real cache for some reason;
             //  we have to "close" any previously-opened projects
             //  and re-open each time to prevent unit test failures
-//            return cached;
             markProjectClosed(mgr, cached);
             deallocateFrame(cached);
         }
@@ -98,7 +99,12 @@ public class ProjectUtil {
                 @Override
                 public void run() {
                     try {
-//                        Project project = mgr.convertAndLoadProject(projectPath);
+//                        final Project project = mgr.convertAndLoadProject(projectPath);
+                        // NB: The line below causes a window to be opened for
+                        //  the project. But! RunCommand breaks in IntelliJ 14 without it.
+                        //  So, we now hide any existing frames in allocateFrame().
+                        //  I'm not sure if this is the right way to do it, but it doesn't
+                        //  seem to cause any problems so far....
                         Project project = mgr.loadAndOpenProject(projectPath);
                         projectRef.set(project);
 
@@ -258,9 +264,12 @@ public class ProjectUtil {
      *  compileAndRun to work
      */
     private static void allocateFrame(final Project project) {
-        WindowManager mgr = WindowManager.getInstance();
-        if (null != mgr.getFrame(project)) {
-//            System.out.println("Frame already allocated");
+        final WindowManager mgr = WindowManager.getInstance();
+        final JFrame existing = mgr.getFrame(project);
+        if (null != existing) {
+            // hide any existing frames. We may want this
+            //  to be a preference... Not sure
+            existing.setVisible(false);
             return; // already done
         }
 
@@ -298,6 +307,7 @@ public class ProjectUtil {
      * Also needed to prevent NPE in CompilerTask
      */
     private static void mockMessageView(final Project project) {
+
         final ContentManager mgr = ContentFactory.SERVICE.getInstance()
                 .createContentManager(false, project);
 
