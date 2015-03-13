@@ -4,6 +4,10 @@ IntelliVim [![Build Status](http://img.shields.io/travis/dhleong/intellivim.svg?
 IntelliVim aims to expose the features from [IntelliJ](https://www.jetbrains.com/idea/) inside of [Vim](http://www.vim.org/),
 in the spirit of [Eclim](http://eclim.org).
 
+## UNMAINTAINED
+
+This is the unmaintained IntelliJ 13 branch. Contributions may be accepted, but I will not be
+doing any active work on this branch. Since AndroidStudio is moving to IntelliJ 14, so am I.
 
 ## Features
 
