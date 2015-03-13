@@ -1,25 +1,14 @@
 package org.intellivim.core.util;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -30,14 +19,13 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellivim.core.model.VimDocument;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -48,8 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Lots of stuff imported from ProjectManagerImpl to
- *  prevent extraneous UI from appearing
  *
  * @author dhleong
  */
@@ -71,7 +57,7 @@ public class ProjectUtil {
     public static Project getProject(final String projectPath) {
         final ProjectManagerEx mgr = ProjectManagerEx.getInstanceEx();
 
-        // this doesn't really work; use our own cache
+        // this doesn't really work, for the same reasons as below:
 //        // check for an open one first
 //        for (Project p : mgr.getOpenProjects()) {
 //            System.out.println("Check: " + p.getProjectFilePath());
@@ -108,10 +94,6 @@ public class ProjectUtil {
                         Project project = mgr.loadAndOpenProject(projectPath);
                         projectRef.set(project);
 
-                        DirectoryIndex index = DirectoryIndex.getInstance(project);
-                        waitForFileWatcher(project, index);
-                        waitForStartup(project);
-                        markProjectOpened(mgr, project);
                         allocateFrame(project);
                         mockMessageView(project);
                     } catch (IOException e) {
@@ -173,90 +155,6 @@ public class ProjectUtil {
         //  return the exact same instance that we want to use
         VimDocument.getInstance(psiFile);
         return virtual;
-    }
-
-    static void waitForFileWatcher(@NotNull Project project, final DirectoryIndex index) {
-        LocalFileSystem fs = LocalFileSystem.getInstance();
-        if (!(fs instanceof LocalFileSystemImpl)) return;
-
-        final FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
-        if (!watcher.isOperational() || !watcher.isSettingRoots()) return;
-
-//        LOG.info("FW/roots waiting started");
-        Task.Modal task = new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-                indicator.setIndeterminate(true);
-                indicator.setText(ProjectBundle.message("project.load.waiting.watcher"));
-                if (indicator instanceof ProgressWindow) {
-                    ((ProgressWindow)indicator).setCancelButtonText(CommonBundle.message("button.skip"));
-                }
-                while ((watcher.isSettingRoots() || !index.isInitialized()) && !indicator.isCanceled()) {
-                    TimeoutUtil.sleep(10);
-                }
-//                LOG.info("FW/roots waiting finished");
-            }
-        };
-        ProgressManager.getInstance().run(task);
-    }
-
-    static void waitForStartup(@NotNull Project project) {
-        final StartupManagerImpl startupManager = (StartupManagerImpl) StartupManager.getInstance(project);
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            @Override
-            public void run() {
-                startupManager.runStartupActivities();
-
-                // dumb mode should start before post-startup activities
-                // only when startCacheUpdate is called from UI thread, we can guarantee that
-                // when the method returns, the application has entered dumb mode
-                UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                    @Override
-                    public void run() {
-                        startupManager.startCacheUpdate();
-                    }
-                });
-
-//                startupManager.runPostStartupActivitiesFromExtensions();
-
-                // this doesn't seem to do anything useful, and gunks up stderr
-//                UIUtil.invokeLaterIfNeeded(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        startupManager.runPostStartupActivities();
-//                    }
-//                });
-            }
-        }, ProjectBundle.message("project.load.progress"), true, project);
-    }
-
-    static void markProjectOpened(ProjectManagerEx mgr, Project project) {
-        // gross reflection
-        try {
-            Field f = ProjectManagerImpl.class.getDeclaredField("myOpenProjects");
-            f.setAccessible(true);
-
-            Method cacheOpenProjects = ProjectManagerImpl.class.getDeclaredMethod("cacheOpenProjects");
-            cacheOpenProjects.setAccessible(true);
-
-            List<Project> myOpenProjects = (List<Project>) f.get(mgr);
-            synchronized (myOpenProjects) {
-                if (myOpenProjects.contains(project))
-                    return; // done
-
-                myOpenProjects.add(project);
-                cacheOpenProjects.invoke(mgr);
-            }
-
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -366,6 +264,7 @@ public class ProjectUtil {
             cacheOpenProjects.setAccessible(true);
 
             List<Project> myOpenProjects = (List<Project>) f.get(mgr);
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (myOpenProjects) {
                 if (!myOpenProjects.contains(project))
                     return; // done
