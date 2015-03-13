@@ -11,11 +11,13 @@ import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassConfigurationProducer;
 import com.intellij.execution.junit.TestMethodConfigurationProducer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -97,12 +99,17 @@ public class TestTest extends UsableSdkTestCase {
         Project project = prepareProject(TESTABLE_PROJECT);
         PsiFile file = ProjectUtil.getPsiFile(project, TESTABLE);
 
-        PsiElement element = prepareElement(project, file, offset);
+        final PsiElement element = prepareElement(project, file, offset);
 
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(JUnitUtil.isTestMethodOrConfig((PsiMethod) element))
-              .as("isTestMethodOrConfig")
-              .isTrue();
+        final SoftAssertions softly = new SoftAssertions();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+                softly.assertThat(JUnitUtil.isTestMethodOrConfig((PsiMethod) element))
+                        .as("isTestMethodOrConfig")
+                        .isTrue();
+            }
+        });
 
         softly.assertThat(element)
               .as("Found element")
@@ -269,8 +276,19 @@ public class TestTest extends UsableSdkTestCase {
      *
      * @return The PsiElement at the offset in the file, if you want it
      */
-    PsiElement prepareElement(Project project, PsiFile file, int offset) throws Exception{
+    PsiElement prepareElement(final Project project,
+            final PsiFile file, final int offset) throws Exception {
+        return ApplicationManager.getApplication().runReadAction(
+                new ThrowableComputable<PsiElement, Exception>() {
+                    @Override
+                    public PsiElement compute() throws Exception{
+                        return prepareElementImpl(project, file, offset);
+                    }
+                }
+        );
+    }
 
+    private PsiElement prepareElementImpl(Project project, PsiFile file, int offset) throws Exception {
         PsiElement element = file.findElementAt(offset);
         while (element != null
                 && !(element instanceof PsiMethod
@@ -297,6 +315,8 @@ public class TestTest extends UsableSdkTestCase {
         Mockito.when(mockClass.getSupers()).thenReturn(new PsiClass[0]);
         Mockito.when(mockClass.getSuperTypes()).thenReturn(new PsiClassType[0]);
         Mockito.when(mockClass.getTypeParameters()).thenReturn(new PsiTypeParameter[0]);
+        Mockito.when(mockClass.getImplementsListTypes()).thenReturn(new PsiClassType[0]);
+        Mockito.when(mockClass.getExtendsListTypes()).thenReturn(new PsiClassType[0]);
         Mockito.when(mockClass.getFields()).thenReturn(new PsiField[0]);
         Mockito.when(mockClass.getMethods()).thenReturn(new PsiMethod[0]);
         Mockito.when(mockClass.getInnerClasses()).thenReturn(new PsiClass[0]);

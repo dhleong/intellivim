@@ -20,7 +20,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
@@ -69,10 +68,13 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-                for (PsiJavaCodeReferenceElement el
-                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-                    // TODO handle ambiguous imports somehow
-                    attemptAutoImport(editor, el);
+//                for (PsiJavaCodeReferenceElement el
+//                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
+//                    // TODO handle ambiguous imports somehow
+//                    attemptAutoImport(editor, el);
+//                }
+                for (final QuickFixDescriptor desc : findImportProblemFixes()) {
+                    desc.execute(project, editor, psiFile);
                 }
 
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
@@ -154,7 +156,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
                 PsiElement refElement = resolveResult.getElement();
                 if (refElement == null && referenceElement != null) {
-                    refElement = ResolveClassUtil.resolveClass(referenceElement); // might be incomplete code
+                    refElement = ResolveClassUtil.resolveClass(referenceElement, file); // might be incomplete code
                 }
                 if (refElement != null) continue; // already resolved?
 

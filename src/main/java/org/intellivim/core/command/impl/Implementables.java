@@ -13,7 +13,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellivim.core.model.VimDocument;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -149,8 +148,12 @@ public class Implementables extends ArrayList<Implementable> {
             range = new TextRange(offset, offset + member.getElement().getTextLength());
         }
 
-        // NB see the comments in this method
-        ((VimDocument) editor.getDocument()).setUncommited(true);
+        // NB: The setUncommited hack no longer works
+        //  in IntelliJ 14. The tests pass without it,
+        //  but now the complaint mentioned below is back....
+        // TODO Can we remove the complaint another way?
+//        // NB see the comments in this method
+//        ((VimDocument) editor.getDocument()).setUncommited(true);
 
         new ReformatCodeProcessor(project,
                 targetClass.getContainingFile(),
@@ -158,12 +161,12 @@ public class Implementables extends ArrayList<Implementable> {
                 false)
             .runWithoutProgress();
 
-        // the above sometimes complains with:
-        // "Document and psi file texts should be equal"
-        //  even if they are. The `setUncommited` hack seems
-        //  to prevent that now
-
-        ((VimDocument) editor.getDocument()).setUncommited(false);
+//        // the above sometimes complains with:
+//        // "Document and psi file texts should be equal"
+//        //  even if they are. The `setUncommited` hack seems
+//        //  to prevent that now
+//
+//        ((VimDocument) editor.getDocument()).setUncommited(false);
     }
 
 

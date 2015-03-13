@@ -58,6 +58,11 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
         return super.getUserData(key);
     }
 
+    @Override
+    public String toString() {
+        return "VimDocument: " + super.toString();
+    }
+
     public static VimDocument getInstance(@NotNull PsiFile originalFile) {
         VirtualFile file = originalFile.getVirtualFile();
         final Document doc = FileDocumentManager.getInstance()

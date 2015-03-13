@@ -2,7 +2,6 @@ package org.intellivim.core.model;
 
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrap;
-import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
@@ -118,6 +117,11 @@ public class NullSoftWrapModel implements SoftWrapModelEx {
     @Override
     public void forceAdditionalColumnsUsage() {
 
+    }
+
+    @Override
+    public EditorTextRepresentationHelper getEditorTextRepresentationHelper() {
+        return null;
     }
 
 }

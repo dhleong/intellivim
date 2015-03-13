@@ -47,14 +47,15 @@ public class IntelliVimUtil {
         ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
         sTemporarilyUnitTest = !app.isUnitTestMode();
 
-        if (sTemporarilyUnitTest)
-            app.setUnitTestMode(true);
+        // FIXME hopefully this isn't needed anymore...
+//        if (sTemporarilyUnitTest)
+//            app.setUnitTestMode(true);
     }
 
     public static void unsetUnitTestMode() {
         ApplicationImpl app = (ApplicationImpl) ApplicationManager.getApplication();
-        if (sTemporarilyUnitTest)
-            app.setUnitTestMode(false);
+//        if (sTemporarilyUnitTest)
+//            app.setUnitTestMode(false);
         sTemporarilyUnitTest = false;
     }
 
@@ -71,5 +72,4 @@ public class IntelliVimUtil {
             }
         };
     }
-
 }

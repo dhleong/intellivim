@@ -19,9 +19,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellivim.core.command.run.LaunchManager;
@@ -263,12 +265,19 @@ public class CompileAndRunner {
     }
 
     /** Just a little bit of convenience */
-    static ExecutionEnvironment prepareEnvironment(Project project,
-            RunnerAndConfigurationSettings setting,
-            ProgramRunner runner, Executor executor)
+    static ExecutionEnvironment prepareEnvironment(final Project project,
+            final RunnerAndConfigurationSettings setting,
+            final ProgramRunner runner, final Executor executor)
             throws ExecutionException {
-        ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-        return prepareEnvironment(project, setting, runner, target, executor);
+        return ApplicationManager.getApplication().runReadAction(
+                new ThrowableComputable<ExecutionEnvironment, ExecutionException>() {
+                    @Override
+                    public ExecutionEnvironment compute() throws ExecutionException {
+                        final ExecutionTarget target =
+                                ExecutionTargetManager.getActiveTarget(project);
+                        return prepareEnvironment(project, setting, runner, target, executor);
+                    }
+                });
     }
 
     /**
