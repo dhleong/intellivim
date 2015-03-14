@@ -20,6 +20,7 @@ import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 /**
@@ -62,6 +63,16 @@ public class CompletionParametersUtil {
         final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
         final PsiElement position = psiFile.findElementAt(offset);
         final CompletionType completionType = CompletionType.BASIC;
+
+        if (position == null) {
+            System.out.println("Couldn't find element at " + offset);
+            System.out.println("psif=" + psiFile.getText());
+            try {
+                System.out.println("file=" + new String(psiFile.getVirtualFile().contentsToByteArray()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         final Editor editor = new VimEditor(project, psiFile, offset);
 //        final Lookup lookup = new VimLookup(project, editor);

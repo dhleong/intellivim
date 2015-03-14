@@ -55,7 +55,7 @@ public class IVGsonTest extends BaseTestCase {
     public void testValidCommand() {
         String projectPath = getProjectPath(JAVA_PROJECT);
         String json = "{command: 'get_problems', project: '"
-                + projectPath + "', file: 'src/SomeClass.java'}";
+                + projectPath + "', file: 'src/org/intellivim/javaproject/SubClass.java'}";
         ICommand command = inflateAndInject(json);
         assertThat(command).isInstanceOf(GetProblemsCommand.class);
     }

@@ -16,7 +16,6 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
@@ -33,6 +32,7 @@ import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -45,19 +45,17 @@ import java.util.List;
 @Command("java_import_optimize")
 public class OptimizeImportsCommand extends ProjectCommand {
 
-    @Required String file;
+    @Required @Inject PsiFile file;
 
     public OptimizeImportsCommand(Project project, String filePath) {
         super(project);
-        file = filePath;
+        file = ProjectUtil.getPsiFile(project, filePath);
     }
 
     @Override
     public Result execute() {
-        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
-        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        final VimEditor editor = new VimEditor(project, psiFile, 0);
-        if (!(psiFile instanceof PsiJavaFile)) {
+        final VimEditor editor = new VimEditor(project, file, 0);
+        if (!(file instanceof PsiJavaFile)) {
             return SimpleResult.error(file + " is not a Java file");
         }
 
@@ -74,7 +72,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
 //                    attemptAutoImport(editor, el);
 //                }
                 for (final QuickFixDescriptor desc : findImportProblemFixes()) {
-                    desc.execute(project, editor, psiFile);
+                    desc.execute(project, editor, file);
                 }
 
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
@@ -84,8 +82,8 @@ public class OptimizeImportsCommand extends ProjectCommand {
         });
 
         ImportOptimizer optimizer = new JavaImportOptimizer();
-        if (optimizer.supports(psiFile)) {
-            Runnable action = optimizer.processFile(psiFile);
+        if (optimizer.supports(file)) {
+            Runnable action = optimizer.processFile(file);
             ApplicationManager.getApplication().runWriteAction(action);
         }
 

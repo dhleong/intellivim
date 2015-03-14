@@ -9,14 +9,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.intellivim.core.model.VimEditor;
-import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,15 +38,8 @@ public class Problems extends ArrayList<Problem> {
         }
     }
 
-    public static Problems collectFrom(Project project, String filePath) {
-        return collectFrom(project, ProjectUtil.getVirtualFile(project, filePath));
-    }
-    public static Problems collectFrom(final Project project, VirtualFile virtualFile) {
-
+    public static Problems collectFrom(final Project project, final PsiFile psiFile) {
         final Problems problems = new Problems();
-
-        final PsiManager manager = PsiManager.getInstance(project);
-        final PsiFile psiFile = manager.findFile(virtualFile);
 
         final VimEditor editor = new VimEditor(project, psiFile, 0);
         final DocumentEx doc = editor.getDocument();

@@ -16,6 +16,7 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.intellivim.core.util.Profiler;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 import org.intellivim.inject.Injector;
@@ -99,6 +100,8 @@ public class IVGson {
 //                injectField(gson, f, obj, raw);
 //            }
 
+            Profiler profiler = Profiler.with(RawCommand.class);
+
             // iterate over injectors in order
             for (Injector<?> injector : injectors) {
                 for (Field f : fieldsToInject) {
@@ -107,17 +110,21 @@ public class IVGson {
                     }
 
                     // got it!
+                    profiler.mark("  inject: " + injector);
                     f.setAccessible(true);
                     injector.inject(gson, f, raw, obj);
+                    profiler.mark("injected: " + injector);
                 }
             }
 
+            profiler.mark("getRequired");
             final Set<Field> requiredFields = ReflectionUtils
                     .getAllFields(commandClass, withAnnotation(Required.class));
+            profiler.mark("gotRequired");
             for (Field f : requiredFields) {
                 ensureRequiredField(f, obj, raw);
             }
-
+            profiler.mark("ensuredRequired");
 
             return raw;
         }

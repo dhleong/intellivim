@@ -1,11 +1,14 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 import java.util.Collections;
 
@@ -15,12 +18,12 @@ import java.util.Collections;
 @Command("get_fixes")
 public class GetFixesCommand extends ProjectCommand {
 
-    @Required String file;
+    @Required @Inject PsiFile file;
     @Required int offset;
 
     public GetFixesCommand(Project project, String filePath, int offset) {
         super(project);
-        file = filePath;
+        file = ProjectUtil.getPsiFile(project, filePath);
         this.offset = offset;
     }
 

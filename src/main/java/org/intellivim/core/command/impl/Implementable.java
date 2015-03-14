@@ -34,6 +34,11 @@ public class Implementable {
         return description.toString();
     }
 
+    @Override
+    public String toString() {
+        return candidate + "->" + getSignature();
+    }
+
     public static Implementable from(Implementables context, CandidateInfo info) {
         PsiElement element = info.getElement();
         if (element == null)

@@ -1,10 +1,14 @@
 package org.intellivim.core.command.complete;
 
 import com.intellij.openapi.project.Project;
+import org.assertj.core.api.Condition;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
+import java.util.Collection;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author dhleong
@@ -26,7 +30,9 @@ public class CompletionTest extends BaseTestCase {
         assertSuccess(result);
 
         List<CompletionInfo> infoList = (List<CompletionInfo>) result.result;
-        assertSize(3, infoList);
+        assertThat(infoList)
+                .isNotEmpty()
+                .has(sizeAtLeast(3));
 
         CompletionInfo first = infoList.get(0);
         assertNotNull(first);
@@ -48,5 +54,14 @@ public class CompletionTest extends BaseTestCase {
     }
 
     // TODO test completion with incomplete text, eg: list.<caret>
+
+    private static Condition<? super List<?>> sizeAtLeast(final int minSize) {
+        return new Condition<Collection<?>>("size at least " + minSize) {
+            @Override
+            public boolean matches(final Collection<?> ts) {
+                return ts.size() >= minSize;
+            }
+        };
+    }
 
 }

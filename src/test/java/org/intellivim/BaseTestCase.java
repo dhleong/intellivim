@@ -81,6 +81,8 @@ public abstract class BaseTestCase extends UsefulTestCase {
         myFixture.tearDown();
         myFixture = null;
         super.tearDown();
+
+        ProjectUtil.prepareForNextTest();
     }
 
     protected static void assertSuccess(SimpleResult result) {

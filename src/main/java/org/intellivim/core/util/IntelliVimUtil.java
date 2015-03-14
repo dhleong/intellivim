@@ -3,6 +3,7 @@ package org.intellivim.core.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.ui.UIUtil;
 
 /**
@@ -69,6 +70,19 @@ public class IntelliVimUtil {
             @Override
             public void run() {
                 UIUtil.invokeAndWaitIfNeeded(runnable);
+            }
+        };
+    }
+
+    /**
+     * @return A new computable that wraps execution of the given
+     *  computable as a Write Action
+     */
+    public static <T> Computable<T> asWriteAction(final Computable<T> computable) {
+        return new Computable<T>() {
+            @Override
+            public T compute() {
+                return ApplicationManager.getApplication().runWriteAction(computable);
             }
         };
     }

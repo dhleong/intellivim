@@ -1,10 +1,14 @@
 package org.intellivim.core.command.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
+import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 /**
  * @author dhleong
@@ -12,9 +16,9 @@ import org.intellivim.SimpleResult;
 @Command("implement")
 public class ImplementCommand extends ProjectCommand {
 
-    private final String file;
-    private final String[] signatures;
-    private final int offset;
+    @Required @Inject final PsiFile file;
+    @Required @Inject final String[] signatures;
+    @Required @Inject final int offset;
 
     public ImplementCommand(Project project, String file, String signature, int offset) {
         this(project, file, offset, signature);
@@ -23,7 +27,7 @@ public class ImplementCommand extends ProjectCommand {
     public ImplementCommand(Project project, String file, int offset, String... signatures) {
         super(project);
 
-        this.file = file;
+        this.file = ProjectUtil.getPsiFile(project, file);
         this.signatures = signatures;
         this.offset = offset;
     }

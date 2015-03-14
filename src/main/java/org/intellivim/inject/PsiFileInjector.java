@@ -40,7 +40,9 @@ public class PsiFileInjector implements Injector<PsiFile> {
             ? json.get(fieldName).getAsString()
             : json.get(DEFAULT_FIELD_NAME).getAsString();
         final Project project = ((ProjectCommand) command).getProject();
-        field.set(command, ProjectUtil.getPsiFile(project, path));
+        if (project != null) {
+            field.set(command, ProjectUtil.getPsiFile(project, path));
+        }
         return true;
     }
 }

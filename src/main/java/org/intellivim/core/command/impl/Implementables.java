@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
-import org.intellivim.core.util.ProjectUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,12 +177,11 @@ public class Implementables extends ArrayList<Implementable> {
         }
     }
 
-    public static Implementables collectFrom(Project project, String file, int offset)
+    public static Implementables collectFrom(Project project, PsiFile file, int offset)
             throws IllegalArgumentException {
-        final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
-        final VimEditor editor = new VimEditor(project, psiFile, offset);
+        final VimEditor editor = new VimEditor(project, file, offset);
 
-        final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, psiFile, true);
+        final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
         if (aClass == null) {
             throw new IllegalArgumentException("No context for implement");
         }

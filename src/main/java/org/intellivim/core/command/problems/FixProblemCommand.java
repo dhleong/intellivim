@@ -1,9 +1,7 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
@@ -11,6 +9,7 @@ import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 /**
  * @author dhleong
@@ -18,27 +17,24 @@ import org.intellivim.core.util.ProjectUtil;
 @Command("quickfix")
 public class FixProblemCommand extends ProjectCommand {
 
-    @Required String file;
+    @Required @Inject PsiFile file;
     @Required String fixId;
 
     public FixProblemCommand(Project project, String filePath, String fixId) {
         super(project);
-        file = filePath;
+        file = ProjectUtil.getPsiFile(project, filePath);
         this.fixId = fixId;
     }
 
     @Override
     public Result execute() {
 
-        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
-
-        final Problems problems = Problems.collectFrom(project, virtualFile);
+        final Problems problems = Problems.collectFrom(project, file);
         final QuickFixDescriptor fix = problems.locateQuickFix(fixId);
 
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        VimEditor editor = new VimEditor(project, psiFile, 0);
+        VimEditor editor = new VimEditor(project, file, 0);
 
-        fix.execute(project, editor, psiFile);
+        fix.execute(project, editor, file);
         return SimpleResult.success();
     }
 }

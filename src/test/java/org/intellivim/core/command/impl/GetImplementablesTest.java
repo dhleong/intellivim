@@ -45,7 +45,6 @@ public class GetImplementablesTest extends BaseTestCase {
 
         final Implementables impl = result.getResult();
         assertThat(impl)
-                .hasSize(2)
                 .extracting("description", CharSequence.class)
                     .usingElementComparator(charSequenceComparator)
                     .contains("public void normalMethod()")
@@ -59,7 +58,6 @@ public class GetImplementablesTest extends BaseTestCase {
         // this nested class extends Dummy
         final Implementables impl = result.getResult();
         assertThat(impl)
-                .hasSize(3)
                 .extracting("description", CharSequence.class)
                     .usingElementComparator(charSequenceComparator)
                     .contains("public void boring()")

@@ -1,6 +1,5 @@
 package org.intellivim.core.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -14,6 +13,8 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -25,7 +26,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -67,12 +68,12 @@ public class ProjectUtil {
 
         final Project cached = sProjectCache.get(projectPath);
         if (cached != null) {
-//            return cached;
-            // we can't use this as a real cache for some reason;
-            //  we have to "close" any previously-opened projects
-            //  and re-open each time to prevent unit test failures
-            markProjectClosed(mgr, cached);
-            deallocateFrame(cached);
+            return cached;
+//            // we can't use this as a real cache for some reason;
+//            //  we have to "close" any previously-opened projects
+//            //  and re-open each time to prevent unit test failures
+//            markProjectClosed(mgr, cached);
+//            deallocateFrame(cached);
         }
 
         try {
@@ -123,14 +124,19 @@ public class ProjectUtil {
     }
 
     public static PsiFile getPsiFile(@NotNull final Project project, @NotNull final VirtualFile virtual) {
-        return ApplicationManager.getApplication().runReadAction(
-                new Computable<PsiFile>() {
-                    @Override
-                    public PsiFile compute() {
-                        return PsiManager.getInstance(project).findFile(virtual);
-                    }
+        return UIUtil.invokeAndWaitIfNeeded(IntelliVimUtil.asWriteAction(
+            new Computable<PsiFile>() {
+                @Override
+                public PsiFile compute() {
+                    final PsiManager mgr = PsiManager.getInstance(project);
+                    // NB: ensure we're not eating stale cache
+                    ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
+                    final PsiFile file = mgr.findFile(virtual);
+                    mgr.reloadFromDisk(file);
+                    PsiUtilCore.ensureValid(file);
+                    return file;
                 }
-        );
+        }));
     }
 
     public static VirtualFile getVirtualFile(final Project project, String filePath) {
@@ -282,5 +288,19 @@ public class ProjectUtil {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void prepareForNextTest() {
+
+//        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+//            @Override
+//            public void run() {
+//                for (Project p : sProjectCache.values()) {
+//                    ProjectManager.getInstance().closeProject(p);
+//                }
+//            }
+//        });
+
+        sProjectCache.clear();
     }
 }

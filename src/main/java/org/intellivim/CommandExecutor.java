@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.intellivim.core.util.Profiler;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -82,7 +83,9 @@ public class CommandExecutor {
     public Future<Result> execute(final Reader json) {
         final CommandResult result = new CommandResult();
 
+        final Profiler profiler = Profiler.start(IVGson.RawCommand.class);
         final IVGson.RawCommand rawCommand = gson.fromJson(json, IVGson.RawCommand.class);
+        profiler.mark("Gson Parsed");
 
         final Runnable execution = new Runnable() {
 
@@ -90,11 +93,14 @@ public class CommandExecutor {
             public void run() {
 
                 try {
+                    profiler.mark("Init'ing");
                     final ICommand command = rawCommand.init();
                     if (command == null) {
                         result.setResult(SimpleResult.error("Invalid command"));
                         return;
                     }
+                    profiler.mark("Init'd");
+                    profiler.switchContext(command);
 
                     execute(result, command);
 
@@ -120,7 +126,9 @@ public class CommandExecutor {
         return result;
     }
 
-    protected void execute(final CommandResult result, final ICommand command) {
+    protected void execute(final CommandResult result,
+            final ICommand command) {
+        final Profiler profiler = Profiler.with(command);
         if (command instanceof ProjectCommand) {
             final Project project = ((ProjectCommand) command).getProject();
 
@@ -128,21 +136,27 @@ public class CommandExecutor {
             dumbService.runWhenSmart(new Runnable() {
                 @Override
                 public void run() {
+                    profiler.mark("runWhenSmart");
                     executeProjectCommand(project, command, result);
                 }
             });
         } else {
             // just invoke via the application
             result.setResult(command.execute());
+            profiler.finish("normalExecute");
         }
     }
 
-    private void executeProjectCommand(final Project project, final ICommand command, final CommandResult result) {
+    private void executeProjectCommand(final Project project,
+            final ICommand command, final CommandResult result) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
 
             @Override
             public void run() {
+                final Profiler profiler = Profiler.with(command);
+                profiler.mark("preProjectExecute");
                 result.setResult(command.execute());
+                profiler.finish("projectExecute");
             }
         }, "intellivim-command", "org.intellivim");
     }

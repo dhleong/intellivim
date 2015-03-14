@@ -19,8 +19,4 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="JavacSettings">
-    <option name="testsUseExternalCompiler" value="true" />
-  </component>
 </project>
-

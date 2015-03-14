@@ -1,11 +1,14 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 /**
  * Created by dhleong on 11/8/14.
@@ -13,11 +16,11 @@ import org.intellivim.SimpleResult;
 @Command("get_problems")
 public class GetProblemsCommand extends ProjectCommand {
 
-    @Required String file;
+    @Required @Inject PsiFile file;
 
     public GetProblemsCommand(Project project, String filePath) {
         super(project);
-        file = filePath;
+        file = ProjectUtil.getPsiFile(project, filePath);
     }
 
     @Override

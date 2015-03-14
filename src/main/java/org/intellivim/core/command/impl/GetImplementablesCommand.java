@@ -1,11 +1,14 @@
 package org.intellivim.core.command.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 /**
  * @author dhleong
@@ -13,13 +16,13 @@ import org.intellivim.SimpleResult;
 @Command("get_implementables")
 public class GetImplementablesCommand extends ProjectCommand {
 
-    @Required String file;
+    @Required @Inject PsiFile file;
     @Required int offset;
 
     public GetImplementablesCommand(Project project, String file, int offset) {
         super(project);
 
-        this.file = file;
+        this.file = ProjectUtil.getPsiFile(project, file);
         this.offset = offset;
     }
 
