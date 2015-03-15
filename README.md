@@ -82,3 +82,8 @@ component that runs inside IntelliJ. Commands are `POST`'d to the server as a JS
 object that gets inflated directly into an instance of `ICommand` and `execute()`'d.
 The result is returned as a JSON object with an `error` key if anything went wrong,
 else a `result` key containing whatever expected result for the command.
+
+Some commands make use of or require asynchronous execution, and so must have
+client-specific code. This is facilitated through the use of `@Inject`'d interfaces,
+with implementations annotated with `@ClientSpecific`. For an example, see `RunCommand`,
+its `AsyncRunner` interface, and and the `VimAsyncRunner` implementation.
