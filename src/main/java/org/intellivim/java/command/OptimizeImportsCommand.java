@@ -8,7 +8,6 @@ import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,6 +27,7 @@ import org.intellivim.SimpleResult;
 import org.intellivim.core.command.problems.Problem;
 import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
+import org.intellivim.core.command.problems.QuickFixException;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -71,8 +71,14 @@ public class OptimizeImportsCommand extends ProjectCommand {
 //                    // TODO handle ambiguous imports somehow
 //                    attemptAutoImport(editor, el);
 //                }
+
+                // FIXME collect non-null results of execute
                 for (final QuickFixDescriptor desc : findImportProblemFixes()) {
-                    desc.execute(project, editor, file);
+                    try {
+                        desc.execute(project, editor, file, null);
+                    } catch (QuickFixException e) {
+                        // don't care
+                    }
                 }
 
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;

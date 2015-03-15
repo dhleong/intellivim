@@ -20,10 +20,16 @@ public class FixProblemCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required String fixId;
 
+    /* optional */String arg;
+
     public FixProblemCommand(Project project, String filePath, String fixId) {
+        this(project, filePath, fixId, null);
+    }
+    public FixProblemCommand(Project project, String filePath, String fixId, String arg) {
         super(project);
         file = ProjectUtil.getPsiFile(project, filePath);
         this.fixId = fixId;
+        this.arg = arg;
     }
 
     @Override
@@ -34,7 +40,12 @@ public class FixProblemCommand extends ProjectCommand {
 
         VimEditor editor = new VimEditor(project, file, 0);
 
-        fix.execute(project, editor, file);
-        return SimpleResult.success();
+        try {
+            return SimpleResult.success(
+                    fix.execute(project, editor, file, arg)
+            );
+        } catch (QuickFixException e) {
+            return SimpleResult.error(e);
+        }
     }
 }
