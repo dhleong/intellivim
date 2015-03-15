@@ -66,7 +66,7 @@ nnoremap <leader>jc :FixProblem<cr>
 " 'fix imports'
 nnoremap <leader>fi :JavaOptimizeImports<cr>
 " muscle memory from eclim ("ProjectRun")
-nnoremap <leader>pr :Run<cr>
+nnoremap <leader>pr :RunProject<cr>
 " muscle memory from vim-fireplace
 nnoremap cpr :RunTest<cr>
 nnoremap gd :GotoDeclaration<cr>
