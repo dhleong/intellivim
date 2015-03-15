@@ -49,9 +49,9 @@ function! intellivim#signs#UnplaceAll(bufno) " {{{
         \ " buffer=" . a:bufno
 endfunction " }}}
 
-function! intellivim#signs#Update() " {{{
-    " Update signs in current buffer to match the location list
-    " and quickfix list
+function! intellivim#signs#Update(...) " {{{
+    " Update signs in current buffer (or the given buffer number)
+    " to match the location list and quickfix list
 
     if !has('signs') || &ft == 'qf'
         return
@@ -61,13 +61,13 @@ function! intellivim#signs#Update() " {{{
     set lazyredraw
 
     " remove existing signs
-    let bufno = bufnr('%')
+    let bufno = a:0 ? a:1 : bufnr('%')
     call intellivim#signs#UnplaceAll(bufno)
 
     " prepare new signs
     let qflist = filter(getqflist(),
-        \ 'bufnr("%") == v:val.bufnr')
-    let loclist = getloclist(0)
+        \ bufno . ' == v:val.bufnr')
+    let loclist = getloclist(bufwinnr(bufno))
     let items = qflist + loclist
 
     " Place signs

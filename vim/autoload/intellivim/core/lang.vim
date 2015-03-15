@@ -24,7 +24,7 @@ function! intellivim#core#lang#CleanCompletion(base, completion) " {{{
 
 endfunction " }}}
 
-function! intellivim#core#lang#CodeComplete(findstart, base)
+function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
     if !intellivim#InProject()
         return a:findstart ? -1 : []
     endif
@@ -72,6 +72,6 @@ function! intellivim#core#lang#CodeComplete(findstart, base)
         return completions
     endif
 
-endfunction
+endfunction " }}}
 
 " vim:ft=vim:fdm=marker
