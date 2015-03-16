@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by dhleong on 11/8/14.
+ * @author dhleong
  */
 public class Problem {
 
@@ -44,6 +44,14 @@ public class Problem {
 
     public boolean containsOffset(int offset) {
         return offset >= startOffset && offset < endOffset;
+    }
+
+    /**
+     * @param line 1-based line number
+     * @return True if this problem exists on the given line
+     */
+    public boolean isOnLine(int line) {
+        return this.line == line;
     }
 
     public String getDescription() {
@@ -102,4 +110,5 @@ public class Problem {
         final int index = Integer.parseInt(id);
         return fixes.get(index);
     }
+
 }

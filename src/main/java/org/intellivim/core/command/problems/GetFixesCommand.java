@@ -1,5 +1,6 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
@@ -7,6 +8,7 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
@@ -35,6 +37,16 @@ public class GetFixesCommand extends ProjectCommand {
                 return SimpleResult.success(p.getFixes());
             }
         }
-        return SimpleResult.success(Collections.EMPTY_LIST);
+
+        // no exact match; try line-wise
+        final Editor editor = new VimEditor(project, file, offset);
+        final int line = editor.getCaretModel().getLogicalPosition().line + 1; // NB 0-based to 1-based line
+        for (Problem p : problems) {
+            if (p.isOnLine(line)) {
+                return SimpleResult.success(p.getFixes());
+            }
+        }
+
+        return SimpleResult.success();
     }
 }

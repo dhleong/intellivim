@@ -33,7 +33,18 @@ function! intellivim#core#problems#FixProblem() " {{{
         return
     endif
 
+    if !has_key(result, "result") 
+        call intellivim#util#EchoError("No problems under the cursor")
+        return
+    endif
+
+    if !len(result.result)
+        call intellivim#util#Echo("No fixes available")
+        return
+    endif
+
     call s:ShowQuickfixWindow(result.result)
+    call intellivim#util#Echo("Total results: " + len(result.result))
 endfunction " }}}
 
 function! intellivim#core#problems#PromptFix(fix, ...) " {{{
