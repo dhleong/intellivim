@@ -55,6 +55,8 @@ public class FixProblemCommand extends ProjectCommand {
 
     private QuickFixDescriptor selectFix() {
 
+        final Problems problems = Problems.collectFrom(project, file);
+
         if (sPendingFixes != null && file.getVirtualFile().getPath().equals(sPendingFixesContext)) {
             final Iterator<? extends QuickFixDescriptor> iter = sPendingFixes.iterator();
             while (iter.hasNext()) {
@@ -67,7 +69,9 @@ public class FixProblemCommand extends ProjectCommand {
                         sPendingFixes = null;
                         sPendingFixesContext = null;
                     }
-                    return descriptor;
+
+                    // we need to use a matching the one from a fresh Problems.collectFrom
+                    return problems.locateQuickFix(descriptor);
                 }
             }
         }
@@ -75,7 +79,6 @@ public class FixProblemCommand extends ProjectCommand {
         // no? possibly they canceled half-way; just try from scratch
         sPendingFixes = null;
         sPendingFixesContext = null;
-        final Problems problems = Problems.collectFrom(project, file);
         return problems.locateQuickFix(fixId);
     }
 

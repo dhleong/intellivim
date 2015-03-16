@@ -34,6 +34,7 @@ import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -70,13 +71,8 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-//                for (PsiJavaCodeReferenceElement el
-//                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-//                    // TODO handle ambiguous imports somehow
-//                    attemptAutoImport(editor, el);
-//                }
-
-                // FIXME collect non-null results of execute
+                // FIXME we actually need to re-collect the Problems each time
+                //  since when we execute, the PsiFile changes....
                 for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
                     try {
                         Object result = desc.execute(project, editor, file, null);
@@ -84,6 +80,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
                             // it was ambiguous
                             ambiguous.add(desc);
                         }
+
                     } catch (QuickFixException e) {
                         // don't care
                     }
@@ -111,30 +108,8 @@ public class OptimizeImportsCommand extends ProjectCommand {
         }
     }
 
-    private List<ImportsQuickFixDescriptor> findImportProblemFixes() {
-        List<ImportsQuickFixDescriptor> fixes = new ArrayList<ImportsQuickFixDescriptor>();
-        Problems problems = Problems.collectFrom(project, file);
-        for (Problem problem : problems) {
-            if (!problem.isError()) continue;
-
-            ImportsQuickFixDescriptor importFix = findImportFix(problem);
-            if (importFix != null) {
-                // found import fix
-                fixes.add(importFix);
-            }
-        }
-
-        return fixes;
-    }
-
-    private ImportsQuickFixDescriptor findImportFix(Problem problem) {
-
-        for (QuickFixDescriptor descriptor : problem.getFixes()) {
-            if (descriptor instanceof ImportsQuickFixDescriptor)
-                return (ImportsQuickFixDescriptor) descriptor;
-        }
-
-        return null;
+    private Iterable<ImportsQuickFixDescriptor> findImportProblemFixes() {
+        return new ImportsQuickFixIterator();
     }
 
     private List<PsiJavaCodeReferenceElement> findUnresolvedReferences(PsiJavaFile file) {
@@ -184,4 +159,65 @@ public class OptimizeImportsCommand extends ProjectCommand {
         return elements;
     }
 
+    private static ImportsQuickFixDescriptor findImportFix(Problem problem) {
+
+        for (QuickFixDescriptor descriptor : problem.getFixes()) {
+            if (descriptor instanceof ImportsQuickFixDescriptor)
+                return (ImportsQuickFixDescriptor) descriptor;
+        }
+
+        return null;
+    }
+
+    private class ImportsQuickFixIterator
+            implements Iterable<ImportsQuickFixDescriptor>,
+                       Iterator<ImportsQuickFixDescriptor> {
+
+        int offset = 0;
+        List<ImportsQuickFixDescriptor> last = fetch();
+
+        @Override
+        public boolean hasNext() {
+            return offset < last.size();
+        }
+
+        public ImportsQuickFixDescriptor next() {
+            int lastSize = last.size();
+            final ImportsQuickFixDescriptor descriptor = last.get(offset);
+
+            if ((last = fetch()).size() == lastSize) {
+                // no size change; we must not have fixed it
+                offset++;
+            }
+
+            return descriptor;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Iterator<ImportsQuickFixDescriptor> iterator() {
+            return this;
+        }
+
+        private List<ImportsQuickFixDescriptor> fetch() {
+
+            List<ImportsQuickFixDescriptor> fixes = new ArrayList<ImportsQuickFixDescriptor>();
+            Problems problems = Problems.collectFrom(project, file);
+            for (Problem problem : problems) {
+                if (!problem.isError()) continue;
+
+                ImportsQuickFixDescriptor importFix = findImportFix(problem);
+                if (importFix != null) {
+                    // found import fix
+                    fixes.add(importFix);
+                }
+            }
+
+            return fixes;
+        }
+    }
 }

@@ -38,7 +38,29 @@ public class Problems extends ArrayList<Problem> {
         }
     }
 
+    /**
+     * When resolving multiple ambiguous imports from OptimizeImportsCommand,
+     *  we need to be able to use an old descriptor to locate the equivalent
+     *  in a new set of problems and fixes
+     * @param descriptor The old descriptor
+     * @return The new, equivalent descriptor, if any
+     * @throws java.lang.IllegalArgumentException if no such updated descriptor exists
+     */
+    public QuickFixDescriptor locateQuickFix(final QuickFixDescriptor descriptor) {
+        for (Problem problem : this) {
+            // just look at all problems (unfortunately) since the
+            //  offsets have probably changed
+            for (QuickFixDescriptor updated : problem.getFixes()) {
+                if (updated.equals(descriptor))
+                    return updated;
+            }
+        }
+
+        throw new IllegalArgumentException("Unable to find " + descriptor);
+    }
+
     public static Problems collectFrom(final Project project, final PsiFile psiFile) {
+
         final Problems problems = new Problems();
 
         final VimEditor editor = new VimEditor(project, psiFile, 0);

@@ -125,18 +125,18 @@ public class ProjectUtil {
 
     public static PsiFile getPsiFile(@NotNull final Project project, @NotNull final VirtualFile virtual) {
         return UIUtil.invokeAndWaitIfNeeded(IntelliVimUtil.asWriteAction(
-            new Computable<PsiFile>() {
-                @Override
-                public PsiFile compute() {
-                    final PsiManager mgr = PsiManager.getInstance(project);
-                    // NB: ensure we're not eating stale cache
-                    ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
-                    final PsiFile file = mgr.findFile(virtual);
-                    mgr.reloadFromDisk(file);
-                    PsiUtilCore.ensureValid(file);
-                    return file;
-                }
-        }));
+                new Computable<PsiFile>() {
+                    @Override
+                    public PsiFile compute() {
+                        final PsiManager mgr = PsiManager.getInstance(project);
+                        // NB: ensure we're not eating stale cache
+                        ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
+                        final PsiFile file = mgr.findFile(virtual);
+                        mgr.reloadFromDisk(file);
+                        PsiUtilCore.ensureValid(file);
+                        return file;
+                    }
+                }));
     }
 
     public static VirtualFile getVirtualFile(final Project project, String filePath) {

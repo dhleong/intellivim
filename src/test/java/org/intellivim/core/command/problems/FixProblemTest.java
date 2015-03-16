@@ -34,7 +34,7 @@ public class FixProblemTest extends FileEditingTestCase {
         assertSuccess(result);
 
         final Problems problems = result.getResult();
-        assertSize(1, problems);
+        assertSize(2, problems);
 
         final QuickFixDescriptor quickFix = problems.locateQuickFix("0.0");
         assertNotNull(quickFix);

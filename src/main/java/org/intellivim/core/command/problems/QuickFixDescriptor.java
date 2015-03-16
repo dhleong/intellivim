@@ -36,6 +36,24 @@ public class QuickFixDescriptor {
         this.descriptor = descriptor;
     }
 
+    @Override
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof QuickFixDescriptor))
+            return false;
+
+        final QuickFixDescriptor other = (QuickFixDescriptor) obj;
+        return other.description.equals(description);
+//                && other.descriptor.equals(descriptor);
+    }
+
+    @Override
+    public int hashCode() {
+        // FIXME this is almost definitely insufficient....
+        int result = description.hashCode();
+//        result = 31 * result + (descriptor != null ? descriptor.toString().hashCode() : 0);
+        return result;
+    }
+
     public String getDescription() {
         return description;
     }
