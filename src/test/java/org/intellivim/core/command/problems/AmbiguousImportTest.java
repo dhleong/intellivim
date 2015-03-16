@@ -87,4 +87,5 @@ public class AmbiguousImportTest extends FileEditingTestCase {
         assertFileNowContains(IMPORT_STATEMENT);
     }
 
+
 }

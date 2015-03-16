@@ -36,6 +36,24 @@ function! intellivim#core#problems#FixProblem() " {{{
     call s:ShowQuickfixWindow(result.result)
 endfunction " }}}
 
+function! intellivim#core#problems#PromptFix(fix, ...) " {{{
+    " Show the prompt to disambiguate a quickfix
+
+    let extras = a:0 ? a:1 : {}
+    let returnWinNr = get(extras, 'returnWinNr', bufwinnr('%'))
+    let fix = a:fix
+    let config = {
+            \ 'title': fix.description,
+            \ 'list': fix.choices,
+            \ 'onSelect': function("s:OnPerformFix"),
+            \ 'selectArgs': [returnWinNr, fix.id],
+            \ }
+    for key in keys(extras)
+        let config[key] = extras[key]
+    endfor
+    call intellivim#display#PromptList(config)
+endfunction " }}}
+
 function s:ExecuteQuickFix() " {{{
     let line = getline('.')
     let parts = split(line, ':')
@@ -57,12 +75,9 @@ function s:ExecuteQuickFix() " {{{
     if has_key(fix, 'choices')
         let fixes = b:quickfix_results
         norm! ZZ
-        call intellivim#display#PromptList({
-                \ 'title': fix.description,
-                \ 'list': fix.choices,
-                \ 'onSelect': function("s:OnPerformFix"),
+        call intellivim#core#problems#PromptFix(fix, {
+                \ 'returnWinNr': oldWinr,
                 \ 'onCancel': function("s:OnFixPromptCanceled"),
-                \ 'selectArgs': [oldWinr, fixId],
                 \ 'cancelArgs': [oldWinr, fixes]
                 \ })
         return

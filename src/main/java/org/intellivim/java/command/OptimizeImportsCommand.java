@@ -1,12 +1,9 @@
 package org.intellivim.java.command;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -24,6 +21,8 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.problems.FixProblemCommand;
+import org.intellivim.core.command.problems.ImportsQuickFixDescriptor;
 import org.intellivim.core.command.problems.Problem;
 import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
@@ -59,6 +58,11 @@ public class OptimizeImportsCommand extends ProjectCommand {
             return SimpleResult.error(file + " is not a Java file");
         }
 
+        // always go ahead and clear this
+        FixProblemCommand.clearPendingFixes();
+
+        final List<ImportsQuickFixDescriptor> ambiguous =
+                new ArrayList<ImportsQuickFixDescriptor>();
         IntelliVimUtil.runInUnitTestMode(new Runnable() {
 
             @Override
@@ -73,9 +77,13 @@ public class OptimizeImportsCommand extends ProjectCommand {
 //                }
 
                 // FIXME collect non-null results of execute
-                for (final QuickFixDescriptor desc : findImportProblemFixes()) {
+                for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
                     try {
-                        desc.execute(project, editor, file, null);
+                        Object result = desc.execute(project, editor, file, null);
+                        if (null != result) {
+                            // it was ambiguous
+                            ambiguous.add(desc);
+                        }
                     } catch (QuickFixException e) {
                         // don't care
                     }
@@ -87,29 +95,29 @@ public class OptimizeImportsCommand extends ProjectCommand {
             }
         });
 
-        ImportOptimizer optimizer = new JavaImportOptimizer();
+        final ImportOptimizer optimizer = new JavaImportOptimizer();
         if (optimizer.supports(file)) {
-            Runnable action = optimizer.processFile(file);
+            final Runnable action = optimizer.processFile(file);
             ApplicationManager.getApplication().runWriteAction(action);
+
+            FileUtil.commitChanges(editor);
         }
 
-        FileUtil.commitChanges(editor);
-
-        return SimpleResult.success();
+        if (ambiguous.isEmpty()) {
+            return SimpleResult.success();
+        } else {
+            FixProblemCommand.setPendingFixes(file, ambiguous);
+            return SimpleResult.success(ambiguous);
+        }
     }
 
-    private ImportClassFixBase.Result attemptAutoImport(EditorEx editor, PsiJavaCodeReferenceElement el) {
-        editor.getCaretModel().moveToOffset(el.getTextOffset());
-        return new ImportClassFix(el).doFix(editor, false, false);
-    }
-
-    private List<QuickFixDescriptor> findImportProblemFixes() {
-        List<QuickFixDescriptor> fixes = new ArrayList<QuickFixDescriptor>();
+    private List<ImportsQuickFixDescriptor> findImportProblemFixes() {
+        List<ImportsQuickFixDescriptor> fixes = new ArrayList<ImportsQuickFixDescriptor>();
         Problems problems = Problems.collectFrom(project, file);
         for (Problem problem : problems) {
             if (!problem.isError()) continue;
 
-            QuickFixDescriptor importFix = findImportFix(problem);
+            ImportsQuickFixDescriptor importFix = findImportFix(problem);
             if (importFix != null) {
                 // found import fix
                 fixes.add(importFix);
@@ -119,11 +127,11 @@ public class OptimizeImportsCommand extends ProjectCommand {
         return fixes;
     }
 
-    private QuickFixDescriptor findImportFix(Problem problem) {
+    private ImportsQuickFixDescriptor findImportFix(Problem problem) {
 
         for (QuickFixDescriptor descriptor : problem.getFixes()) {
-            if (descriptor.getFix() instanceof ImportClassFix)
-                return descriptor;
+            if (descriptor instanceof ImportsQuickFixDescriptor)
+                return (ImportsQuickFixDescriptor) descriptor;
         }
 
         return null;

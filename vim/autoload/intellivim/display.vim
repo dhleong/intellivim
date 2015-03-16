@@ -20,8 +20,10 @@ function! intellivim#display#PromptList(config) " {{{
     "            where `selectArgs` is optionally those passed in this
     "            dict, and `choice` is the string chosen by the user
     " - onCancel (optional) Function called when the user cancels
+    " - onDone (optional) Function called when user is done selecting
     " - selectArgs (optional) Arguments to be passed to onSelect
     " - cancelArgs (optional) Arguments to be passed to onCancel
+    " - doneArgs (optional) Arguments to be passed to onDone
     " - autoDismiss (optional; default: true) If true, the prompt
     "            window will be dismissed after `onSelect` is called
 
@@ -38,9 +40,10 @@ function! intellivim#display#PromptList(config) " {{{
 
     call intellivim#display#TempWindow("[" . title . "]", contents)
     let b:prompt_config = config
+    let b:prompt_selects = 0
     nnoremap <buffer> <cr> :call <SID>ListPromptSelect()<cr>
-    nnoremap <buffer> q :call <SID>ListPromptCancel()<cr>
-    nnoremap <buffer> <c-c> :call <SID>ListPromptCancel()<cr>
+    nnoremap <buffer> q :call <SID>ListPromptCancel(0)<cr>
+    nnoremap <buffer> <c-c> :call <SID>ListPromptCancel(1)<cr>
     " TODO highlight currently selected item
     " TODO support multi-line items nicely
     " TODO support numbered shortcuts
@@ -176,10 +179,17 @@ endfunction " }}}
 " Calbacks
 "
 
-function s:ListPromptCancel() " {{{
+function s:ListPromptCancel(alwaysCancel) " {{{
     let config = b:prompt_config
+    let selects = b:prompt_selects
 
     norm! ZZ
+
+    if !a:alwaysCancel && selects > 0
+        " actual, we're done
+        call s:ListPromptDone(config)
+        return
+    endif
 
     if has_key(config, 'onCancel')
         if type(get(config, 'cancelArgs')) == type([])
@@ -191,8 +201,24 @@ function s:ListPromptCancel() " {{{
 
 endfunction " }}}
 
+function s:ListPromptDone(config) " {{{
+    let config = a:config
+
+    if has_key(config, 'onDone')
+        if type(get(config, 'doneArgs')) == type([])
+            call call(config.onDone, config.doneArgs)
+        else
+            call config.onDone()
+        endif
+    endif
+
+endfunction " }}}
+
 function s:ListPromptSelect() " {{{
     let config = b:prompt_config
+    let autoDismiss = 0 != get(config, 'autoDismiss', 1)
+
+    let b:prompt_selects = 1
 
     let line = getline('.')
     let parts = split(line, ':')
@@ -206,7 +232,8 @@ function s:ListPromptSelect() " {{{
 
     " close now, because onSelect might pop
     "  back to a specific place
-    if 0 != get(config, 'autoDismiss', 1)
+    if autoDismiss
+        " aaaaand... done!
         norm! ZZ
     endif
 
@@ -214,6 +241,10 @@ function s:ListPromptSelect() " {{{
         call call(config.onSelect, config.selectArgs + [choice])
     else
         call config.onSelect(choice)
+    endif
+
+    if autoDismiss
+        call s:ListPromptDone(config)
     endif
 
 endfunction " }}}
