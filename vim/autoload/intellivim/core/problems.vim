@@ -44,7 +44,6 @@ function! intellivim#core#problems#FixProblem() " {{{
     endif
 
     call s:ShowQuickfixWindow(result.result)
-    call intellivim#util#Echo("Total results: " + len(result.result))
 endfunction " }}}
 
 function! intellivim#core#problems#PromptFix(fix, ...) " {{{
