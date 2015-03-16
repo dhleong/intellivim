@@ -1,5 +1,6 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -13,6 +14,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -21,11 +23,11 @@ import java.util.List;
  */
 public class ImportsQuickFixDescriptor
         extends PromptingQuickFixDescriptor {
-    ImportsQuickFixDescriptor(String id,
-            String description,
-            int start, int end,
-            HighlightInfo.IntentionActionDescriptor descriptor) {
-        super(id, description, start, end, descriptor, extractChoices(descriptor));
+    ImportsQuickFixDescriptor(String problemDescription, String id,
+                              String description,
+                              int start, int end,
+                              HighlightInfo.IntentionActionDescriptor descriptor) {
+        super(problemDescription, id, description, start, end, descriptor, extractChoices(descriptor));
     }
     @Override
     protected Object invoke(final IntentionAction action, final Project project,
@@ -62,21 +64,36 @@ public class ImportsQuickFixDescriptor
     private static List<String> extractChoices(
             final HighlightInfo.IntentionActionDescriptor descriptor) {
         final List<PsiClass> classes = getClassesToImport(descriptor.getAction());
-        // TODO we need access to the PsiReference, so we can do this:
-//        CodeInsightUtil.sortIdenticalShortNameClasses(classes, );
-
         if (classes.size() <= 1) {
             // no choices necessary
             return null;
         }
 
-        return ContainerUtil.map(classes,
+        final PsiClass[] sorted = attemptClassesSort(descriptor, classes);
+        return ContainerUtil.map(sorted,
                 new Function<PsiClass, String>() {
                     @Override
                     public String fun(final PsiClass psiClass) {
                         return psiClass.getQualifiedName();
                     }
                 });
+    }
+
+    private static PsiClass[] attemptClassesSort(HighlightInfo.IntentionActionDescriptor descriptor, List<PsiClass> classes) {
+        final PsiClass[] array = classes.toArray(new PsiClass[classes.size()]);
+        final ImportClassFixBase<?, ?> action = (ImportClassFixBase<?, ?>) descriptor.getAction();
+        try {
+            final Field myRef = ImportClassFixBase.class.getDeclaredField("myRef");
+            myRef.setAccessible(true);
+            final PsiReference ref = (PsiReference) myRef.get(action);
+
+            CodeInsightUtil.sortIdenticalShortNameClasses(array, ref);
+        } catch (Exception e) {
+            // oh well
+            e.printStackTrace();
+        }
+
+        return array;
     }
 
     private static List<PsiClass> getClassesToImport(IntentionAction rawAction) {

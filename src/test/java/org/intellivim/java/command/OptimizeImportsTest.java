@@ -39,6 +39,7 @@ public class OptimizeImportsTest extends FileEditingTestCase {
         SimpleResult result = (SimpleResult) new OptimizeImportsCommand(getProject(), filePath).execute();
         assertSuccess(result);
         assertFileNowContains(FixProblemTest.IMPORT_STATEMENT);
+        assertFileNowContains("import org.intellivim.javaproject.subpackage.AlsoNotImported;");
     }
 
     /**

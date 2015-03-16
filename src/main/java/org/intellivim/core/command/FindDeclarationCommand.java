@@ -31,21 +31,23 @@ public class FindDeclarationCommand extends ProjectCommand {
         }
     }
 
-    @Required String file;
+    @Required PsiFile file;
     @Required int offset;
 
     public FindDeclarationCommand(Project project, String file, int offset) {
         super(project);
 
-        this.file = file;
+        this.file = ProjectUtil.getPsiFile(project, file);
         this.offset = offset;
     }
 
     @Override
     public Result execute() {
 
-        final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
-        final PsiReference ref = psiFile.findReferenceAt(offset);
+        final PsiReference ref = file.findReferenceAt(offset);
+        if (ref == null)
+            return SimpleResult.error("No element found.");
+
         final PsiElement lookup = ref.resolve();
 
         if (lookup == null)

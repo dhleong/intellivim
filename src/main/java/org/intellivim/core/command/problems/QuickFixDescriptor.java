@@ -18,6 +18,7 @@ import org.intellivim.core.util.FileUtil;
  */
 public class QuickFixDescriptor {
 
+    final String problemDescription;
     final String id;
     final String description;
     final int start;
@@ -25,10 +26,11 @@ public class QuickFixDescriptor {
 
     final transient HighlightInfo.IntentionActionDescriptor descriptor;
 
-    QuickFixDescriptor(String id,
-            String description,
-            int start, int end,
-            HighlightInfo.IntentionActionDescriptor descriptor) {
+    QuickFixDescriptor(String problemDescription, String id,
+                       String description,
+                       int start, int end,
+                       HighlightInfo.IntentionActionDescriptor descriptor) {
+        this.problemDescription = problemDescription;
         this.id = id;
         this.description = description;
         this.start = start;
@@ -42,14 +44,15 @@ public class QuickFixDescriptor {
             return false;
 
         final QuickFixDescriptor other = (QuickFixDescriptor) obj;
-        return other.description.equals(description);
+        return other.description.equals(description)
+                && other.problemDescription.equals(problemDescription);
 //                && other.descriptor.equals(descriptor);
     }
 
     @Override
     public int hashCode() {
-        // FIXME this is almost definitely insufficient....
         int result = description.hashCode();
+        result = 31 * result + problemDescription.hashCode();
 //        result = 31 * result + (descriptor != null ? descriptor.toString().hashCode() : 0);
         return result;
     }
@@ -105,8 +108,8 @@ public class QuickFixDescriptor {
         return null;
     }
 
-    static QuickFixDescriptor from(String id,
-           HighlightInfo.IntentionActionDescriptor descriptor, TextRange range) {
+    static QuickFixDescriptor from(String problemDescription, String id,
+                                   HighlightInfo.IntentionActionDescriptor descriptor, TextRange range) {
 
         final String desc;
         if (!TextUtils.isEmpty(descriptor.getDisplayName())) {
@@ -120,13 +123,15 @@ public class QuickFixDescriptor {
         }
 
         if (ImportsQuickFixDescriptor.handles(descriptor)) {
-            return new ImportsQuickFixDescriptor(id,
+            return new ImportsQuickFixDescriptor(problemDescription,
+                    id,
                     desc,
                     range.getStartOffset(),
                     range.getEndOffset(),
                     descriptor);
         } else {
-            return new QuickFixDescriptor(id,
+            return new QuickFixDescriptor(problemDescription,
+                    id,
                     desc,
                     range.getStartOffset(),
                     range.getEndOffset(),

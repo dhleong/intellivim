@@ -306,11 +306,15 @@ public class IVGson {
                     final JsonObject obj = jsonAdapter.read(jsonReader);
                     final String commandName = obj.get("command").getAsString();
                     final Class<?> commandClass = getCommandClass(obj, commandName);
-                    return (T) new RawCommand(gson,
-                            commandClass,
-                            obj,
-                            gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
-                                TypeToken.get(commandClass)).fromJsonTree(obj));
+                    try {
+                        return (T) new RawCommand(gson,
+                                commandClass,
+                                obj,
+                                gson.getDelegateAdapter(CommandTypeAdapterFactory.this,
+                                        TypeToken.get(commandClass)).fromJsonTree(obj));
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error parsing " + commandClass + ": " + obj, e);
+                    }
                 }
 
             };

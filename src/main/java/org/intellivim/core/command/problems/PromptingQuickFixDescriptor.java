@@ -18,11 +18,11 @@ public abstract class PromptingQuickFixDescriptor
 
     final List<String> choices;
 
-    PromptingQuickFixDescriptor(final String id, final String description,
+    PromptingQuickFixDescriptor(final String problemDescription, final String id, final String description,
             final int start, final int end,
             final HighlightInfo.IntentionActionDescriptor descriptor,
             final List<String> choices) {
-        super(id, description, start, end, descriptor);
+        super(problemDescription, id, description, start, end, descriptor);
 
         this.choices = choices;
     }

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -40,25 +41,30 @@ import java.util.List;
 
 
 /**
- * Created by dhleong on 11/8/14.
+ * Attempt to automatically resolve unambiguous imports,
+ *  and provide a means to prompt for resolving ambiguous ones.
+ *  Returns a list of ImportQuickFixDescriptors if there were
+ *  any ambiguous imports, which will have the <code>choices[]</code>
+ *  for resolution. {@see FixProblemCommand} for how to deal with these
+ *
+ * @author dhleong
  */
 @Command("java_import_optimize")
 public class OptimizeImportsCommand extends ProjectCommand {
 
-    @Required @Inject PsiFile file;
+    @Required String file;
+
+    // NB: for multiple imports, we need to re-load these each time
+    transient PsiFile psiFile;
+    transient VimEditor editor;
 
     public OptimizeImportsCommand(Project project, String filePath) {
         super(project);
-        file = ProjectUtil.getPsiFile(project, filePath);
+        file = filePath;
     }
 
     @Override
     public Result execute() {
-        final VimEditor editor = new VimEditor(project, file, 0);
-        if (!(file instanceof PsiJavaFile)) {
-            return SimpleResult.error(file + " is not a Java file");
-        }
-
         // always go ahead and clear this
         FixProblemCommand.clearPendingFixes();
 
@@ -71,15 +77,19 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-                // FIXME we actually need to re-collect the Problems each time
-                //  since when we execute, the PsiFile changes....
                 for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
                     try {
-                        Object result = desc.execute(project, editor, file, null);
+//                        System.out.println("Executing " + desc.getDescription());
+//                        if (!psiFile.textMatches(editor.getDocument().getCharsSequence())) {
+//                            System.out.println("Using " + psiFile.getText());
+//                            System.out.println("Vs: " + editor.getDocument().getCharsSequence());
+//                        }
+                        Object result = desc.execute(project, editor, psiFile, null);
                         if (null != result) {
                             // it was ambiguous
                             ambiguous.add(desc);
                         }
+//                        System.out.println("Executed: " + desc.getDescription());
 
                     } catch (QuickFixException e) {
                         // don't care
@@ -92,10 +102,15 @@ public class OptimizeImportsCommand extends ProjectCommand {
             }
         });
 
+        // prepare again
+        prepare();
+
         final ImportOptimizer optimizer = new JavaImportOptimizer();
-        if (optimizer.supports(file)) {
-            final Runnable action = optimizer.processFile(file);
-            ApplicationManager.getApplication().runWriteAction(action);
+        if (optimizer.supports(psiFile)) {
+            final Runnable action = optimizer.processFile(psiFile);
+
+            CommandProcessor.getInstance().runUndoTransparentAction(action);
+//            ApplicationManager.getApplication().runWriteAction(action);
 
             FileUtil.commitChanges(editor);
         }
@@ -103,8 +118,16 @@ public class OptimizeImportsCommand extends ProjectCommand {
         if (ambiguous.isEmpty()) {
             return SimpleResult.success();
         } else {
-            FixProblemCommand.setPendingFixes(file, ambiguous);
+            FixProblemCommand.setPendingFixes(psiFile, ambiguous);
             return SimpleResult.success(ambiguous);
+        }
+    }
+
+    private void prepare() {
+        psiFile = ProjectUtil.getPsiFile(project, file);
+        editor = new VimEditor(project, psiFile, 0);
+        if (!(psiFile instanceof PsiJavaFile)) {
+            throw new IllegalArgumentException(file + " is not a Java file");
         }
     }
 
@@ -173,24 +196,20 @@ public class OptimizeImportsCommand extends ProjectCommand {
             implements Iterable<ImportsQuickFixDescriptor>,
                        Iterator<ImportsQuickFixDescriptor> {
 
-        int offset = 0;
-        List<ImportsQuickFixDescriptor> last = fetch();
+        final Iterator<ImportsQuickFixDescriptor> fixes = fetch().iterator();
 
         @Override
         public boolean hasNext() {
-            return offset < last.size();
+            return fixes.hasNext();
         }
 
         public ImportsQuickFixDescriptor next() {
-            int lastSize = last.size();
-            final ImportsQuickFixDescriptor descriptor = last.get(offset);
+            ImportsQuickFixDescriptor fix = fixes.next();
 
-            if ((last = fetch()).size() == lastSize) {
-                // no size change; we must not have fixed it
-                offset++;
-            }
-
-            return descriptor;
+            // make sure we're using the most up-to-date PsiFile and a matching Editor
+            prepare();
+            return (ImportsQuickFixDescriptor) Problems.collectFrom(project, psiFile)
+                    .locateQuickFix(fix);
         }
 
         @Override
@@ -205,8 +224,9 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
         private List<ImportsQuickFixDescriptor> fetch() {
 
+            prepare();
             List<ImportsQuickFixDescriptor> fixes = new ArrayList<ImportsQuickFixDescriptor>();
-            Problems problems = Problems.collectFrom(project, file);
+            Problems problems = Problems.collectFrom(project, psiFile);
             for (Problem problem : problems) {
                 if (!problem.isError()) continue;
 

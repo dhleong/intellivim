@@ -36,12 +36,10 @@ function! intellivim#java#OptimizeImports() " {{{
         return
     endif
 
+    " prepare initial resolution and fire
     let b:intellivim_pending_fixes = fixes
-    let b:intellivim_last_fix_index = 0
-    call intellivim#core#problems#PromptFix(fixes[0], {
-            \ 'returnWinNr': bufwinnr('%'),
-            \ 'onDone': function("s:OnContinueImportResolution")
-            \ })
+    let b:intellivim_last_fix_index = -1
+    call s:OnContinueImportResolution()
 
 endfunction " }}}
 
