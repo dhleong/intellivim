@@ -22,8 +22,8 @@ Autocomplete is bound to omnifunc (`<c-x><c-o>`) and should work with [YouComple
 ### Commands
 
 `:FixProblem`  Provide options for fixing the problem under the cursor.
-Press `enter` on the desired fix to attempt it. "Import Class" usually works
-for unambiguous imports, but other fixes are not thoroughly tested yet.
+Press `enter` on the desired fix to attempt it. "Import Class" usually works,
+but other fixes are not thoroughly tested yet.
 
 `:GotoDeclaration`  Jump to the declaration of the element under the cursor.
 A split is opened if the declaration is in another file
@@ -36,7 +36,9 @@ Press `enter` on a method to implement it, and `q` to quit.
 Visual selection to implement multiple at a time is supported.
 
 `:JavaOptimizeImports`  Attempts to automatically add imports and organize them.
-Handling of ambiguous imports is currently undefined.
+Prompts for disambiguation if necessary. As the name implies, this one is currently
+Java only. Future work could let this pick the right implementation based on filetype
+(as `RunTest` does).
 
 `:Locate [type]` Opens a search window for locating files. Optionally pass the type
 of thing to locate: 
