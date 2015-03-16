@@ -33,7 +33,7 @@ function! intellivim#core#Setup() " {{{
     " define commands {{{
     if !exists(":FixProblem")
         command -nargs=0 FixProblem
-            \ call intellivim#core#FixProblem()
+            \ call intellivim#core#problems#FixProblem()
     endif
 
     if !exists(":GetDocumentation")
@@ -82,21 +82,8 @@ function! intellivim#core#ReloadFile() " {{{
 endfunction " }}}
 
 function! intellivim#core#Update() " {{{
-    let command = intellivim#NewCommand("get_problems")
-    let result = intellivim#client#Execute(command)
-    if intellivim#ShowErrorResult(result, 1)
-        return
-    endif
-
-    " mark problems
-    let list = []
-    for problem in result.result
-        call add(list, s:ProblemToLocationEntry(problem))
-    endfor
-
-    call setloclist(0, list, 'r')
-    call intellivim#signs#Update()
-
+    " for now, basically just update problems
+    call intellivim#core#problems#UpdateProblems()
 endfunction " }}}
 
 function! intellivim#core#GetDocumentation() " {{{
@@ -140,78 +127,6 @@ function! intellivim#core#GotoDeclaration() " {{{
 
     exe 'goto ' . offset
 
-endfunction " }}}
-
-function! intellivim#core#FixProblem() " {{{
-    " Begin the process of fixing the problem under the cursor
-    if !intellivim#InProject()
-        return
-    endif
-
-    let command = intellivim#NewCommand("get_fixes")
-    let command.offset = intellivim#GetOffset()
-    let result = intellivim#client#Execute(command)
-    if intellivim#ShowErrorResult(result)
-        return
-    endif
-
-    " prepare contents
-    let contents = []
-    for quickfix in result.result
-        call add(contents, quickfix.id . ": " . quickfix.description)
-    endfor
-
-    " show quickfix window (not to be confused with vim's quickfix)
-    call intellivim#display#TempWindow("[Quick Fix]", contents)
-    nnoremap <buffer> <cr> :call <SID>ExecuteQuickFix()<cr>
-
-endfunction " }}}
-
-function s:ExecuteQuickFix() " {{{
-    let line = getline('.')
-    let parts = split(line, ':')
-    if len(parts) == 1
-        " nothing to be done
-        return
-    endif
-
-    let fixId = parts[0]
-    let oldWinr = bufwinnr(b:last_bufno)
-
-    " close the tempwindow and pop back
-    norm! ZZ
-    exe oldWinr . 'winc w'
-
-    let command = intellivim#NewCommand("quickfix")
-    let command.fixId = fixId
-    let result = intellivim#client#Execute(command)
-
-    if intellivim#ShowErrorResult(result)
-        return
-    endif
-
-    call intellivim#core#ReloadFile()
-
-endfunction " }}}
-
-function s:ProblemToLocationEntry(problem) " {{{
-
-    let prob = a:problem
-
-    if !has_key(prob, 'file')
-        " if it doesn't have a file already,
-        "  it's just for the current file
-        let prob.file = expand('%:p')
-    endif
-
-    return {
-        \ 'filename': prob.file,
-        \ 'lnum': prob.line,
-        \ 'col': prob.col,
-        \ 'text': prob.description,
-        \ 'type': strpart(prob.severity, 0, 1),
-        \ 'nr': prob.id
-        \ }
 endfunction " }}}
 
 function s:ShouldIgnoreFiletype(ft) " {{{

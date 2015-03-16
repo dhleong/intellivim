@@ -62,8 +62,13 @@ public class ImportsQuickFixDescriptor
     private static List<String> extractChoices(
             final HighlightInfo.IntentionActionDescriptor descriptor) {
         final List<PsiClass> classes = getClassesToImport(descriptor.getAction());
-        // TODO if we had access to the PsiReference, we could do this:
+        // TODO we need access to the PsiReference, so we can do this:
 //        CodeInsightUtil.sortIdenticalShortNameClasses(classes, );
+
+        if (classes.size() <= 1) {
+            // no choices necessary
+            return null;
+        }
 
         return ContainerUtil.map(classes,
                 new Function<PsiClass, String>() {

@@ -87,6 +87,8 @@ public class IVCore implements ApplicationComponent {
             final String json = gson.toJson(result);
             final int code = result.isSuccess() ? 200 : 400;
 
+            System.out.println(json);
+
             // send headers
             httpExchange.sendResponseHeaders(code, json.length());
 
