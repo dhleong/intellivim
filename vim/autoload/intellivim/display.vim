@@ -1,39 +1,52 @@
 " Author: Daniel Leong
 "
 
-function! s:ExecuteAndFillWindow(command) " {{{
-    " Execute a command and append the results
-    "  line-by-line to the current window
-
-    let result = intellivim#client#Execute(a:command)
-    if intellivim#ShowErrorResult(result)
-        return
-    endif
-
-    setlocal modifiable
-
-    " prepare contents
-    let contents = split(result.result, '\n')
-    call append(0, contents)
-    retab
-    norm! gg
-
-    setlocal wrap
-    setlocal nomodifiable
-    setlocal nolist
-    setlocal noswapfile
-    setlocal nobuflisted
-    setlocal buftype=nofile
-    setlocal bufhidden=wipe
-
-    nnoremap <buffer> <silent> q :q<cr>
-endfunction " }}}
-
 function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
     " Show a preview window whose contents are the results
     "  of executing the given command
 
     exe 'pedit +:call\ s:ExecuteAndFillWindow(a:command) ' . a:name
+
+endfunction " }}}
+
+function! intellivim#display#PromptList(config) " {{{
+    " Prompt the user to pick from a list of choices.
+    " The argument is a dict defined as follows:
+    " Arguments:
+    " - title Title of the window
+    " - list List of strings to choose from
+    " - onSelect Function called when a choice was selected.
+    "            Will be called as `onSelect([selectArgs...], choice)`
+    "            where `selectArgs` is optionally those passed in this
+    "            dict, and `choice` is the string chosen by the user
+    " - onCancel (optional) Function called when the user cancels
+    " - onDone (optional) Function called when user is done selecting
+    " - selectArgs (optional) Arguments to be passed to onSelect
+    " - cancelArgs (optional) Arguments to be passed to onCancel
+    " - doneArgs (optional) Arguments to be passed to onDone
+    " - autoDismiss (optional; default: true) If true, the prompt
+    "            window will be dismissed after `onSelect` is called
+
+    let config = a:config
+    let title = config.title
+    let list = config.list
+
+    let contents = []
+    let index = 0
+    for choice in list
+        call add(contents, index . ": " . choice)
+        let index = index + 1
+    endfor
+
+    call intellivim#display#TempWindow("[" . title . "]", contents)
+    let b:prompt_config = config
+    let b:prompt_selects = 0
+    nnoremap <buffer> <cr> :call <SID>ListPromptSelect()<cr>
+    nnoremap <buffer> q :call <SID>ListPromptCancel(0)<cr>
+    nnoremap <buffer> <c-c> :call <SID>ListPromptCancel(1)<cr>
+    " TODO highlight currently selected item
+    " TODO support multi-line items nicely
+    " TODO support numbered shortcuts
 
 endfunction " }}}
 
@@ -92,8 +105,9 @@ function! intellivim#display#TempWindow(name, contents, ...) " {{{
     call append(0, a:contents)
     retab
 
-    " pop to the top
-    norm! gg
+    " clear the (always empty) last line and pop to the top
+    silent $delete _
+    call cursor(1, 1)
 
     if get(options, 'readonly', 1)
         setlocal nomodified
@@ -159,6 +173,112 @@ if buf:
 
 PYEOF
 
+endfunction " }}}
+
+"
+" Calbacks
+"
+
+function s:ListPromptCancel(alwaysCancel) " {{{
+    let config = b:prompt_config
+    let selects = b:prompt_selects
+
+    norm! ZZ
+
+    if !a:alwaysCancel && selects > 0
+        " actual, we're done
+        call s:ListPromptDone(config)
+        return
+    endif
+
+    if has_key(config, 'onCancel')
+        if type(get(config, 'cancelArgs')) == type([])
+            call call(config.onCancel, config.cancelArgs)
+        else
+            call config.onCancel()
+        endif
+    endif
+
+endfunction " }}}
+
+function s:ListPromptDone(config) " {{{
+    let config = a:config
+
+    if has_key(config, 'onDone')
+        if type(get(config, 'doneArgs')) == type([])
+            call call(config.onDone, config.doneArgs)
+        else
+            call config.onDone()
+        endif
+    endif
+
+endfunction " }}}
+
+function s:ListPromptSelect() " {{{
+    let config = b:prompt_config
+    let autoDismiss = 0 != get(config, 'autoDismiss', 1)
+
+    let b:prompt_selects = 1
+
+    let line = getline('.')
+    let parts = split(line, ':')
+    if len(parts) == 1
+        " nothing to be done
+        call intellivim#util#EchoError("Not a valid choice")
+    endif
+
+    let index = str2nr(parts[0])
+    let choice = config.list[index]
+
+    " close now, because onSelect might pop
+    "  back to a specific place
+    if autoDismiss
+        " aaaaand... done!
+        norm! ZZ
+    endif
+
+    if type(get(config, 'selectArgs')) == type([])
+        call call(config.onSelect, config.selectArgs + [choice])
+    else
+        call config.onSelect(choice)
+    endif
+
+    if autoDismiss
+        call s:ListPromptDone(config)
+    endif
+
+endfunction " }}}
+
+"
+" Private utils
+"
+
+function! s:ExecuteAndFillWindow(command) " {{{
+    " Execute a command and append the results
+    "  line-by-line to the current window
+
+    let result = intellivim#client#Execute(a:command)
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    setlocal modifiable
+
+    " prepare contents
+    let contents = split(result.result, '\n')
+    call append(0, contents)
+    retab
+    norm! gg
+
+    setlocal wrap
+    setlocal nomodifiable
+    setlocal nolist
+    setlocal noswapfile
+    setlocal nobuflisted
+    setlocal buftype=nofile
+    setlocal bufhidden=wipe
+
+    nnoremap <buffer> <silent> q :q<cr>
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker

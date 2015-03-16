@@ -1,14 +1,11 @@
 package org.intellivim.java.command;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,9 +22,12 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.problems.FixProblemCommand;
+import org.intellivim.core.command.problems.ImportsQuickFixDescriptor;
 import org.intellivim.core.command.problems.Problem;
 import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
+import org.intellivim.core.command.problems.QuickFixException;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -35,30 +35,41 @@ import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 
 /**
- * Created by dhleong on 11/8/14.
+ * Attempt to automatically resolve unambiguous imports,
+ *  and provide a means to prompt for resolving ambiguous ones.
+ *  Returns a list of ImportQuickFixDescriptors if there were
+ *  any ambiguous imports, which will have the <code>choices[]</code>
+ *  for resolution. {@see FixProblemCommand} for how to deal with these
+ *
+ * @author dhleong
  */
 @Command("java_import_optimize")
 public class OptimizeImportsCommand extends ProjectCommand {
 
-    @Required @Inject PsiFile file;
+    @Required String file;
+
+    // NB: for multiple imports, we need to re-load these each time
+    transient PsiFile psiFile;
+    transient VimEditor editor;
 
     public OptimizeImportsCommand(Project project, String filePath) {
         super(project);
-        file = ProjectUtil.getPsiFile(project, filePath);
+        file = filePath;
     }
 
     @Override
     public Result execute() {
-        final VimEditor editor = new VimEditor(project, file, 0);
-        if (!(file instanceof PsiJavaFile)) {
-            return SimpleResult.error(file + " is not a Java file");
-        }
+        // always go ahead and clear this
+        FixProblemCommand.clearPendingFixes();
 
+        final List<ImportsQuickFixDescriptor> ambiguous =
+                new ArrayList<ImportsQuickFixDescriptor>();
         IntelliVimUtil.runInUnitTestMode(new Runnable() {
 
             @Override
@@ -66,13 +77,23 @@ public class OptimizeImportsCommand extends ProjectCommand {
                 final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-//                for (PsiJavaCodeReferenceElement el
-//                        : findUnresolvedReferences((PsiJavaFile) psiFile)) {
-//                    // TODO handle ambiguous imports somehow
-//                    attemptAutoImport(editor, el);
-//                }
-                for (final QuickFixDescriptor desc : findImportProblemFixes()) {
-                    desc.execute(project, editor, file);
+                for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
+                    try {
+//                        System.out.println("Executing " + desc.getDescription());
+//                        if (!psiFile.textMatches(editor.getDocument().getCharsSequence())) {
+//                            System.out.println("Using " + psiFile.getText());
+//                            System.out.println("Vs: " + editor.getDocument().getCharsSequence());
+//                        }
+                        Object result = desc.execute(project, editor, psiFile, null);
+                        if (null != result) {
+                            // it was ambiguous
+                            ambiguous.add(desc);
+                        }
+//                        System.out.println("Executed: " + desc.getDescription());
+
+                    } catch (QuickFixException e) {
+                        // don't care
+                    }
                 }
 
                 CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
@@ -81,46 +102,37 @@ public class OptimizeImportsCommand extends ProjectCommand {
             }
         });
 
-        ImportOptimizer optimizer = new JavaImportOptimizer();
-        if (optimizer.supports(file)) {
-            Runnable action = optimizer.processFile(file);
-            ApplicationManager.getApplication().runWriteAction(action);
+        // prepare again
+        prepare();
+
+        final ImportOptimizer optimizer = new JavaImportOptimizer();
+        if (optimizer.supports(psiFile)) {
+            final Runnable action = optimizer.processFile(psiFile);
+
+            CommandProcessor.getInstance().runUndoTransparentAction(action);
+//            ApplicationManager.getApplication().runWriteAction(action);
+
+            FileUtil.commitChanges(editor);
         }
 
-        FileUtil.commitChanges(editor);
-
-        return SimpleResult.success();
-    }
-
-    private ImportClassFixBase.Result attemptAutoImport(EditorEx editor, PsiJavaCodeReferenceElement el) {
-        editor.getCaretModel().moveToOffset(el.getTextOffset());
-        return new ImportClassFix(el).doFix(editor, false, false);
-    }
-
-    private List<QuickFixDescriptor> findImportProblemFixes() {
-        List<QuickFixDescriptor> fixes = new ArrayList<QuickFixDescriptor>();
-        Problems problems = Problems.collectFrom(project, file);
-        for (Problem problem : problems) {
-            if (!problem.isError()) continue;
-
-            QuickFixDescriptor importFix = findImportFix(problem);
-            if (importFix != null) {
-                // found import fix
-                fixes.add(importFix);
-            }
+        if (ambiguous.isEmpty()) {
+            return SimpleResult.success();
+        } else {
+            FixProblemCommand.setPendingFixes(psiFile, ambiguous);
+            return SimpleResult.success(ambiguous);
         }
-
-        return fixes;
     }
 
-    private QuickFixDescriptor findImportFix(Problem problem) {
-
-        for (QuickFixDescriptor descriptor : problem.getFixes()) {
-            if (descriptor.getFix() instanceof ImportClassFix)
-                return descriptor;
+    private void prepare() {
+        psiFile = ProjectUtil.getPsiFile(project, file);
+        editor = new VimEditor(project, psiFile, 0);
+        if (!(psiFile instanceof PsiJavaFile)) {
+            throw new IllegalArgumentException(file + " is not a Java file");
         }
+    }
 
-        return null;
+    private Iterable<ImportsQuickFixDescriptor> findImportProblemFixes() {
+        return new ImportsQuickFixIterator();
     }
 
     private List<PsiJavaCodeReferenceElement> findUnresolvedReferences(PsiJavaFile file) {
@@ -170,4 +182,62 @@ public class OptimizeImportsCommand extends ProjectCommand {
         return elements;
     }
 
+    private static ImportsQuickFixDescriptor findImportFix(Problem problem) {
+
+        for (QuickFixDescriptor descriptor : problem.getFixes()) {
+            if (descriptor instanceof ImportsQuickFixDescriptor)
+                return (ImportsQuickFixDescriptor) descriptor;
+        }
+
+        return null;
+    }
+
+    private class ImportsQuickFixIterator
+            implements Iterable<ImportsQuickFixDescriptor>,
+                       Iterator<ImportsQuickFixDescriptor> {
+
+        final Iterator<ImportsQuickFixDescriptor> fixes = fetch().iterator();
+
+        @Override
+        public boolean hasNext() {
+            return fixes.hasNext();
+        }
+
+        public ImportsQuickFixDescriptor next() {
+            ImportsQuickFixDescriptor fix = fixes.next();
+
+            // make sure we're using the most up-to-date PsiFile and a matching Editor
+            prepare();
+            return (ImportsQuickFixDescriptor) Problems.collectFrom(project, psiFile)
+                    .locateQuickFix(fix);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Iterator<ImportsQuickFixDescriptor> iterator() {
+            return this;
+        }
+
+        private List<ImportsQuickFixDescriptor> fetch() {
+
+            prepare();
+            List<ImportsQuickFixDescriptor> fixes = new ArrayList<ImportsQuickFixDescriptor>();
+            Problems problems = Problems.collectFrom(project, psiFile);
+            for (Problem problem : problems) {
+                if (!problem.isError()) continue;
+
+                ImportsQuickFixDescriptor importFix = findImportFix(problem);
+                if (importFix != null) {
+                    // found import fix
+                    fixes.add(importFix);
+                }
+            }
+
+            return fixes;
+        }
+    }
 }

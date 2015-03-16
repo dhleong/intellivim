@@ -7,6 +7,7 @@ public class Problematic {
 
     public void foo() {
         NotImported obj;
+        AlsoNotImported other;
     }
 
 }

@@ -70,8 +70,9 @@ public class Problem {
         if (info.getDescription() == null)
             return null;
 
-        int line = doc.getLineNumber(info.getStartOffset());
-        int col = info.getStartOffset() - doc.getLineStartOffset(line);
+        final String description = info.getDescription();
+        final int line = doc.getLineNumber(info.getStartOffset());
+        final int col = info.getStartOffset() - doc.getLineStartOffset(line);
 
         List<QuickFixDescriptor> quickFixes = new ArrayList<QuickFixDescriptor>();
         int quickFixNumber = 0;
@@ -82,7 +83,7 @@ public class Problem {
                 final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber++;
                 final HighlightInfo.IntentionActionDescriptor desc = pair.getFirst();
                 final TextRange range = pair.getSecond();
-                quickFixes.add(QuickFixDescriptor.from(quickFixId, desc, range));
+                quickFixes.add(QuickFixDescriptor.from(description, quickFixId, desc, range));
             }
         }
 
@@ -92,7 +93,7 @@ public class Problem {
                 line + 1, col + 1,
                 info.getActualStartOffset(), info.getActualEndOffset(),
                 info.getSeverity(),
-                info.getDescription(),
+                description,
                 quickFixes);
     }
 

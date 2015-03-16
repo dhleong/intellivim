@@ -36,6 +36,7 @@ endfunction " }}}
 
 function! intellivim#signs#Place(type, bufno, line) " {{{
     " Place a sign at the given line in the given buffer
+
     let id = a:line
     exe "sign place " . id . 
         \ " line=" . a:line .
@@ -75,7 +76,11 @@ function! intellivim#signs#Update(...) " {{{
     for item in items
         let line = item.lnum
         let type = tolower(item.type)
-        call intellivim#signs#Place(type, bufno, line)
+        " NB: IJ actually has a few more marker types,
+        "  like typo and info
+        if has_key(s:sign_markers, type)
+            call intellivim#signs#Place(type, bufno, line)
+        endif
     endfor
 
   let &lazyredraw = save_lazy
