@@ -40,12 +40,13 @@ public class CompleteCommand extends ProjectCommand {
         this.offset = offset;
     }
 
+    @Override
     public Result execute() {
         final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
 
         final CompletionParameters params = CompletionParametersUtil.from(project, virtualFile, offset);
         final LookupElement[] results = performCompletion(params, null);
-        ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>(results.length);
+        final ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>(results.length);
         for (LookupElement el : results) {
 //            System.out.println("result: " + el.getPsiElement() + " / " + el + " / " + el.getClass());
 
@@ -82,10 +83,6 @@ public class CompleteCommand extends ProjectCommand {
     /**
      * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
      * will be run starting from the next one after that.
-     * @param parameters
-     * @param from
-     * @param consumer
-     * @return
      */
     public static void getVariantsFromContributors(final CompletionParameters parameters,
                                             final CompletionContributor from,
@@ -106,13 +103,18 @@ public class CompleteCommand extends ProjectCommand {
     static CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
                                                final CompletionContributor contributor) {
         final PsiElement position = parameters.getPosition();
-        final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
+        final String prefix = findPrefix(position, parameters.getOffset());
         final int lengthOfTextBeforePosition = parameters.getOffset();
-        CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
-        CompletionSorter sorter = CompletionService.getCompletionService().defaultSorter(parameters, matcher);
+        final CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
+        final CompletionSorter sorter = CompletionService.getCompletionService().defaultSorter(parameters, matcher);
         return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher,
                 contributor, parameters, sorter, null);
     }
 
+    @SuppressWarnings("deprecation")
+    static String findPrefix(PsiElement position, int offset) {
+        // Class is deprecated, but the method seems to be used...
+        return CompletionData.findPrefixStatic(position, offset);
+    }
 
 }

@@ -1,12 +1,9 @@
 package org.intellivim.core.command.complete;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import org.apache.http.util.TextUtils;
 import org.intellivim.core.command.complete.formatters.ClassCompletionInfo;
 import org.intellivim.core.command.complete.formatters.FieldCompletionInfo;
 import org.intellivim.core.command.complete.formatters.PackageCompletionInfo;
@@ -42,6 +39,17 @@ public abstract class CompletionInfo<T extends PsiElement> {
     }
 
     protected String formatBody(final LookupElement lookup, final T el) {
+        if (el instanceof PsiNamedElement) {
+            final String name = ((PsiNamedElement) el).getName();
+            if (!TextUtils.isEmpty(name)) {
+                // use it. This fixes cases like Arrays.asList() where
+                //  the lookup string contains the class (but we've
+                //  already typed it)
+                return name;
+            }
+        }
+
+        // fallback
         return lookup.getLookupString();
     }
 
