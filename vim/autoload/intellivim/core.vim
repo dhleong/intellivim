@@ -71,6 +71,11 @@ endfunction " }}}
 function! intellivim#core#ReloadFile(...) " {{{
     " Update the contents/state of a file after
     "  we (think) it has been changed externally
+    " Optional Argument:
+    "  - "result" A result from executing a comand.
+    "             If provided, we will attempt to
+    "             update the cursor position to match
+    "             the newOffset parameter, if provided.
 
     let result = a:0 ? a:1 : {}
 

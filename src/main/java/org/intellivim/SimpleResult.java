@@ -27,10 +27,22 @@ public class SimpleResult implements Result {
         return (T) result;
     }
 
-    public SimpleResult withOffsetFrom(RangeMarker marker) {
-        final int editorOffset = marker.getStartOffset();
-        if (editorOffset > 0) {
-            newOffset = editorOffset;
+    /**
+     * Some commands may edit the text, and we would like to
+     *  preserve the cursor position across such edits.
+     *  You can use {@see VimEditor#createRangeMarker()} before
+     *  performing the edit and pass it here after, then
+     *  utilize the newOffset field of the result
+     *
+     * @return This object again, Builder-style
+     */
+    public SimpleResult withOffsetFrom(final RangeMarker marker) {
+        if (marker != null) {
+            final int editorOffset = marker.getStartOffset();
+            System.out.println("marker=" + editorOffset);
+            if (editorOffset > 0) {
+                newOffset = editorOffset;
+            }
         }
         return this;
     }

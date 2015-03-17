@@ -3,8 +3,8 @@ package org.intellivim.java.command;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -32,7 +32,6 @@ import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
-import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -54,9 +53,14 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
     @Required String file;
 
+    int offset;
+
     // NB: for multiple imports, we need to re-load these each time
     transient PsiFile psiFile;
     transient VimEditor editor;
+
+    // created once, on first prepare()
+    transient RangeMarker marker;
 
     public OptimizeImportsCommand(Project project, String filePath) {
         super(project);
@@ -116,18 +120,22 @@ public class OptimizeImportsCommand extends ProjectCommand {
         }
 
         if (ambiguous.isEmpty()) {
-            return SimpleResult.success();
+            return SimpleResult.success().withOffsetFrom(marker);
         } else {
             FixProblemCommand.setPendingFixes(psiFile, ambiguous);
-            return SimpleResult.success(ambiguous);
+            return SimpleResult.success(ambiguous).withOffsetFrom(marker);
         }
     }
 
     private void prepare() {
         psiFile = ProjectUtil.getPsiFile(project, file);
-        editor = new VimEditor(project, psiFile, 0);
+        editor = new VimEditor(project, psiFile, offset);
         if (!(psiFile instanceof PsiJavaFile)) {
             throw new IllegalArgumentException(file + " is not a Java file");
+        }
+
+        if (marker == null) {
+            marker = editor.createRangeMarker();
         }
     }
 
