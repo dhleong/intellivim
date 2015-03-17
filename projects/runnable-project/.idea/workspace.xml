@@ -31,7 +31,7 @@
             <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="903">
               <caret line="0" column="13" selection-start-line="0" selection-start-column="13" selection-end-line="0" selection-end-column="13" />
               <folding>
-                <marker date="1426532933000" expanded="true" signature="114:214" placeholder="{...}" />
+                <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
               </folding>
             </state>
           </provider>
@@ -287,10 +287,40 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/org/intellivim/runnable/RunnableMain.java">
       <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/intellivim/runnable/RunnableMain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="255">
+          <caret line="0" column="13" selection-start-line="0" selection-start-column="13" selection-end-line="0" selection-end-column="13" />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/intellivim/runnable/RunnableMain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="255">
+          <caret line="0" column="13" selection-start-line="0" selection-start-column="13" selection-end-line="0" selection-end-column="13" />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/intellivim/runnable/RunnableMain.java">
+      <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1426532933000" expanded="true" signature="114:214" placeholder="{...}" />
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
           </folding>
         </state>
       </provider>
@@ -299,7 +329,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="270">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -307,7 +339,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="255">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -315,7 +349,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -323,7 +359,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="255">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -331,7 +369,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -339,7 +379,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="225">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -347,7 +389,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -355,7 +399,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -363,7 +409,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -371,7 +419,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -379,7 +429,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -387,7 +439,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0" vertical-offset="30" max-vertical-offset="210">
           <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
-          <folding />
+          <folding>
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -396,7 +450,7 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="903">
           <caret line="0" column="13" selection-start-line="0" selection-start-column="13" selection-end-line="0" selection-end-column="13" />
           <folding>
-            <marker date="1426532933000" expanded="true" signature="114:214" placeholder="{...}" />
+            <marker date="1426600022000" expanded="true" signature="105:230" placeholder="{...}" />
           </folding>
         </state>
       </provider>

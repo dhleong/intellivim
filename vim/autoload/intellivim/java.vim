@@ -15,13 +15,14 @@ endfunction " }}}
 function! intellivim#java#OptimizeImports() " {{{
 
     let command = intellivim#NewCommand("java_import_optimize")
+    let command.offset = intellivim#GetOffset()
     let result = intellivim#client#Execute(command)
 
     if intellivim#ShowErrorResult(result)
         return
     endif
 
-    call intellivim#core#ReloadFile()
+    call intellivim#core#ReloadFile(result)
 
     if !has_key(result, 'result') || !type(result.result) == type([])
         " all unambiguous

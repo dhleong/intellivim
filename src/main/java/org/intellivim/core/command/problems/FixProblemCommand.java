@@ -1,5 +1,6 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
@@ -26,6 +27,7 @@ public class FixProblemCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required String fixId;
 
+    /* optional */int offset;
     /* optional */String arg;
 
     public FixProblemCommand(Project project, String filePath, String fixId) {
@@ -42,12 +44,13 @@ public class FixProblemCommand extends ProjectCommand {
     public Result execute() {
 
         final QuickFixDescriptor fix = selectFix();
-        final VimEditor editor = new VimEditor(project, file, 0);
+        final VimEditor editor = new VimEditor(project, file, offset);
+        RangeMarker marker = editor.createRangeMarker();
 
         try {
             return SimpleResult.success(
                     fix.execute(project, editor, file, arg)
-            );
+            ).withOffsetFrom(marker);
         } catch (QuickFixException e) {
             return SimpleResult.error(e);
         }

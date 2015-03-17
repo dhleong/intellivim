@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project;
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author dhleong
  */
@@ -11,6 +13,11 @@ public class FixProblemTest extends FileEditingTestCase {
 
 //    public static final String IMPORT_STATEMENT = "import java.util.ArrayList;";
     public static final String IMPORT_STATEMENT = "import org.intellivim.javaproject.subpackage.NotImported;";
+
+    /** Offset of cursor when on top of [N]otImported before the problem fix */
+    private static final int OFFSET_BEFORE = 152;
+    /** Offset of cursor after the problem fix */
+    private static final int OFFSET_AFTER = 211;
 
     final String projPath = getProjectPath(JAVA_PROJECT);
     final String filePath = PROBLEMATIC_FILE_PATH;
@@ -34,15 +41,21 @@ public class FixProblemTest extends FileEditingTestCase {
         assertSuccess(result);
 
         final Problems problems = result.getResult();
-        assertSize(2, problems);
+        assertThat(problems).hasSize(2);
 
         final QuickFixDescriptor quickFix = problems.locateQuickFix("0.0");
         assertNotNull(quickFix);
         assertEquals("Import Class", quickFix.description);
 
-        SimpleResult fixResult = (SimpleResult) new FixProblemCommand(project, filePath, quickFix.id).execute();
+        FixProblemCommand command = new FixProblemCommand(project, filePath, quickFix.id);
+        command.offset = OFFSET_BEFORE;
+        SimpleResult fixResult = (SimpleResult) command.execute();
         assertSuccess(fixResult);
         assertFileNowContains(IMPORT_STATEMENT);
+
+        assertThat(fixResult.getNewOffset())
+            .isGreaterThan(0)
+            .isEqualTo(OFFSET_AFTER);
     }
 
 }

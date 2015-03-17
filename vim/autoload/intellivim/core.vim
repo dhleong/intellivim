@@ -68,17 +68,35 @@ function! intellivim#core#Setup() " {{{
 
 endfunction " }}}
 
-function! intellivim#core#ReloadFile() " {{{
+function! intellivim#core#ReloadFile(...) " {{{
     " Update the contents/state of a file after
     "  we (think) it has been changed externally
+    " Optional Argument:
+    "  - "result" A result from executing a comand.
+    "             If provided, we will attempt to
+    "             update the cursor position to match
+    "             the newOffset parameter, if provided.
+
+    let result = a:0 ? a:1 : {}
 
     " reload the file
     edit!
 
-    " TODO somehow preserve cursor position?
-
     " refresh problems
     call intellivim#core#Update()
+
+    " if they provided a useful newOffset, use it!
+    if has_key(result, 'newOffset')
+        let newOffset = result.newOffset
+        if newOffset > 0
+            " NB add 1 to col because offset is from zero,
+            "  and another 1 because col is 1-indexed
+            let line = byte2line(newOffset)
+            let col = newOffset - line2byte(line) + 2
+            call cursor(line, col)
+        endif
+    endif
+
 endfunction " }}}
 
 function! intellivim#core#Update() " {{{
