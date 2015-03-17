@@ -21,7 +21,12 @@ endfunction " }}}
 
 function! intellivim#core#lang#CleanCompletion(base, completion) " {{{
     " default CleanCompletion implementation
+    " Arguments:
+    "  - "base" The text which matches should match (see :h completion-functions)
+    "  - "completion" Completion dict
+    " Returns: 1 if the completion should be included, else 0
 
+    return stridx(a:completion.body, a:base) == 0
 endfunction " }}}
 
 function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
@@ -35,13 +40,12 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
         " make sure the file on disk is up to date
         call intellivim#SilentUpdate()
 
-        let findStart = "intellivim#" . filetype . "#lang#FindStart"
-        if !exists("*" . findStart)
-            let findStart = "intellivim#core#lang#FindStart"
+        let findStartName = "intellivim#" . filetype . "#lang#FindStart"
+        if !exists("*" . findStartName)
+            let findStartName = "intellivim#core#lang#FindStart"
         endif
-
-        exe "let start = " . findStart . "()"
-        return start
+        let FindStart = function(findStartName)
+        return FindStart()
     else
         let command = intellivim#NewCommand("complete")
         let command.offset = intellivim#GetOffset()
@@ -54,19 +58,20 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
         if !exists("*" . clean)
             let clean = "intellivim#core#lang#CleanCompletion"
         endif
+        let CleanCompletion = function(clean)
 
         let completions = []
         for item in result.result
 
             " clean it up
-            exe "call " . clean . "(a:base, item)"
-
-            call add(completions, {
-                \ 'word': item.body,
-                \ 'menu': item.detail,
-                \ 'info': item.doc,
-                \ 'dup': 1
-                \ })
+            if CleanCompletion(a:base, item)
+                call add(completions, {
+                    \ 'word': item.body,
+                    \ 'menu': item.detail,
+                    \ 'info': item.doc,
+                    \ 'dup': 1
+                    \ })
+            endif
         endfor
 
         return completions

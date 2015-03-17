@@ -2,6 +2,7 @@ package org.intellivim.core.command.complete;
 
 import com.intellij.openapi.project.Project;
 import org.assertj.core.api.Condition;
+import org.assertj.core.api.SoftAssertions;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
@@ -23,13 +24,13 @@ public class CompletionTest extends BaseTestCase {
     public void testCompletion() {
         Project project = getProject();
         String filePath = "src/org/intellivim/javaproject/Dummy.java";
-        int offset = 269;
+        int offset = 269; // new Dummy().
 
         SimpleResult result = (SimpleResult) new CompleteCommand(
                 project, filePath, offset).execute();
         assertSuccess(result);
 
-        List<CompletionInfo> infoList = (List<CompletionInfo>) result.result;
+        List<CompletionInfo> infoList = result.getResult();
         assertThat(infoList)
                 .isNotEmpty()
                 .has(sizeAtLeast(3));
@@ -52,8 +53,6 @@ public class CompletionTest extends BaseTestCase {
         assertEquals("()-> Dummy", last.detail);
         assertEquals("", last.doc);
     }
-
-    // TODO test completion with incomplete text, eg: list.<caret>
 
     private static Condition<? super List<?>> sizeAtLeast(final int minSize) {
         return new Condition<Collection<?>>("size at least " + minSize) {
