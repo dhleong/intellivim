@@ -115,7 +115,9 @@ function! intellivim#core#GetDocumentation() " {{{
     let command.offset = intellivim#GetOffset()
 
     " show documentation window
-    call intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
+    if !intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
+        call intellivim#util#EchoError("No documentation found")
+    endif
 
 endfunction " }}}
 

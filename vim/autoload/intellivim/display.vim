@@ -4,8 +4,26 @@
 function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
     " Show a preview window whose contents are the results
     "  of executing the given command
+    " Arguments:
+    "  - "name" The name of the window
+    "  - "command" Command dict to execute
+    " Returns:
+    "  -1 If there was an error
+    "   0 If there was no result returned
+    "   1 If the command was executed and the results shown
 
-    exe 'pedit +:call\ s:ExecuteAndFillWindow(a:command) ' . a:name
+    let result = intellivim#client#Execute(a:command)
+    if intellivim#ShowErrorResult(result)
+        pclose
+        return -1
+    endif
+    if !has_key(result, 'result')
+        pclose
+        return 0
+    endif
+
+    exe 'pedit +:call\ s:FillWindow(result.result) ' . a:name
+    return 1
 
 endfunction " }}}
 
@@ -253,22 +271,15 @@ endfunction " }}}
 " Private utils
 "
 
-function! s:ExecuteAndFillWindow(command) " {{{
-    " Execute a command and append the results
-    "  line-by-line to the current window
-
-    let result = intellivim#client#Execute(a:command)
-    if intellivim#ShowErrorResult(result)
-        return
-    endif
+function! s:FillWindow(result) " {{{
 
     setlocal modifiable
 
     " prepare contents
-    let contents = split(result.result, '\n')
+    let contents = split(a:result, '\n')
     call append(0, contents)
     retab
-    norm! gg
+    call cursor(1, 1)
 
     setlocal wrap
     setlocal nomodifiable
