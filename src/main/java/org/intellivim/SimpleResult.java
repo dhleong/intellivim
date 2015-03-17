@@ -39,7 +39,6 @@ public class SimpleResult implements Result {
     public SimpleResult withOffsetFrom(final RangeMarker marker) {
         if (marker != null) {
             final int editorOffset = marker.getStartOffset();
-            System.out.println("marker=" + editorOffset);
             if (editorOffset > 0) {
                 newOffset = editorOffset;
             }

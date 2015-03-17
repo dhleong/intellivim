@@ -30,7 +30,8 @@ public class CompletionTest extends BaseTestCase {
                 project, filePath, offset).execute();
         assertSuccess(result);
 
-        List<CompletionInfo> infoList = result.getResult();
+        CompleteCommand.CompletionResultInfo completion = result.getResult();
+        List<CompletionInfo<?>> infoList = completion.completions;
         assertThat(infoList)
                 .isNotEmpty()
                 .has(sizeAtLeast(3));

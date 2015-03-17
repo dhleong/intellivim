@@ -58,9 +58,8 @@ public class CompletionParametersUtil {
         return null;
     }
 
-    static CompletionParameters from(Project project, VirtualFile file, int offset) {
+    static CompletionParameters from(Project project, PsiFile psiFile, int offset) {
 
-        final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
         final PsiElement position = psiFile.findElementAt(offset);
         final CompletionType completionType = CompletionType.BASIC;
 

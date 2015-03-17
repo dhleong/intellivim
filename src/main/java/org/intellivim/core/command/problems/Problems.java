@@ -9,9 +9,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.intellivim.core.model.VimEditor;
 
@@ -19,11 +21,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by dhleong on 11/8/14.
+ * @author dhleong
  */
 public class Problems extends ArrayList<Problem> {
 
     private static final int ATTEMPTS = 5;
+
+    public Problems filterByFixType(final Class<? extends QuickFixDescriptor> fixType) {
+        return filter(new Condition<Problem>() {
+            @Override
+            public boolean value(Problem problem) {
+                for (QuickFixDescriptor fix : problem.getFixes()) {
+                    if (fixType.isAssignableFrom(fix.getClass())) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        });
+    }
+
+    public Problems filter(Condition<Problem> condition) {
+        Problems filtered = new Problems();
+        for (Problem problem : this) {
+            if (condition.value(problem))
+                filtered.add(problem);
+        }
+
+        return filtered;
+    }
 
     public QuickFixDescriptor locateQuickFix(String fixId) {
         String problemId = fixId.substring(0, fixId.indexOf(Problem.FIX_ID_SEPARATOR));

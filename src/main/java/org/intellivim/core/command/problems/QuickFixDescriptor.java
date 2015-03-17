@@ -3,6 +3,7 @@ package org.intellivim.core.command.problems;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -108,34 +109,37 @@ public class QuickFixDescriptor {
         return null;
     }
 
-    static QuickFixDescriptor from(String problemDescription, String id,
-                                   HighlightInfo.IntentionActionDescriptor descriptor, TextRange range) {
+    static QuickFixDescriptor from(final String problemDescription, final String id,
+            final HighlightInfo.IntentionActionDescriptor descriptor, final TextRange range) {
 
-        final String desc;
-        if (!TextUtils.isEmpty(descriptor.getDisplayName())) {
-            desc = descriptor.getDisplayName();
-        } else if (!TextUtils.isEmpty(descriptor.getAction().getText())) {
-            desc = descriptor.getAction().getText();
-        } else if (!TextUtils.isEmpty(descriptor.getAction().getFamilyName())) {
-            desc = descriptor.getAction().getFamilyName();
-        } else {
-            desc = descriptor.getAction().getClass().getSimpleName();
-        }
+        final String desc = extractDescription(descriptor);
+        final int start = range.getStartOffset();
+        final int end = range.getEndOffset();
 
         if (ImportsQuickFixDescriptor.handles(descriptor)) {
             return new ImportsQuickFixDescriptor(problemDescription,
-                    id,
-                    desc,
-                    range.getStartOffset(),
-                    range.getEndOffset(),
-                    descriptor);
+                    id, desc, start, end, descriptor);
         } else {
             return new QuickFixDescriptor(problemDescription,
-                    id,
-                    desc,
-                    range.getStartOffset(),
-                    range.getEndOffset(),
-                    descriptor);
+                    id, desc, start, end, descriptor);
+        }
+    }
+
+    private static String extractDescription(HighlightInfo.IntentionActionDescriptor descriptor) {
+
+        try {
+            if (!TextUtils.isEmpty(descriptor.getDisplayName())) {
+                return descriptor.getDisplayName();
+            } else if (!TextUtils.isEmpty(descriptor.getAction().getText())) {
+                return descriptor.getAction().getText();
+            } else if (!TextUtils.isEmpty(descriptor.getAction().getFamilyName())) {
+                return descriptor.getAction().getFamilyName();
+            } else {
+                return descriptor.getAction().getClass().getSimpleName();
+            }
+        } catch (Exception e) {
+            Logger.getInstance(QuickFixDescriptor.class).warn("Problem extracting description", e);
+            return "";
         }
     }
 }

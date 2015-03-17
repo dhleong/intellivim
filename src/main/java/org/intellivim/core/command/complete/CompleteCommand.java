@@ -9,16 +9,24 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.problems.ImportsQuickFixDescriptor;
+import org.intellivim.core.command.problems.Problem;
+import org.intellivim.core.command.problems.Problems;
+import org.intellivim.core.command.problems.QuickFixDescriptor;
+import org.intellivim.core.command.problems.QuickFixException;
+import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,36 +34,92 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
+ * Returns a CompletionResultInfo object.
+ *  If completions is null, there were no problems
+ *  If completions is non-null but empty, we auto-resolved problems
+ *  Otherwise, there were either ambiguous problems, or multiple problems
+ *
  * @author dhleong
  */
 @Command("complete")
 public class CompleteCommand extends ProjectCommand {
 
-    @Required String file;
+    public static class CompletionResultInfo {
+        public final List<CompletionInfo<?>> completions;
+        public final Problems problems;
+
+        private CompletionResultInfo(List<CompletionInfo<?>> completions, Problems problems) {
+            this.completions = completions;
+            this.problems = problems;
+        }
+    }
+
+    @Required @Inject PsiFile file;
     @Required int offset;
 
     public CompleteCommand(Project project, String filePath, int offset) {
         super(project);
-        file = filePath;
+        file = ProjectUtil.getPsiFile(project, filePath);
         this.offset = offset;
     }
 
     @Override
     public Result execute() {
-        final VirtualFile virtualFile = ProjectUtil.getVirtualFile(project, file);
+        final CompletionParameters params = CompletionParametersUtil.from(project, file, offset);
+        final ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>();
 
-        final CompletionParameters params = CompletionParametersUtil.from(project, virtualFile, offset);
-        final LookupElement[] results = performCompletion(params, null);
-        final ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>(results.length);
-        for (LookupElement el : results) {
-//            System.out.println("result: " + el.getPsiElement() + " / " + el + " / " + el.getClass());
+        // we must first gather problems; this will let us
+        //  handle auto-imports. This seems to be fast enough...
+        final RangeMarker marker;
+        final Problems problems = Problems.collectFrom(project, file)
+                .filterByFixType(ImportsQuickFixDescriptor.class);
+        final Problems returnedProblems;
+        if (problems.isEmpty()) {
+            // nothing to do
+            marker = null;
+            returnedProblems = null;
+        } else if (problems.size() == 1) {
+            // let's attempt to resolve it right now
+            final VimEditor editor = (VimEditor) params.getEditor();
+            marker = editor.createRangeMarker();
+            returnedProblems = problems;
 
-            CompletionInfo<?> info = CompletionInfo.from(el);
-            if (info != null)
-                infos.add(info);
+            try {
+                final Problem problem = problems.get(0);
+                final List<QuickFixDescriptor> fixes = problem.getFixes();
+                if (!fixes.isEmpty()) {
+                    final Object result = fixes.get(0).execute(project, editor, file, null);
+                    if (null == result && offset != marker.getStartOffset()) {
+                        // resolved unambiguously if execution returned null and
+                        //  our cursor moved
+                        problems.remove(problem);
+                    }
+                }
+            } catch (QuickFixException e) {
+                // bummer....
+            }
+        } else {
+            // multiple import problems? User can deal
+            marker = null;
+            returnedProblems = problems;
         }
 
-        return SimpleResult.success(infos);
+        // NB: We can take a shortcut here. If returnedProblems is an empty list,
+        //  we're going to restart completion anyway, so don't bother now
+        if (returnedProblems == null || !returnedProblems.isEmpty()) {
+            performCompletion(params, new Consumer<CompletionResult>() {
+                @Override
+                public void consume(CompletionResult completionResult) {
+                    final LookupElement el = completionResult.getLookupElement();
+                    final CompletionInfo<?> info = CompletionInfo.from(el);
+                    if (info != null)
+                        infos.add(info);
+                }
+            });
+        }
+
+        return SimpleResult.success(new CompletionResultInfo(infos, returnedProblems))
+                .withOffsetFrom(marker);
     }
 
     /*

@@ -54,6 +54,20 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
             return
         endif
 
+        if has_key(result.result, 'problems') && !len(result.result.problems)
+            " we fixed a problem!
+
+            " reload the file (thank you, eclim)
+            let func = "intellivim#core#ReloadFile({'newOffset': " 
+                        \ . result.newOffset . "}, {'update': 0})"
+            call feedkeys("\<c-e>\<c-r>=" . func . "\<cr>", 'n')
+
+            " restart completion
+            silent call s:RestartCompletion()
+            return -1
+            " TODO if not-empty, we could proactively show the errors....
+        endif
+
         let clean = "intellivim#" . filetype . "#lang#CleanCompletion"
         if !exists("*" . clean)
             let clean = "intellivim#core#lang#CleanCompletion"
@@ -61,7 +75,7 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
         let CleanCompletion = function(clean)
 
         let completions = []
-        for item in result.result
+        for item in result.result.completions
 
             " clean it up
             if CleanCompletion(a:base, item)
@@ -77,6 +91,16 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
         return completions
     endif
 
+endfunction " }}}
+
+"
+" Private utils
+"
+function! s:RestartCompletion() " {{{
+    " TODO For YCM, it'd be nicer if we could just replay
+    "  the last keypress, so the first suggestion isn't
+    "  necessarily selected....
+    call feedkeys("\<c-x>\<c-o>", 'n')
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker
