@@ -1,5 +1,6 @@
 package org.intellivim.core.model;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -16,6 +17,15 @@ import org.jetbrains.annotations.NotNull;
 public class VimDocument extends DocumentImpl implements DocumentEx {
     private PsiFile psiFile;
     private boolean forceEventsHandling;
+
+    /** Testing only */
+    public VimDocument(@NotNull CharSequence chars) {
+        this(null, chars);
+
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            throw new IllegalStateException("This constructor is ONLY for testing");
+        }
+    }
 
     VimDocument(PsiFile psiFile) {
         this(psiFile, psiFile.getViewProvider().getContents());

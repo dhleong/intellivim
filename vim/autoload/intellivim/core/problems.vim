@@ -118,6 +118,7 @@ function s:OnPerformFix(oldWinr, fixId, ...) " {{{
     exe a:oldWinr . 'winc w'
 
     let command = intellivim#NewCommand("quickfix")
+    let command.offset = intellivim#GetOffset()
     let command.fixId = a:fixId
 
     if a:0
@@ -130,7 +131,7 @@ function s:OnPerformFix(oldWinr, fixId, ...) " {{{
         return
     endif
 
-    call intellivim#core#ReloadFile()
+    call intellivim#core#ReloadFile(result)
 
 endfunction " }}}
 
