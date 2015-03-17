@@ -7,11 +7,13 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -37,7 +39,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
-import org.intellivim.core.util.ProjectUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,9 +71,22 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     private JComponent component;
 
     public VimEditor(Project project, PsiFile originalFile, int offset) {
+        this(project, originalFile, VimDocument.getInstance(originalFile), offset);
+    }
+
+    /** For TESTING only */
+    public VimEditor(VimDocument doc, int offset) {
+        this(null, null, doc, offset);
+
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            throw new IllegalStateException("This constructor is for TESTING only");
+        }
+    }
+
+    private VimEditor(Project project, PsiFile originalFile, VimDocument document, int offset) {
         this.project = project;
         this.originalFile = originalFile;
-        doc = VimDocument.getInstance(originalFile);
+        doc = document;
         caretModel = new VimCaretModel(this, doc, offset);
         softWrapModel = new NullSoftWrapModel();
         selectionModel = new NullSelectionModel();
@@ -101,6 +115,12 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
                 };
             }
         };
+    }
+
+    /** Convenience to create a RangeMarker based on the current cursor offset */
+    public RangeMarker createRangeMarker() {
+        final int offset = getCaretModel().getOffset();
+        return getDocument().createRangeMarker(offset, offset);
     }
 
     @NotNull
@@ -400,7 +420,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     @NotNull
     @Override
     public LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware) {
-        return null;
+        return offsetToLogicalPosition(offset);
     }
 
     @NotNull
@@ -629,4 +649,5 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     public IndentsModel getIndentsModel() {
         return indentsModel;
     }
+
 }

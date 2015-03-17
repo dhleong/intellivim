@@ -1,5 +1,7 @@
 package org.intellivim;
 
+import com.intellij.openapi.editor.RangeMarker;
+
 /**
  * Convenient implementation of Result
  * @author dhleong
@@ -8,15 +10,29 @@ public class SimpleResult implements Result {
     public final String error;
     public final Object result;
 
+    private int newOffset;
+
     SimpleResult(String error, Object result) {
         this.error = error;
         this.result = result;
+    }
+
+    public int getNewOffset() {
+        return newOffset;
     }
 
     /** Convenience method to avoid casting when you're sure of what it is */
     @SuppressWarnings("unchecked")
     public <T> T getResult() {
         return (T) result;
+    }
+
+    public SimpleResult withOffsetFrom(RangeMarker marker) {
+        final int editorOffset = marker.getStartOffset();
+        if (editorOffset > 0) {
+            newOffset = editorOffset;
+        }
+        return this;
     }
 
     @Override
