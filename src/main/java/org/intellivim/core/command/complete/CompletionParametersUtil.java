@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,7 +17,6 @@ import com.intellij.util.DocumentUtil;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
-import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;

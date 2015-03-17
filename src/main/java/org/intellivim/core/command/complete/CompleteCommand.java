@@ -57,6 +57,8 @@ public class CompleteCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required int offset;
 
+    /* optional */String prefix;
+
     public CompleteCommand(Project project, String filePath, int offset) {
         super(project);
         file = ProjectUtil.getPsiFile(project, filePath);
@@ -107,7 +109,7 @@ public class CompleteCommand extends ProjectCommand {
         // NB: We can take a shortcut here. If returnedProblems is an empty list,
         //  we're going to restart completion anyway, so don't bother now
         if (returnedProblems == null || !returnedProblems.isEmpty()) {
-            performCompletion(params, new Consumer<CompletionResult>() {
+            performCompletion(params, prefix, new Consumer<CompletionResult>() {
                 @Override
                 public void consume(CompletionResult completionResult) {
                     final LookupElement el = completionResult.getLookupElement();
@@ -127,12 +129,13 @@ public class CompleteCommand extends ProjectCommand {
      *  UI requirements, and tweaked for sanity
      */
     public LookupElement[] performCompletion(final CompletionParameters parameters,
+                                             final String prefix,
                                              final Consumer<CompletionResult> consumer) {
 
 
         final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-        getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
+        getVariantsFromContributors(parameters, prefix, null, new Consumer<CompletionResult>() {
             @Override
             public void consume(final CompletionResult result) {
                 if (lookupSet.add(result.getLookupElement())
@@ -149,13 +152,13 @@ public class CompleteCommand extends ProjectCommand {
      * will be run starting from the next one after that.
      */
     public static void getVariantsFromContributors(final CompletionParameters parameters,
-                                            final CompletionContributor from,
-                                            final Consumer<CompletionResult> consumer) {
+                                                   final String prefix, final CompletionContributor from,
+                                                   final Consumer<CompletionResult> consumer) {
         final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
         for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
             final CompletionContributor contributor = contributors.get(i);
 
-            CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+            CompletionResultSet result = createResultSet(parameters, prefix, consumer, contributor);
             contributor.fillCompletionVariants(parameters, result);
             if (result.isStopped()) {
                 return;
@@ -164,10 +167,10 @@ public class CompleteCommand extends ProjectCommand {
 
     }
 
-    static CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
-                                               final CompletionContributor contributor) {
+    static CompletionResultSet createResultSet(final CompletionParameters parameters, final String userPrefix,
+           final Consumer<CompletionResult> consumer, final CompletionContributor contributor) {
         final PsiElement position = parameters.getPosition();
-        final String prefix = findPrefix(position, parameters.getOffset());
+        final String prefix = userPrefix != null ? userPrefix : findPrefix(position, parameters.getOffset());
         final int lengthOfTextBeforePosition = parameters.getOffset();
         final CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
         final CompletionSorter sorter = CompletionService.getCompletionService().defaultSorter(parameters, matcher);

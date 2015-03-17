@@ -103,7 +103,7 @@ class CompletionResultSetImpl extends CompletionResultSet {
         if (stop) {
             stopHere();
         }
-        CompleteCommand.getVariantsFromContributors(parameters, myContributor, consumer);
+        CompleteCommand.getVariantsFromContributors(parameters, getPrefixMatcher().getPrefix(), myContributor, consumer);
     }
 
     public static CompletionService getCompletionService() {

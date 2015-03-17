@@ -49,6 +49,7 @@ function! intellivim#core#lang#CodeComplete(findstart, base) " {{{
     else
         let command = intellivim#NewCommand("complete")
         let command.offset = intellivim#GetOffset()
+        let command.prefix = a:base
         let result = intellivim#client#Execute(command)
         if intellivim#ShowErrorResult(result)
             return
