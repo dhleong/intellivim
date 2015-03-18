@@ -8,8 +8,10 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
@@ -83,7 +85,12 @@ public class LocateFileCommand extends ProjectCommand {
         });
 
         System.out.println("Results: " + results);
-        return SimpleResult.success(results);
+        return SimpleResult.success(ContainerUtil.filter(results, new Condition() {
+            @Override
+            public boolean value(Object o) {
+                return null != o;
+            }
+        }));
     }
 
     private String preparePattern(ChooseByNameModel model) {

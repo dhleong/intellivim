@@ -39,6 +39,10 @@ public class LocatedFile {
     }
 
     public static LocatedFile from(ChooseByNameModel model, Object obj) {
+        if (obj instanceof String) {
+            System.out.println("It's a string! " + obj);
+            return null;
+        }
         final String name = model.getFullName(obj);
         if (obj instanceof PsiFile) {
             final PsiFile file = (PsiFile) obj;

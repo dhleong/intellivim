@@ -94,11 +94,11 @@ function! intellivim#core#locate#OpenSearchWindow(config) " {{{
     augroup END
 
     " bindings to accept, move, etc.
-    imap <buffer> <silent> <up> <c-r>=<SID>OnNavigate('up')<cr>
-    imap <buffer> <silent> <c-k> <c-r>=<SID>OnNavigate('up')<cr>
-    imap <buffer> <silent> <down> <c-r>=<SID>OnNavigate('down')<cr>
-    imap <buffer> <silent> <c-j> <c-r>=<SID>OnNavigate('down')<cr>
-    imap <buffer> <silent> <cr> <c-r>=<SID>OnSelectFile()<cr>
+    inoremap <buffer> <silent> <up> <c-r>=<SID>OnNavigate('up')<cr>
+    inoremap <buffer> <silent> <c-k> <c-r>=<SID>OnNavigate('up')<cr>
+    inoremap <buffer> <silent> <down> <c-r>=<SID>OnNavigate('down')<cr>
+    inoremap <buffer> <silent> <c-j> <c-r>=<SID>OnNavigate('down')<cr>
+    inoremap <buffer> <silent> <cr> <c-r>=<SID>OnSelectFile()<cr>
 
     " wait for input!
     startinsert!
