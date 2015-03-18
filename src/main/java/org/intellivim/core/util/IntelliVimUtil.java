@@ -75,14 +75,28 @@ public class IntelliVimUtil {
     }
 
     /**
-     * @return A new computable that wraps execution of the given
-     *  computable as a Write Action
+     * @return A new Computable that wraps execution of the given
+     *  Computable as a Write Action
      */
     public static <T> Computable<T> asWriteAction(final Computable<T> computable) {
         return new Computable<T>() {
             @Override
             public T compute() {
                 return ApplicationManager.getApplication().runWriteAction(computable);
+            }
+        };
+    }
+
+    /**
+     * @return A new Runnable that wraps execution of the given
+     *  Runnable as a Write Action
+     */
+    public static Runnable asWriteAction(final Runnable runnable) {
+        return new Runnable() {
+
+            @Override
+            public void run() {
+                ApplicationManager.getApplication().runWriteAction(runnable);
             }
         };
     }

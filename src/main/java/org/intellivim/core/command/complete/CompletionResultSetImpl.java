@@ -62,7 +62,13 @@ class CompletionResultSetImpl extends CompletionResultSet {
 
     @Override
     public CompletionResultSet withPrefixMatcher(final String prefix) {
-        return withPrefixMatcher(new CamelHumpMatcher(prefix));
+        if (!prefix.isEmpty()) {
+            // don't erase our prefix!
+            // also, use `cloneWithPrefix` so our settings are preserved
+            return withPrefixMatcher(getPrefixMatcher().cloneWithPrefix(prefix));
+        }
+
+        return this;
     }
 
     @Override

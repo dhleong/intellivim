@@ -172,7 +172,7 @@ public class CompleteCommand extends ProjectCommand {
         final PsiElement position = parameters.getPosition();
         final String prefix = userPrefix != null ? userPrefix : findPrefix(position, parameters.getOffset());
         final int lengthOfTextBeforePosition = parameters.getOffset();
-        final CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
+        final CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, false);
         final CompletionSorter sorter = CompletionService.getCompletionService().defaultSorter(parameters, matcher);
         return new CompletionResultSetImpl(consumer, lengthOfTextBeforePosition, matcher,
                 contributor, parameters, sorter, null);

@@ -113,8 +113,8 @@ public class OptimizeImportsCommand extends ProjectCommand {
         if (optimizer.supports(psiFile)) {
             final Runnable action = optimizer.processFile(psiFile);
 
-            CommandProcessor.getInstance().runUndoTransparentAction(action);
-//            ApplicationManager.getApplication().runWriteAction(action);
+            CommandProcessor.getInstance().runUndoTransparentAction(
+                    IntelliVimUtil.asWriteAction(action));
 
             FileUtil.commitChanges(editor);
         }
