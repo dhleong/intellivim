@@ -98,12 +98,10 @@ function! intellivim#core#ReloadFile(...) " {{{
 
     if skipUpdate
         unlet b:intellivim_skipUpdate
+    else
+        " refresh problems
+        call intellivim#core#Update()
     endif
-
-    " if !has_key(options, "update") || options.update
-    "     " refresh problems
-    "     call intellivim#core#Update()
-    " endif
 
     " if they provided a useful newOffset, use it!
     if has_key(result, 'newOffset')
