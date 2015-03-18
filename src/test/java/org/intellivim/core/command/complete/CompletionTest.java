@@ -2,7 +2,6 @@ package org.intellivim.core.command.complete;
 
 import com.intellij.openapi.project.Project;
 import org.assertj.core.api.Condition;
-import org.assertj.core.api.SoftAssertions;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
