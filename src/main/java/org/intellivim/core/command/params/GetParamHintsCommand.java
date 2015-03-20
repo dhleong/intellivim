@@ -29,6 +29,8 @@ public class GetParamHintsCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required int offset;
 
+    private transient VimEditor editor;
+
     public GetParamHintsCommand(Project project, final String filePath, final int offset) {
         super(project);
 
@@ -39,7 +41,7 @@ public class GetParamHintsCommand extends ProjectCommand {
     @Override
     public Result execute() {
 
-        final VimEditor editor = new VimEditor(project, file, offset);
+        editor = new VimEditor(project, file, offset);
         final int lbraceOffset = offset - 1;
 
         final PsiElement psiElement = file.findElementAt(offset);
@@ -62,28 +64,42 @@ public class GetParamHintsCommand extends ProjectCommand {
         for (final ParameterInfoHandler handler : handlers) {
             final Object element = handler.findElementForParameterInfo(context);
             if (element instanceof PsiElement) {
-                final Object[] itemsToShow = context.getItemsToShow();
-                PsiExpressionList list = (PsiExpressionList) element;
-                for (int i=0; i < itemsToShow.length; i++) {
-                    final DummyParameterInfoUIContext infoContext = new DummyParameterInfoUIContext(list, i);
-                    final String presentation = infoToString(itemsToShow[i], handler, infoContext);
-                    paramPresentations.add(presentation);
-                }
+                buildParamPresentations((PsiElement) element, handler, context, paramPresentations);
+                break;
             }
         }
 
         return SimpleResult.success(paramPresentations);
     }
 
-    static String infoToString(Object p, ParameterInfoHandler handler, DummyParameterInfoUIContext context) {
+    private void buildParamPresentations(PsiElement element, ParameterInfoHandler handler,
+            ShowParameterInfoContext context, List<String> paramPresentations) {
+        final Object[] itemsToShow = context.getItemsToShow();
+        final DummyUpdateParameterInfoContext updateContext =
+                new DummyUpdateParameterInfoContext(project, file, editor, itemsToShow);
 
-        handler.updateUI(p, context);
+        // first pass, build the UI
+        final int len = itemsToShow.length;
+        PsiExpressionList list = (PsiExpressionList) element;
+        for (int i=0; i < len; i++) {
+            final DummyParameterInfoUIContext infoContext = new DummyParameterInfoUIContext(list, i);
+            handler.updateUI(itemsToShow[i], infoContext);
 
-        if (context.isPresentationValid()) {
-            return context.getPresentedString();
-        } else {
-            return null;
+            updateContext.add(infoContext);
+        }
+
+        // I guess?
+        updateContext.setParameterOwner(list);
+
+        // second pass, run the update
+        for (int i=0; i < len; i++) {
+            handler.updateParameterInfo(list, updateContext);
+
+            if (updateContext.isUIComponentEnabled(i)) {
+                paramPresentations.add(updateContext.getPresentedString(i));
+            }
         }
     }
+
 
 }
