@@ -33,7 +33,7 @@ public class CompletionTest extends BaseTestCase {
         List<CompletionInfo<?>> infoList = completion.completions;
         assertThat(infoList)
                 .isNotEmpty()
-                .has(sizeAtLeast(3));
+                .has(sizeAtLeast(4));
 
         CompletionInfo first = infoList.get(0);
         assertNotNull(first);
@@ -47,7 +47,13 @@ public class CompletionTest extends BaseTestCase {
         assertEquals("(int number)-> void", second.detail);
         assertEquals("/** I promise it's not boring */", second.doc);
 
-        CompletionInfo last = infoList.get(2);
+        CompletionInfo third = infoList.get(2);
+        assertNotNull(third);
+        assertEquals("notBoring(", third.body);
+        assertEquals("(int number, String foo)-> void", third.detail);
+        assertEquals("", third.doc);
+
+        CompletionInfo last = infoList.get(3);
         assertNotNull(last);
         assertEquals("fluid()", last.body);
         assertEquals("()-> Dummy", last.detail);
