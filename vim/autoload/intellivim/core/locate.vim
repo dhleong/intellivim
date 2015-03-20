@@ -121,7 +121,7 @@ endfunction " }}}
 " }}}
 
 "
-" Util and callbacks {{{
+" Util and callbacks
 "
 
 function! s:CloseLocateWindow() " {{{
@@ -248,7 +248,5 @@ function! s:TriggerCompletion() " {{{
     call s:OnNavigate('reset')
 
 endfunction " }}}
-
-" }}}
 
 " vim:ft=vim:fdm=marker

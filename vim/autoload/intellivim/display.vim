@@ -17,7 +17,8 @@ function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
         pclose
         return -1
     endif
-    if !has_key(result, 'result')
+    if !has_key(result, 'result') || 
+            \ (type(result.result) == type([]) && !len(result.result))
         pclose
         return 0
     endif
@@ -276,7 +277,10 @@ function! s:FillWindow(result) " {{{
     setlocal modifiable
 
     " prepare contents
-    let contents = split(a:result, '\n')
+    let contents = a:result
+    if type(contents) == type("")
+        let contents = split(contents, '\n')
+    endif
     call append(0, contents)
     retab
     call cursor(1, 1)
