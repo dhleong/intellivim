@@ -18,14 +18,14 @@ endfunction
 " Private utils
 "
 
-function! s:IsParamsTrigger(char)
+function! s:IsParamsTrigger(char) " {{{
     " we could allow extensions for other languages
     "  that don't use `function(arg, arg)` syntax
     let triggers = s:defaultTriggers
     return -1 != index(triggers, a:char)
-endfunction
+endfunction " }}}
 
-function! s:Restart()
+function! s:Restart() " {{{
     augroup intellivim_core_params
         autocmd!
         " NB: ideally we'd show after a delay using CursorHoldI,
@@ -33,7 +33,7 @@ function! s:Restart()
         " autocmd CursorMovedI <buffer> call <SID>PrepareDelay()
         autocmd CursorMovedI <buffer> call <SID>TriggerHints()
     augroup END
-endfunction
+endfunction " }}}
 
 " function! s:PrepareDelay()
 "     augroup intellivim_core_params
@@ -42,7 +42,7 @@ endfunction
 "     augroup END
 " endfunction
 
-function! s:TriggerHints()
+function! s:TriggerHints() " {{{
     " disable temporarily
     augroup intellivim_core_params
         autocmd!
@@ -65,13 +65,35 @@ function! s:TriggerHints()
     endif
 
     " make sure the file on disk is up to date
+    call s:CallMaybe("veryhint#duck#Duck")
     call intellivim#SilentUpdate()
 
     let command = intellivim#NewCommand("get_param_hints")
     let command.offset = intellivim#GetOffset()
-    call intellivim#display#PreviewWindowFromCommand("[Params]", command)
+
+    let result = intellivim#client#Execute(command)
+    if intellivim#ShowErrorResult(result)
+        " go ahead and unduck here
+        call s:CallMaybe("veryhint#duck#Unduck")
+        return
+    endif
+
+    let hints = result.result
+    let col = hints.start - line2byte(line('.')) + 1
+
+    " no need to unduck at this point
+    call s:CallMaybe("veryhint#ShowHints", hints.hints, col)
 
     return ''
-endfunction
+endfunction " }}}
+
+function! s:CallMaybe(func, ...) " {{{
+    try
+        return call(a:func, a:000)
+    catch /^Vim\%((\a\+)\)\=:E117/
+        " 'Unknown function'
+        " so, veryhint not installed
+    endtry
+endfunction " }}}
 
 " vim:ft=vim:fdm=marker

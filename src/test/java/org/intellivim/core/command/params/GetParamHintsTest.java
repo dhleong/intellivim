@@ -3,8 +3,6 @@ package org.intellivim.core.command.params;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -25,8 +23,8 @@ public class GetParamHintsTest extends BaseTestCase {
         SimpleResult result = (SimpleResult) new GetParamHintsCommand(getProject(), filePath, offset).execute();
         assertSuccess(result);
 
-        final List<String> params = result.getResult();
-        assertThat(params)
+        final GetParamHintsCommand.ParamHints params = result.getResult();
+        assertThat(params.hints)
                 .hasSize(2)
                 .contains("int number",
                           "int number, String foo");
@@ -38,8 +36,8 @@ public class GetParamHintsTest extends BaseTestCase {
         SimpleResult result = (SimpleResult) new GetParamHintsCommand(getProject(), filePath, offset).execute();
         assertSuccess(result);
 
-        final List<String> params = result.getResult();
-        assertThat(params)
+        final GetParamHintsCommand.ParamHints params = result.getResult();
+        assertThat(params.hints)
                 .hasSize(4)
                 .contains("<no parameters>",
                           "int number",

@@ -26,6 +26,16 @@ import java.util.List;
 @Command("get_param_hints")
 public class GetParamHintsCommand extends ProjectCommand {
 
+    public static class ParamHints {
+        public final List<String> hints;
+        public final int start;
+
+        private ParamHints(final List<String> hints, final int start) {
+            this.hints = hints;
+            this.start = start;
+        }
+    }
+
     @Required @Inject PsiFile file;
     @Required int offset;
 
@@ -42,7 +52,6 @@ public class GetParamHintsCommand extends ProjectCommand {
     public Result execute() {
 
         editor = new VimEditor(project, file, offset);
-        final int lbraceOffset = offset - 1;
 
         final PsiElement psiElement = file.findElementAt(offset);
         if (psiElement == null) return SimpleResult.error("No element at offset");
@@ -52,7 +61,7 @@ public class GetParamHintsCommand extends ProjectCommand {
                 project,
                 file,
                 offset,
-                lbraceOffset
+                findParametersStart()
         );
 
         final Language language = psiElement.getLanguage();
@@ -69,7 +78,34 @@ public class GetParamHintsCommand extends ProjectCommand {
             }
         }
 
-        return SimpleResult.success(paramPresentations);
+        return SimpleResult.success(new ParamHints(paramPresentations,
+                context.getParameterListStart()));
+    }
+
+    private int findParametersStart() {
+        int nesting = 0;
+        int start = offset - 1;
+        do {
+            final PsiElement atStart = file.findElementAt(start);
+            if (atStart == null)
+                continue;
+
+            final String startText = atStart.getText();
+
+            if (")".equals(startText)) {
+                nesting++;
+            } else if ("(".equals(startText)) {
+                if (--nesting <= 0) {
+                    // theoretically, we really want to check if this paren
+                    //  is balanced, and just return offset-1 if it is. That
+                    //  would close the hints on all parens closed. But,
+                    //  this is faster, and fine enough for now)
+                    return start;
+                }
+            }
+        } while (--start > 0);
+
+        return start;
     }
 
     private void buildParamPresentations(PsiElement element, ParameterInfoHandler handler,
