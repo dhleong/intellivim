@@ -19,6 +19,10 @@ they can be fixed with `:FixProblem`.
 
 Autocomplete is bound to omnifunc (`<c-x><c-o>`) and should work with [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) out of the box.
 
+#### Parameter Hints
+
+If [VeryHint](https://github.com/dhleong/vim-veryhint) is installed, parameter "hints" are shown inline.
+
 ### Commands
 
 `:FixProblem`  Provide options for fixing the problem under the cursor.
