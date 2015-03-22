@@ -5,7 +5,12 @@
 " Global vars {{{
 let s:default_locate_type = 'FILE'
 let s:default_update_time = 2000
+let s:completion_types = ['file', 'class']
 " }}}
+
+function! intellivim#core#locate#CompleteLocateTypes(argLead, cmdLine, cursorPos) " {{{
+    return filter(s:completion_types, 'v:val =~ "^' . a:argLead . '"')
+endfunction " }}}
 
 function! intellivim#core#locate#Locate(type) " {{{
     " Open a window for locating files in the project

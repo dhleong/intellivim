@@ -10,8 +10,9 @@ function! intellivim#core#Setup() " {{{
 
     " always setup :Locate
     if 2 != exists(":Locate") " compat with other Locate*
-        command -nargs=? Locate
-            \ :call intellivim#core#locate#Locate('<args>')
+        command -nargs=?
+            \ -complete=customlist,intellivim#core#locate#CompleteLocateTypes
+            \ Locate :call intellivim#core#locate#Locate('<args>')
     endif
 
     if &previewwindow || &ft == '' || s:ShouldIgnoreFiletype(&ft)
