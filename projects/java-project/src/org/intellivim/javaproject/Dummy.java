@@ -37,4 +37,16 @@ public class Dummy {
     }
     Dummy(int number, String andString) {
     }
+
+    /* New code for testing params */
+
+    void moreBoring() {
+        notBoring(42, "foo");
+        notBoring(answerQuestion("life"), "universe");
+    }
+
+    static int answerQuestion(String question) {
+        return 42;
+    }
+
 }

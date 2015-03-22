@@ -2,6 +2,7 @@ package org.intellivim.core.command.params;
 
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.params.GetParamHintsCommand.ParamHints;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,31 +18,70 @@ public class GetParamHintsTest extends BaseTestCase {
         return getProjectPath(JAVA_PROJECT);
     }
 
+    /** When outside of (params), we should get nothing */
+    public void testNone() {
+        final int offset = 390; // notBoring(42)|;
+
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isNotEqualTo(386);
+        assertThat(params.hints).isEmpty();
+    }
+
     public void testMethod() {
-        int offset = 387;
+        final int offset = 387; // notBoring(|42);
 
-        SimpleResult result = (SimpleResult) new GetParamHintsCommand(getProject(), filePath, offset).execute();
-        assertSuccess(result);
-
-        final GetParamHintsCommand.ParamHints params = result.getResult();
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isEqualTo(386);
         assertThat(params.hints)
                 .hasSize(2)
-                .contains("int number",
-                          "int number, String foo");
+                .contains("*int number*",
+                          "*int number*, String foo");
     }
 
     public void testConstructor() {
-        int offset = 267;
+        final int offset = 267; // new Dummy(|);
 
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isEqualTo(266);
+        assertThat(params.hints)
+                .hasSize(4)
+                .contains("*<no parameters>*",
+                          "*int number*",
+                          "*String string*",
+                          "*int number*, String andString");
+    }
+
+    public void testSecondParam() {
+        final int offset = 905; // notBoring(42, |"foo");
+
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isEqualTo(900);
+        assertThat(params.hints)
+                .containsExactly("int number, *String foo*");
+    }
+
+    public void testNestedParam() {
+        final int offset = 946; // notBoring(answerQuestion(|
+
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isEqualTo(945);
+        assertThat(params.hints)
+                .containsExactly("*String question*");
+    }
+
+    public void testAfterNestedParam() {
+        final int offset = 955; // notBoring(answerQuestion("life"), |"universe")
+
+        final ParamHints params = getParamsAt(offset);
+        assertThat(params.start).isEqualTo(930);
+        assertThat(params.hints)
+                .containsExactly("int number, *String foo*");
+    }
+
+    ParamHints getParamsAt(int offset) {
         SimpleResult result = (SimpleResult) new GetParamHintsCommand(getProject(), filePath, offset).execute();
         assertSuccess(result);
 
-        final GetParamHintsCommand.ParamHints params = result.getResult();
-        assertThat(params.hints)
-                .hasSize(4)
-                .contains("<no parameters>",
-                          "int number",
-                          "String string",
-                          "int number, String andString");
+        return result.getResult();
     }
 }

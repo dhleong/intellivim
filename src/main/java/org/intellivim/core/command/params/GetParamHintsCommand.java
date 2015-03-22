@@ -5,9 +5,12 @@ import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
@@ -61,7 +64,7 @@ public class GetParamHintsCommand extends ProjectCommand {
                 project,
                 file,
                 offset,
-                findParametersStart()
+                findParametersStart(psiElement)
         );
 
         final Language language = psiElement.getLanguage();
@@ -82,8 +85,8 @@ public class GetParamHintsCommand extends ProjectCommand {
                 context.getParameterListStart()));
     }
 
-    private int findParametersStart() {
-        int nesting = 0;
+    private int findParametersStart(final PsiElement cursorElement) {
+        int nesting = 1; // we assume we're "in" a paren already
         int start = offset - 1;
         do {
             final PsiElement atStart = file.findElementAt(start);
@@ -95,17 +98,42 @@ public class GetParamHintsCommand extends ProjectCommand {
             if (")".equals(startText)) {
                 nesting++;
             } else if ("(".equals(startText)) {
-                if (--nesting <= 0) {
-                    // theoretically, we really want to check if this paren
-                    //  is balanced, and just return offset-1 if it is. That
-                    //  would close the hints on all parens closed. But,
-                    //  this is faster, and fine enough for now)
-                    return start;
+                nesting--;
+
+                if (nesting <= 0) {
+                    // now, we make sure this offset is contained within
+                    //  an expression that also contains the cursor. If
+                    //  so, we found the paren we want to start from;
+                    //  if not, we may be outside of a paren, so just
+                    //  break out and return offset-1
+                    if (findExpressionContaining(cursorElement, start)) {
+                        return start;
+                    }
+                    break;
                 }
             }
         } while (--start > 0);
 
-        return start;
+        return offset - 1;
+    }
+
+    /**
+     * Walk up the tree looking for a PsiExpression that encompasses the offset
+     * @return True if we found one, else false
+     */
+    private boolean findExpressionContaining(final PsiElement cursorElement,
+            final int offset) {
+
+        PsiElement el = cursorElement;
+        while (!(el instanceof PsiMethod || el instanceof PsiClass)) {
+            if (el instanceof PsiExpression && el.getTextRange().contains(offset)) {
+                return true;
+            }
+
+            el = el.getParent();
+        }
+
+        return false;
     }
 
     private void buildParamPresentations(PsiElement element, ParameterInfoHandler handler,
