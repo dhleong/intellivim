@@ -3,6 +3,7 @@ package org.intellivim.core.command.params;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +112,13 @@ public class DummyUpdateParameterInfoContext implements UpdateParameterInfoConte
     }
 
     public String getPresentedString(int i) {
-        return contexts.get(i).getPresentedString();
+        final String string = contexts.get(i).getPresentedString();
+        final String[] params = string.split(", ");
+        if (params.length <= 1 || currentIndex < 0 || currentIndex >= params.length) {
+            return '*' + string + '*';
+        } else {
+            params[currentIndex] = '*' + params[currentIndex] + '*';
+            return StringUtil.join(params, ", ");
+        }
     }
 }
