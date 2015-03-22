@@ -75,7 +75,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     }
 
     /** For TESTING only */
-    public VimEditor(VimDocument doc, int offset) {
+    public VimEditor(DocumentEx doc, int offset) {
         this(null, null, doc, offset);
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -83,7 +83,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
         }
     }
 
-    private VimEditor(Project project, PsiFile originalFile, VimDocument document, int offset) {
+    private VimEditor(Project project, PsiFile originalFile, DocumentEx document, int offset) {
         this.project = project;
         this.originalFile = originalFile;
         doc = document;
