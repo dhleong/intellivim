@@ -24,6 +24,8 @@ function! intellivim#core#Setup() " {{{
         autocmd BufWritePost <buffer> call intellivim#core#Update()
     augroup END
 
+    call intellivim#core#params#Setup()
+
     if !(exists("b:intellivim_skipUpdate") && b:intellivim_skipUpdate)
         " also, update now
         call intellivim#core#Update()

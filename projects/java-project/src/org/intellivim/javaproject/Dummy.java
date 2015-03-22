@@ -21,7 +21,32 @@ public class Dummy {
         Problematic problem;
     }
 
+    void notBoring(int number, String foo) {}
+
     public Dummy fluid() {
         return this;
     }
+
+    /* Constructors last so existing tests with offsets aren't broken */
+
+    Dummy() {
+    }
+    Dummy(int number) {
+    }
+    Dummy(String string) {
+    }
+    Dummy(int number, String andString) {
+    }
+
+    /* New code for testing params */
+
+    void moreBoring() {
+        notBoring(42, "foo");
+        notBoring(answerQuestion("life"), "universe");
+    }
+
+    static int answerQuestion(String question) {
+        return 42;
+    }
+
 }
