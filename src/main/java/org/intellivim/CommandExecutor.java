@@ -5,8 +5,8 @@ import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.Profiler;
 
 import java.io.InputStream;
@@ -132,14 +132,27 @@ public class CommandExecutor {
         if (command instanceof ProjectCommand) {
             final Project project = ((ProjectCommand) command).getProject();
 
-            final DumbService dumbService = DumbService.getInstance(project);
-            dumbService.runWhenSmart(new Runnable() {
+            final Runnable executeRunnable = IntelliVimUtil.whenSmart(project,
+                    new Runnable() {
                 @Override
                 public void run() {
                     profiler.mark("runWhenSmart");
                     executeProjectCommand(project, command, result);
                 }
             });
+
+            if (IntelliVimUtil.isUnitTestMode()) {
+                // in unit test mode, just run immediately; there will
+                //  be no external edits, and the IntelliJ plugin junit
+                //  stuff has a weird relationship with the dispatch thread
+                executeRunnable.run();
+            } else {
+                // Invoke later so any delayed updates have a chance
+                //  to run. This is important if we're editing a file
+                //  that's open in IntelliJ. See issue #10
+                ApplicationManager.getApplication().invokeLater(executeRunnable);
+            }
+
         } else {
             // just invoke via the application
             result.setResult(command.execute());
