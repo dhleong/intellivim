@@ -2,6 +2,8 @@ package org.intellivim.core.command;
 
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.find.FindDeclarationCommand;
+import org.intellivim.core.command.find.LocationResult;
 
 import java.io.File;
 
@@ -23,7 +25,7 @@ public class FindDeclarationTest extends BaseTestCase {
         SimpleResult result = locateAt(484);
         assertSuccess(result);
 
-        FindDeclarationCommand.LocationResult loc = result.getResult();
+        LocationResult loc = result.getResult();
         assertNotNull(loc);
 
         assertThat(loc.file).endsWith("Problematic.java");

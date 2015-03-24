@@ -1,7 +1,6 @@
-package org.intellivim.core.command;
+package org.intellivim.core.command.find;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -17,19 +16,6 @@ import org.intellivim.core.util.ProjectUtil;
  */
 @Command("find_declaration")
 public class FindDeclarationCommand extends ProjectCommand {
-
-    public static class LocationResult {
-        public final String file;
-        public final int offset;
-
-        LocationResult(PsiElement element) {
-            final VirtualFile virtualFile = element.getContainingFile()
-                    .getVirtualFile();
-
-            file = virtualFile.getCanonicalPath();
-            offset = element.getTextOffset();
-        }
-    }
 
     @Required PsiFile file;
     @Required int offset;
