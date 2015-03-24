@@ -1,20 +1,22 @@
 package org.intellivim.core.command.find;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.navigation.ImplementationSearcher;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.searches.DefinitionsScopedSearch;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,21 +40,23 @@ public class FindImplementationsCommand extends ProjectCommand {
     @Override
     public Result execute() {
 
-        final PsiElement element = file.findElementAt(offset);
+        PsiElement element = file.findElementAt(offset);
         if (element == null) {
             return SimpleResult.error("No element under the cursor");
         }
 
-        
-        final Query<PsiElement> query = DefinitionsScopedSearch.search(element);
-        final List<LocationResult> results = new ArrayList<LocationResult>();
-        query.forEach(new Processor<PsiElement>() {
-            @Override
-            public boolean process(final PsiElement psiElement) {
-                results.add(new LocationResult(psiElement));
-                return true;
-            }
-        });
+        final Editor editor = new VimEditor(project, file, offset);
+        element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAccepted());
+
+        final PsiElement[] implementations = new ImplementationSearcher()
+                .searchImplementations(editor, element, offset);
+        final List<LocationResult> results = ContainerUtil.map(implementations,
+                new Function<PsiElement, LocationResult>() {
+                    @Override
+                    public LocationResult fun(PsiElement psiElement) {
+                        return new LocationResult(psiElement);
+                    }
+                });
 
         return SimpleResult.success(results);
     }

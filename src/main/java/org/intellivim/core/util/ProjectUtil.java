@@ -70,7 +70,7 @@ public class ProjectUtil {
 //        }
 
         final Project cached = sProjectCache.get(projectPath);
-        if (cached != null) {
+        if (cached != null && !cached.isDisposed()) {
             return cached;
 //            // we can't use this as a real cache for some reason;
 //            //  we have to "close" any previously-opened projects

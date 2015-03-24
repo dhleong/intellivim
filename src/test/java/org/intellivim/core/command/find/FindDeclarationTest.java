@@ -1,9 +1,7 @@
-package org.intellivim.core.command;
+package org.intellivim.core.command.find;
 
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
-import org.intellivim.core.command.find.FindDeclarationCommand;
-import org.intellivim.core.command.find.LocationResult;
 
 import java.io.File;
 
