@@ -1,5 +1,7 @@
 package org.intellivim.core.util;
 
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -11,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -26,7 +29,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -133,6 +136,12 @@ public class ProjectUtil {
                         ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
                         final PsiFile file = mgr.findFile(virtual);
                         mgr.reloadFromDisk(file);
+
+                        // ensure the doc is up to date as well
+                        final DocumentEx doc = VimDocument.getInstance(file);
+                        FileDocumentManager.getInstance().reloadFromDisk(doc);
+                        PsiDocumentManager.getInstance(project).commitDocument(doc);
+
                         PsiUtilCore.ensureValid(file);
                         return file;
                     }

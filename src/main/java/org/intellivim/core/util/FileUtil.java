@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.reference.SoftReference;
+import org.intellivim.core.model.VimDocument;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -32,29 +33,34 @@ public class FileUtil {
      * @param doc
      */
     @SuppressWarnings("unchecked")
-    public static void commitChanges(final Document doc) {
+    private static void commitChanges(final Document doc) {
 
-        // we have to assume the Impl because it will refuse to write anything
-        //  if it doesn't think it's "unsaved." Since we made our own Document,
-        //  we need to let it know that it's "unsaved"
-        // TODO: If we just register the appropriate listeners when we create
-        //  the VimDocument, this whole method may not be necessary
-        final Field myUnsavedDocuments;
-        try {
-            myUnsavedDocuments = FileDocumentManagerImpl.class.getDeclaredField("myUnsavedDocuments");
-            myUnsavedDocuments.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-            return;
-        }
+        final FileDocumentManager manager = FileDocumentManager.getInstance();
+        if (!manager.isDocumentUnsaved(doc)
+                && (doc instanceof VimDocument)) {
+            // NB: If we're using regular Documents, we can probably trust it
 
-        FileDocumentManagerImpl manager = (FileDocumentManagerImpl) FileDocumentManager.getInstance();
-        try {
-            Set<Document> set = (Set<Document>) myUnsavedDocuments.get(manager);
-            set.add(doc);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return;
+            // we have to assume the Impl because it will refuse to write anything
+            //  if it doesn't think it's "unsaved." Since we made our own Document,
+            //  we need to let it know that it's "unsaved"
+            // TODO: If we just register the appropriate listeners when we create
+            //  the VimDocument, this whole method may not be necessary
+            final Field myUnsavedDocuments;
+            try {
+                myUnsavedDocuments = FileDocumentManagerImpl.class.getDeclaredField("myUnsavedDocuments");
+                myUnsavedDocuments.setAccessible(true);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            try {
+                Set<Document> set = (Set<Document>) myUnsavedDocuments.get(manager);
+                set.add(doc);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                return;
+            }
         }
 
         manager.saveDocument(doc);
@@ -62,7 +68,13 @@ public class FileUtil {
 
     /** @see #commitChanges(com.intellij.openapi.editor.Document) */
     public static void commitChanges(Editor editor) {
-        commitChanges(editor.getDocument());
+        final Document doc = editor.getDocument();
+
+        // make sure the document matches the PsiFile
+        final PsiDocumentManager psiMan = PsiDocumentManager.getInstance(editor.getProject());
+        psiMan.doPostponedOperationsAndUnblockDocument(doc);
+
+        commitChanges(doc);
     }
 
     /**

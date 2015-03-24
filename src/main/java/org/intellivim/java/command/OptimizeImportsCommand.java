@@ -74,37 +74,23 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
         final List<ImportsQuickFixDescriptor> ambiguous =
                 new ArrayList<ImportsQuickFixDescriptor>();
-        IntelliVimUtil.runInUnitTestMode(new Runnable() {
+        final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
-            @Override
-            public void run() {
-                final boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-                CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-
-                for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
-                    try {
-//                        System.out.println("Executing " + desc.getDescription());
-//                        if (!psiFile.textMatches(editor.getDocument().getCharsSequence())) {
-//                            System.out.println("Using " + psiFile.getText());
-//                            System.out.println("Vs: " + editor.getDocument().getCharsSequence());
-//                        }
-                        Object result = desc.execute(project, editor, psiFile, null);
-                        if (null != result) {
-                            // it was ambiguous
-                            ambiguous.add(desc);
-                        }
-//                        System.out.println("Executed: " + desc.getDescription());
-
-                    } catch (QuickFixException e) {
-                        // don't care
-                    }
+        for (final ImportsQuickFixDescriptor desc : findImportProblemFixes()) {
+            try {
+                final Object result = desc.execute(project, editor, psiFile, null);
+                if (null != result) {
+                    // it was ambiguous
+                    ambiguous.add(desc);
                 }
 
-                CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-
-                FileUtil.commitChanges(editor);
+            } catch (QuickFixException e) {
+                // don't care
             }
-        });
+        }
+
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
 
         // prepare again
         prepare();
@@ -139,7 +125,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
         }
     }
 
-    private Iterable<ImportsQuickFixDescriptor> findImportProblemFixes() {
+    Iterable<ImportsQuickFixDescriptor> findImportProblemFixes() {
         return new ImportsQuickFixIterator();
     }
 
