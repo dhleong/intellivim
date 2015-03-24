@@ -1,7 +1,15 @@
 package org.intellivim;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import org.intellivim.core.model.VimDocument;
+import org.intellivim.core.model.VimEditor;
+import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;
@@ -146,7 +154,33 @@ public abstract class FileEditingTestCase extends BaseTestCase {
     }
 
     private void restoreFile() throws IOException {
-        getFile().setBinaryContent(originalContents);
+        VirtualFile file = getFile();
+        file.setBinaryContent(originalContents);
+
+        // NB: At this point, the file on disk is correct,
+        //  but the PsiFile is still referencing the modified stuff
+
+        final Project project = getProject();
+        final PsiFile psi = ProjectUtil.getPsiFile(project, file);
+
+        final String originalString = new String(originalContents);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+            @Override
+            public void run() {
+                final DocumentEx doc = VimDocument.getInstance(psi);
+
+                FileDocumentManager.getInstance().reloadFromDisk(doc);
+                assertThat(doc.getText()).isEqualTo(originalString);
+
+                // now, commit changes so the PsiFile is updated
+                PsiDocumentManager.getInstance(project).commitDocument(doc);
+            }
+        });
+
+        assertThat(psi.getText()).isEqualTo(originalString);
+
+        FileUtil.commitChanges(new VimEditor(project, psi, 0));
     }
 
 

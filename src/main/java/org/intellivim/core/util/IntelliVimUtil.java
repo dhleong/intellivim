@@ -3,6 +3,8 @@ package org.intellivim.core.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ui.UIUtil;
 
@@ -97,6 +99,20 @@ public class IntelliVimUtil {
             @Override
             public void run() {
                 ApplicationManager.getApplication().runWriteAction(runnable);
+            }
+        };
+    }
+
+    /**
+     * @return A new Runnable that wraps execution of the given
+     *  Runnable to be "run when smart"
+     */
+    public static Runnable whenSmart(final Project project, final Runnable runWhenSmart) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                final DumbService dumbService = DumbService.getInstance(project);
+                dumbService.runWhenSmart(runWhenSmart);
             }
         };
     }

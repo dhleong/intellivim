@@ -73,12 +73,15 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
         return "VimDocument: " + super.toString();
     }
 
-    public static VimDocument getInstance(@NotNull PsiFile originalFile) {
+    public static DocumentEx getInstance(@NotNull PsiFile originalFile) {
         VirtualFile file = originalFile.getVirtualFile();
         final Document doc = FileDocumentManager.getInstance()
                 .getCachedDocument(file);
-        if (doc instanceof VimDocument) {
-            return (VimDocument) doc;
+//        if (doc instanceof VimDocument) {
+//            return (VimDocument) doc;
+//        }
+        if (doc instanceof DocumentEx) {
+            return (DocumentEx) doc;
         }
 
         // create and cache
