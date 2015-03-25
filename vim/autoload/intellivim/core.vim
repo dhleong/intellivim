@@ -36,6 +36,13 @@ function! intellivim#core#Setup() " {{{
     setlocal omnifunc=intellivim#core#lang#CodeComplete
 
     " define commands {{{
+    if !exists(":FindImplementations")
+        command -nargs=0 FindImplementations
+            \ call intellivim#core#find#Implementations()
+        command -nargs=0 GotoDeclaration
+            \ call intellivim#core#find#Declaration()
+    endif
+
     if !exists(":FixProblem")
         command -nargs=0 FixProblem
             \ call intellivim#core#problems#FixProblem()
@@ -44,11 +51,6 @@ function! intellivim#core#Setup() " {{{
     if !exists(":GetDocumentation")
         command -nargs=0 GetDocumentation
             \ call intellivim#core#GetDocumentation()
-    endif
-
-    if !exists(":GotoDeclaration")
-        command -nargs=0 GotoDeclaration
-            \ call intellivim#core#GotoDeclaration()
     endif
 
     if !exists(":Implement")
@@ -140,34 +142,6 @@ function! intellivim#core#GetDocumentation() " {{{
     if !intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
         call intellivim#util#EchoError("No documentation found")
     endif
-
-endfunction " }}}
-
-function! intellivim#core#GotoDeclaration() " {{{
-    " Fetch and show the documentation for the element under the cursor
-
-    if !intellivim#InProject()
-        return
-    endif
-
-    let command = intellivim#NewCommand("find_declaration")
-    let command.offset = intellivim#GetOffset()
-    let result = intellivim#client#Execute(command)
-    if intellivim#ShowErrorResult(result)
-        return
-    endif
-
-    " intellij offsets start at 0; we start at 1
-    let offset = result.result.offset + 1
-    let file = result.result.file
-
-    if file != expand("%:p")
-        " TODO different file. split? vsp? tabn?
-        let openCommand = 'split'
-        exe openCommand . ' ' . substitute(file, ' ', '\ ', 'g')
-    endif
-
-    exe 'goto ' . offset
 
 endfunction " }}}
 
