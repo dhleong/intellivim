@@ -429,6 +429,12 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
         return null;
     }
 
+    @Override
+    public int logicalPositionToOffset(@NotNull final LogicalPosition logicalPosition,
+            final boolean b) {
+        return logicalPositionToOffset(logicalPosition);
+    }
+
     @NotNull
     @Override
     public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
@@ -506,7 +512,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     @NotNull
     @Override
     public EditorColorsScheme getColorsScheme() {
-        return new EditorColorsSchemeImpl(null, null);
+        return new EditorColorsSchemeImpl(null);
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.intellivim.core.command.params;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 
 import java.awt.Color;
 import java.util.EnumSet;
@@ -31,6 +32,11 @@ public class DummyParameterInfoUIContext implements ParameterInfoUIContextEx {
         // is this enough?
         presentedString = StringUtil.join(texts, "\n");
         return presentedString;
+    }
+
+    @Override
+    public void setEscapeFunction(final Function<String, String> function) {
+
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.intellivim.core.util.CompileAndRunner;
+import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.IOException;
@@ -113,7 +114,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
         final VirtualFile rootDir = projectFile.getParent();
         final VirtualFile compilerFile = rootDir.findChild("compiler.xml");
 
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(IntelliVimUtil.asWriteAction(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -123,7 +124,7 @@ public abstract class UsableSdkTestCase extends BaseTestCase {
                     e.printStackTrace();
                 }
             }
-        });
+        }));
     }
 
     protected static Module getModule(Project project) {

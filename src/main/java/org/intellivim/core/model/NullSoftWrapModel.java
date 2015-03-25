@@ -78,6 +78,11 @@ public class NullSoftWrapModel implements SoftWrapModelEx {
         return null;
     }
 
+    @Override
+    public int logicalPositionToOffset(@NotNull final LogicalPosition logicalPosition) {
+        return 0;
+    }
+
     @NotNull
     @Override
     public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
