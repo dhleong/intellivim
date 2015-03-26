@@ -33,6 +33,9 @@ public class GetDocumentationCommand extends ProjectCommand {
 
         final PsiFile psiFile = ProjectUtil.getPsiFile(project, file);
         final PsiReference ref = psiFile.findReferenceAt(offset);
+        if (ref == null) {
+            return SimpleResult.error("No element under cursor");
+        }
         final PsiElement element = ref.getElement();
         final PsiElement lookup = ref.resolve();
 
