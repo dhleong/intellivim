@@ -68,6 +68,10 @@ dependencies {
     provided fileTree(dir: junitLib, include: '*.jar')
 }
 
+test {
+    jvmArgs '-XX:MaxPermSize=256m'
+}
+
 sourceSets {
     main {
         compileClasspath += configurations.provided
