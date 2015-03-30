@@ -43,7 +43,6 @@ public class FindUsagesTest extends BaseTestCase {
         assertThat(results)
                 .isNotNull()
                 .hasSize(2);
-        System.out.println(results);
     }
 
     SimpleResult locateAt(int offset) {
