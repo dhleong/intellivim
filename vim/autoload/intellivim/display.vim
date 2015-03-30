@@ -1,6 +1,11 @@
 " Author: Daniel Leong
 "
 
+function! intellivim#display#ClearQuickFix() " {{{
+    call setqflist([], 'r')
+    cclose
+endfunction " }}}
+
 function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
     " Show a preview window whose contents are the results
     "  of executing the given command

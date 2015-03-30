@@ -57,6 +57,9 @@ endfunction " }}}
 
 function! s:OpenLocationResult(result) " {{{
 
+    " clear the quickfix
+    call intellivim#display#ClearQuickFix()
+
     " intellij offsets start at 0; we start at 1
     let offset = a:result.offset + 1
     let file = a:result.file
