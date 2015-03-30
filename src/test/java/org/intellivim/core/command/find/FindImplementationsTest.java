@@ -3,6 +3,11 @@ package org.intellivim.core.command.find;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
+import java.io.File;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author dhleong
  */
@@ -16,20 +21,18 @@ public class FindImplementationsTest extends BaseTestCase {
     }
 
     public void testFindMethodImplementation() {
-        SimpleResult result = locateAt(170);
+        final SimpleResult result = locateAt(170);
         assertSuccess(result);
 
-        // FIXME For some reason, this doesn't work in unit test mode,
-        //  but seems to work okay from Vim. Weird.
-//        List<LocationResult> list = result.getResult();
-//        assertThat(list)
-//                .isNotNull()
-//                .hasSize(1);
-//
-//        LocationResult loc = list.get(0);
-//        assertThat(loc.file).endsWith("ProperSubClass.java");
-//        assertThat(new File(loc.file)).exists();
-//        assertThat(loc.offset).isEqualTo(144);
+        final List<LocationResult> list = result.getResult();
+        assertThat(list)
+                .isNotNull()
+                .hasSize(1);
+
+        final LocationResult loc = list.get(0);
+        assertThat(loc.file).endsWith("ProperSubClass.java");
+        assertThat(new File(loc.file)).exists();
+        assertThat(loc.offset).isEqualTo(144);
     }
 
     SimpleResult locateAt(int offset) {

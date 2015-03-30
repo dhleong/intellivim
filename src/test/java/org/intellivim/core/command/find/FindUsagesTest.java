@@ -3,6 +3,7 @@ package org.intellivim.core.command.find;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 
+import java.io.File;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +28,11 @@ public class FindUsagesTest extends BaseTestCase {
         assertThat(results)
                 .isNotNull()
                 .hasSize(2);
+
+        final LocationResult location = results.get(0);
+        assertThat(location.file).endsWith("Dummy.java");
+        assertThat(new File(location.file)).exists();
+        assertThat(location.offset).isEqualTo(891);
     }
 
     public void testFindUsagesFromUsage() {
