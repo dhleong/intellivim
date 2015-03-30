@@ -39,6 +39,8 @@ function! intellivim#core#Setup() " {{{
     if !exists(":FindImplementations")
         command -nargs=0 FindImplementations
             \ call intellivim#core#find#Implementations()
+        command -nargs=0 FindUsages
+            \ call intellivim#core#find#Usages()
         command -nargs=0 GotoDeclaration
             \ call intellivim#core#find#Declaration()
     endif

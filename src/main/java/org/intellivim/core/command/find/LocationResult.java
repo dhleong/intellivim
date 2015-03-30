@@ -17,4 +17,5 @@ public class LocationResult {
         file = virtualFile.getCanonicalPath();
         offset = element.getTextOffset();
     }
+
 }

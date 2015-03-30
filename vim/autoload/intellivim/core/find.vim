@@ -15,6 +15,13 @@ function! intellivim#core#find#Implementations() " {{{
     call s:Find(command, "implementations of " . expand("<cword>"))
 endfunction " }}}
 
+function! intellivim#core#find#Usages() " {{{
+    " Find usages of the thing under the cursor
+
+    let command = intellivim#NewCommand("find_usages")
+    call s:Find(command, "usages of " . expand("<cword>"))
+endfunction " }}}
+
 "
 " Private util
 "
