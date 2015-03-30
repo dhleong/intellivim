@@ -25,6 +25,14 @@ If [VeryHint](https://github.com/dhleong/vim-veryhint) is installed, parameter "
 
 ### Commands
 
+`:FindImplementations`  Populate and open the quickfix buffer with locations of
+implementations of the element under the cursor. If there was a single result,
+it is opened directly.
+
+`:FindUsages`  Populate and open the quickfix buffer with locations of
+usages for the element under the cursor. If there was a single result,
+it is opened directly.
+
 `:FixProblem`  Provide options for fixing the problem under the cursor.
 Press `enter` on the desired fix to attempt it. "Import Class" usually works,
 but other fixes are not thoroughly tested yet.
