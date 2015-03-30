@@ -18,4 +18,8 @@ public class LocationResult {
         offset = element.getTextOffset();
     }
 
+    @Override
+    public String toString() {
+        return file + ":" + offset;
+    }
 }

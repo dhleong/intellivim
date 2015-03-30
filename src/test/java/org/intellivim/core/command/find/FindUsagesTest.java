@@ -5,6 +5,8 @@ import org.intellivim.SimpleResult;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author dhleong
  */
@@ -17,17 +19,26 @@ public class FindUsagesTest extends BaseTestCase {
         return getProjectPath(JAVA_PROJECT);
     }
 
-    public void testFindUsagesOfNotBoring() {
-        SimpleResult result = locateAt(521);
+    public void testFindUsagesFromDeclaration() {
+        SimpleResult result = locateAt(521); // [n]otBoring(int, string)
         assertSuccess(result);
 
-        List<LocationResult> loc = result.getResult();
-        assertNotNull(loc);
-
-        // TODO
+        final List<LocationResult> results = result.getResult();
+        assertThat(results)
+                .isNotNull()
+                .hasSize(2);
     }
 
-    // TODO find other usages when targeting a usage
+    public void testFindUsagesFromUsage() {
+        SimpleResult result = locateAt(891); // [n]otBoring(42, "foo")
+        assertSuccess(result);
+
+        final List<LocationResult> results = result.getResult();
+        assertThat(results)
+                .isNotNull()
+                .hasSize(2);
+        System.out.println(results);
+    }
 
     SimpleResult locateAt(int offset) {
 
