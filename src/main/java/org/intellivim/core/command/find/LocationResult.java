@@ -10,7 +10,7 @@ public class LocationResult {
     public final String file;
     public final int offset;
 
-    LocationResult(PsiElement element) {
+    public LocationResult(PsiElement element) {
         final VirtualFile virtualFile = element.getContainingFile()
                 .getVirtualFile();
 
