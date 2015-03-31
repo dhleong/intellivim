@@ -45,7 +45,7 @@ public class FixProblemTest extends FileEditingTestCase {
 
         final QuickFixDescriptor quickFix = problems.locateQuickFix("0.0");
         assertNotNull(quickFix);
-        assertEquals("Import Class", quickFix.description);
+        assertThat(quickFix.description).isEqualToIgnoringCase("Import Class");
 
         FixProblemCommand command = new FixProblemCommand(project, filePath, quickFix.id);
         command.offset = OFFSET_BEFORE;

@@ -2,11 +2,11 @@ package org.intellivim.core.command.problems;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -92,7 +92,8 @@ public class Problems extends ArrayList<Problem> {
         final VimEditor editor = new VimEditor(project, psiFile, 0);
         final DocumentEx doc = editor.getDocument();
 
-        final ProgressIndicator progress = new ProgressIndicatorBase();
+//        final ProgressIndicator progress = new ProgressIndicatorBase();
+        final ProgressIndicator progress = new DaemonProgressIndicator();
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
 
             @Override

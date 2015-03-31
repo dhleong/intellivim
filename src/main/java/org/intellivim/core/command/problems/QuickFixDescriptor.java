@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import org.apache.http.util.TextUtils;
 import org.intellivim.core.util.FileUtil;
 
 /**
@@ -128,11 +128,11 @@ public class QuickFixDescriptor {
     private static String extractDescription(HighlightInfo.IntentionActionDescriptor descriptor) {
 
         try {
-            if (!TextUtils.isEmpty(descriptor.getDisplayName())) {
+            if (!StringUtil.isEmpty(descriptor.getDisplayName())) {
                 return descriptor.getDisplayName();
-            } else if (!TextUtils.isEmpty(descriptor.getAction().getText())) {
+            } else if (!StringUtil.isEmpty(descriptor.getAction().getText())) {
                 return descriptor.getAction().getText();
-            } else if (!TextUtils.isEmpty(descriptor.getAction().getFamilyName())) {
+            } else if (!StringUtil.isEmpty(descriptor.getAction().getFamilyName())) {
                 return descriptor.getAction().getFamilyName();
             } else {
                 return descriptor.getAction().getClass().getSimpleName();

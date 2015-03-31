@@ -50,7 +50,7 @@ public class AmbiguousImportTest extends FileEditingTestCase {
         assertThat(quickFix)
                 .isNotNull()
                 .isInstanceOf(ImportsQuickFixDescriptor.class);
-        assertEquals("Import Class", quickFix.description);
+        assertThat(quickFix.description).isEqualToIgnoringCase("Import Class");
 
         ImportsQuickFixDescriptor importsQuickFix = (ImportsQuickFixDescriptor) quickFix;
         assertThat(importsQuickFix.choices)

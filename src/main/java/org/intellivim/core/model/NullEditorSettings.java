@@ -128,6 +128,16 @@ public class NullEditorSettings implements EditorSettings {
     }
 
     @Override
+    public boolean isAutoCodeFoldingEnabled() {
+        return false;
+    }
+
+    @Override
+    public void setAutoCodeFoldingEnabled(final boolean b) {
+
+    }
+
+    @Override
     public boolean isUseTabCharacter(Project project) {
         return false;
     }
@@ -204,6 +214,16 @@ public class NullEditorSettings implements EditorSettings {
 
     @Override
     public void setBlockCursor(boolean blockCursor) {
+
+    }
+
+    @Override
+    public boolean isCaretRowShown() {
+        return false;
+    }
+
+    @Override
+    public void setCaretRowShown(final boolean b) {
 
     }
 

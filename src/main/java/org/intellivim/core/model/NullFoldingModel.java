@@ -109,6 +109,12 @@ public class NullFoldingModel implements FoldingModelEx {
         return null;
     }
 
+    @Nullable
+    @Override
+    public FoldRegion getFoldRegion(final int i, final int i1) {
+        return null;
+    }
+
     @Override
     public void runBatchFoldingOperation(@NotNull Runnable operation) {
 

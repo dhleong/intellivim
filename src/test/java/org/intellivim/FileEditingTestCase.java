@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -154,20 +155,22 @@ public abstract class FileEditingTestCase extends BaseTestCase {
     }
 
     private void restoreFile() throws IOException {
-        VirtualFile file = getFile();
-        file.setBinaryContent(originalContents);
+        final VirtualFile file = getFile();
 
         // NB: At this point, the file on disk is correct,
         //  but the PsiFile is still referencing the modified stuff
 
         final Project project = getProject();
-        final PsiFile psi = ProjectUtil.getPsiFile(project, file);
-
         final String originalString = new String(originalContents);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+        final PsiFile psi =  ApplicationManager.getApplication().runWriteAction(
+                new ThrowableComputable<PsiFile, IOException>() {
 
             @Override
-            public void run() {
+            public PsiFile compute() throws IOException {
+                file.setBinaryContent(originalContents);
+
+                final PsiFile psi = ProjectUtil.getPsiFile(project, file);
                 final DocumentEx doc = VimDocument.getInstance(psi);
 
                 FileDocumentManager.getInstance().reloadFromDisk(doc);
@@ -175,6 +178,7 @@ public abstract class FileEditingTestCase extends BaseTestCase {
 
                 // now, commit changes so the PsiFile is updated
                 PsiDocumentManager.getInstance(project).commitDocument(doc);
+                return psi;
             }
         });
 

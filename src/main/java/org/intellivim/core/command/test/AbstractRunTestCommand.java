@@ -123,14 +123,19 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
                 }
             }
 
-            @Override public void onCompileFailed() { }
+            @Override
+            public void onCompileFailed() {
+                // nop
+            }
 
-            @Override public void onCompileSkipped() {
+            @Override
+            public void onCompileSkipped() {
                 System.out.println("Compile skipped!");
             }
 
             @Override
-            public void onCompileSucceeded() { }
+            public void onCompileSucceeded() {
+            }
 
             @Override
             public void onProcessStarted(final RunContentDescriptor descriptor,
