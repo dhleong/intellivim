@@ -6,10 +6,15 @@
   let s:java_types = ['class', 'abstract', 'interface', 'enum', '@interface']
 " }}}
 
-function! intellivim#java#new#Create(type, name) " {{{
+function! intellivim#java#new#Create(type, name, ...) " {{{
     let command = intellivim#NewCommand("java_new")
     let command.type = a:type
     let command.name = a:name
+
+    if a:0
+        let command.dir = a:1
+    endif
+
     let result = intellivim#client#Execute(command)
 
     if intellivim#ShowErrorResult(result)
@@ -17,7 +22,13 @@ function! intellivim#java#new#Create(type, name) " {{{
     endif
 
     if has_key(result.result, 'dirs')
-        call intellivim#util#EchoError("TODO Directory selection")
+        let config = {
+                \ 'title': "Select source directory",
+                \ 'list': result.result.dirs,
+                \ 'onSelect': function("intellivim#java#new#Create"),
+                \ 'selectArgs': [a:type, a:name]
+                \ }
+        call intellivim#display#PromptList(config)
         return
     endif
 
@@ -48,5 +59,6 @@ function! intellivim#java#new#CommandComplete(argLead, cmdLine, cursorPos) " {{{
 
   return []
 endfunction " }}}
+
 
 " vim:ft=vim:fdm=marker

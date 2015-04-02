@@ -132,13 +132,16 @@ public class JavaNewCommand extends ProjectCommand {
     protected PsiDirectory[] resolveNewDirectory() {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final int lastPackageEnd = name.lastIndexOf('.');
-        final String packageName = name.substring(0, lastPackageEnd);
+        final String packageName;
         if (-1 != lastPackageEnd) {
             // separators included; assume that's the package
+            packageName = name.substring(0, lastPackageEnd);
             final PsiPackage psiPackage = psiFacade.findPackage(packageName);
             if (psiPackage != null) {
                 return psiPackage.getDirectories();
             }
+        } else {
+            packageName = ""; // no `.`, so must be default (or current) package
         }
 
 
