@@ -47,6 +47,11 @@ in a preview window.
 Press `enter` on a method to implement it, and `q` to quit. 
 Visual selection to implement multiple at a time is supported.
 
+`:JavaNew <type> <name>`  Create a new Java type (`class`, `@interface`, etc.)
+with the given name. If provided eg `org.intellivim.Test` the class will be
+created in that package. Otherwise, IntelliVim will attempt to creat it in
+the same package as the current file (if any).
+
 `:JavaOptimizeImports`  Attempts to automatically add imports and organize them.
 Prompts for disambiguation if necessary. As the name implies, this one is currently
 Java only. Future work could let this pick the right implementation based on filetype
