@@ -4,6 +4,13 @@
 function! intellivim#java#Setup() " {{{
 
     " define commands {{{
+    if 2 != exists(":JavaNew")
+        command -nargs=+
+            \ -complete=customlist,intellivim#java#new#CommandComplete
+            \ JavaNew :call intellivim#java#new#Create(<f-args>)
+    endif
+
+    " }}}
     if !exists(":JavaOptimizeImports")
         command -nargs=0 JavaOptimizeImports
             \ call intellivim#java#OptimizeImports()
