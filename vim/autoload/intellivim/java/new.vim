@@ -16,6 +16,12 @@ function! intellivim#java#new#Create(type, name) " {{{
         return
     endif
 
+    if has_key(result.result, 'dirs')
+        call intellivim#util#EchoError("TODO Directory selection")
+        return
+    endif
+
+    " success!
     call intellivim#core#find#OpenLocationResult(result.result)
 
 endfunction " }}}

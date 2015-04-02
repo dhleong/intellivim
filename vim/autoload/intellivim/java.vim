@@ -10,7 +10,6 @@ function! intellivim#java#Setup() " {{{
             \ JavaNew :call intellivim#java#new#Create(<f-args>)
     endif
 
-    " }}}
     if !exists(":JavaOptimizeImports")
         command -nargs=0 JavaOptimizeImports
             \ call intellivim#java#OptimizeImports()
