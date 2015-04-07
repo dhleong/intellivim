@@ -3,6 +3,14 @@ package org.intellivim.core.command;
 import com.intellij.psi.PsiFile;
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.command.RenameElementCommand.RenameResult;
+import org.intellivim.core.util.ProjectUtil;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author dhleong
@@ -18,8 +26,8 @@ public class RenameElementTest extends FileEditingTestCase {
         return getProjectPath(JAVA_PROJECT);
     }
 
-    public void testRename() {
-        final int offset = 314;
+    public void testRenameLocalVariable() {
+        final int offset = 314; // list
         final PsiFile file = getPsiFile();
 //        final PsiElement element = file.findElementAt(offset);
 
@@ -34,6 +42,55 @@ public class RenameElementTest extends FileEditingTestCase {
         assertFileDoesNotContain("list.add(");
         assertFileNowContains("list2 = new ArrayList");
         assertFileNowContains("list2.add(");
+
+        RenameResult info = result.getResult();
+        assertThat(info.renamed).isEmpty();
+        assertThat(info.changed)
+                .hasSize(1)
+                .containsExactly(pathOf(getPsiFile()));
+    }
+
+    public void testRenameClass() throws IOException {
+        final int offset = 147; // Dummy
+        final PsiFile file = getPsiFile();
+//        final PsiElement element = file.findElementAt(offset);
+        final String originalFile = pathOf(file);
+        byte[] originalBytes = file.getVirtualFile().contentsToByteArray();
+
+        assertFileContains("class Dummy");
+
+        final SimpleResult result = (SimpleResult)
+                new RenameElementCommand(getProject(), file, offset, "Dummer").execute();
+        assertSuccess(result);
+
+//        assertFileDoesNotContain("class Dummy");
+//        assertFileNowContains("class Dummer");
+
+        PsiFile subClass = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
+        RenameResult info = result.getResult();
+
+        // special restore
+        PsiFile dummerClass = ProjectUtil.getPsiFile(getProject(),
+                DUMMY_FILE_PATH.replace("mmy", "mmer"));
+        String dummerPath = pathOf(dummerClass);
+        new File(dummerPath).delete();
+
+        // manual restore, because the test env will be confused otherwise
+        FileOutputStream out = new FileOutputStream(new File(originalFile));
+        out.write(originalBytes);
+        out.close();
+
+        assertThat(info.changed)
+                .hasSize(1)
+                .contains(pathOf(subClass));
+        assertThat(info.renamed)
+                .hasSize(1)
+                .containsValue(dummerPath);
+
+    }
+
+    private static String pathOf(final PsiFile psiFile) {
+        return psiFile.getVirtualFile().getCanonicalPath();
     }
 
 }

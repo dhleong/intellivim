@@ -29,6 +29,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
     protected static final String RUNNABLE_PROJECT = "runnable-project";
     protected static final String TESTABLE_PROJECT = "testable-project";
     protected static final String DUMMY_FILE_PATH = "src/org/intellivim/javaproject/Dummy.java";
+    protected static final String SUBCLASS_FILE_PATH = "src/org/intellivim/javaproject/SubClass.java";
     protected static final String PROBLEMATIC_FILE_PATH = "src/org/intellivim/javaproject/Problematic.java";
     protected static final String PROBLEMATIC_TWICE_FILE_PATH = "src/org/intellivim/javaproject/ProblematicTwice.java";
 

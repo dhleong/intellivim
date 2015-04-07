@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -24,13 +25,61 @@ import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.inject.Inject;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
+ * Returns a map:
+ * <code>
+ *  {
+ *      changed: [
+ *          'src/path/to/ModifiedFile.java'
+ *      ]
+ *    , renamed: {
+ *        'src/original/Name.java': 'src/updated/FileName.java'
+ *      }
+ *  }
+ * </code>
  * @author dhleong
  */
 @Command("rename_element")
 public class RenameElementCommand extends ProjectCommand {
+
+    public static class RenameResult {
+        public final Set<String> changed;
+        public final Map<String, String> renamed;
+
+        private final transient PsiElement original;
+
+        private RenameResult(final PsiElement element) {
+            this.changed = new HashSet<String>();
+            this.renamed = new HashMap<String, String>();
+
+            original = element;
+        }
+
+        void addRenamed(final PsiElement element) {
+            System.out.println("Renamed: " + element);
+            System.out.println("containedIn:" + element.getContainingFile());
+            System.out.println("   original:" + original);
+            final PsiFile renamedFile = element.getContainingFile();
+            if (original instanceof PsiClass
+                    && !element.getContainingFile().equals(renamedFile)) {
+                renamed.put(
+                    pathOf(original.getContainingFile()),
+                    pathOf(renamedFile));
+            } else {
+                changed.add(pathOf(renamedFile));
+            }
+        }
+
+        private static String pathOf(PsiFile file) {
+            return file.getVirtualFile().getCanonicalPath();
+        }
+    }
 
     @Required @Inject PsiFile file;
     @Required int offset;
@@ -53,8 +102,14 @@ public class RenameElementCommand extends ProjectCommand {
         final RenamePsiElementProcessor processor =
                 RenamePsiElementProcessor.forElement(element);
         final UsageInfo[] usages = gatherUsages(project, file, offset);
-        
 
+        // be up to date, please
+        // (if we delete outside of IntelliJ, it gets confused)
+        file.getContainingDirectory()
+            .getVirtualFile()
+            .refresh(false, true);
+
+        final RenameResult result = new RenameResult(element);
         IntelliVimUtil.runWriteCommand(new Runnable() {
 
             @Override
@@ -67,7 +122,7 @@ public class RenameElementCommand extends ProjectCommand {
 
                     @Override
                     public void elementRenamed(final PsiElement psiElement) {
-                        System.out.println("Renamed: " + psiElement);
+                        result.addRenamed(psiElement);
                     }
                 });
 
@@ -75,9 +130,7 @@ public class RenameElementCommand extends ProjectCommand {
         });
 
         FileUtil.commitChanges(editor);
-
-        // TODO return a list of modified files?
-        return SimpleResult.success();
+        return SimpleResult.success(result);
     }
 
     private UsageInfo[] gatherUsages(final Project project,
