@@ -87,6 +87,11 @@ public class RenameElementCommand extends ProjectCommand {
         final Editor editor = new VimEditor(project, file, offset);
         final PsiElement element = TargetElementUtilBase.findTargetElement(editor,
                 TargetElementUtilBase.getInstance().getAllAccepted());
+
+        if (element == null) {
+            return SimpleResult.error("No element under the cursor");
+        }
+
         final RenamePsiElementProcessor processor =
                 RenamePsiElementProcessor.forElement(element);
         final UsageInfo[] usages = gatherUsages(project, file, offset);
