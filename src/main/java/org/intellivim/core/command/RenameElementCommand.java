@@ -4,7 +4,6 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -61,23 +60,12 @@ public class RenameElementCommand extends ProjectCommand {
             original = element;
         }
 
-        void addRenamed(final PsiElement element) {
-            System.out.println("Renamed: " + element);
-            System.out.println("containedIn:" + element.getContainingFile());
-            System.out.println("   original:" + original);
+        void addUsage(final PsiElement element) {
             final PsiFile renamedFile = element.getContainingFile();
-            if (original instanceof PsiClass
-                    && !element.getContainingFile().equals(renamedFile)) {
-                renamed.put(
-                    pathOf(original.getContainingFile()),
-                    pathOf(renamedFile));
-            } else {
-                changed.add(pathOf(renamedFile));
+            final String renamedPath = pathOf(renamedFile);
+            if (!renamed.containsValue(renamedPath)) {
+                changed.add(renamedPath);
             }
-        }
-
-        private static String pathOf(PsiFile file) {
-            return file.getVirtualFile().getCanonicalPath();
         }
     }
 
@@ -103,6 +91,8 @@ public class RenameElementCommand extends ProjectCommand {
                 RenamePsiElementProcessor.forElement(element);
         final UsageInfo[] usages = gatherUsages(project, file, offset);
 
+        final String elementPath = pathOf(element.getContainingFile());
+
         // be up to date, please
         // (if we delete outside of IntelliJ, it gets confused)
         file.getContainingDirectory()
@@ -114,20 +104,22 @@ public class RenameElementCommand extends ProjectCommand {
 
             @Override
             public void run() {
-                processor.renameElement(element, rename, usages, new RefactoringElementListener() {
-                    @Override
-                    public void elementMoved(final PsiElement psiElement) {
-                        System.out.println("Moved: " + psiElement);
-                    }
-
-                    @Override
-                    public void elementRenamed(final PsiElement psiElement) {
-                        result.addRenamed(psiElement);
-                    }
-                });
-
+                processor.renameElement(element, rename, usages, RefactoringElementListener.DEAF);
             }
         });
+
+        // was the element's file renamed?
+        final String updatedElementPath = pathOf(element.getContainingFile());
+        if (!elementPath.equals(updatedElementPath)) {
+            result.renamed.put(elementPath, updatedElementPath);
+        }
+
+        for (final UsageInfo usage : usages) {
+            final PsiElement el = usage.getElement();
+            if (el != null) {
+                result.addUsage(usage.getElement());
+            }
+        }
 
         FileUtil.commitChanges(editor);
         return SimpleResult.success(result);
@@ -149,8 +141,10 @@ public class RenameElementCommand extends ProjectCommand {
         });
 
         final List<UsageInfo> filtered = ContainerUtil.filter(results, Condition.NOT_NULL);
-        System.out.println("usages=" + filtered);
         return filtered.toArray(new UsageInfo[filtered.size()]);
     }
 
+    static String pathOf(PsiFile file) {
+        return file.getVirtualFile().getCanonicalPath();
+    }
 }
