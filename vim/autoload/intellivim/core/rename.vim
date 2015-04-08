@@ -49,6 +49,9 @@ function! s:DoRename(command, newName) " {{{
         return
     endif
 
+    " go ahead and reload the current file
+    call intellivim#core#ReloadFile(result)
+
     let myWinNr = winnr()
 
     try

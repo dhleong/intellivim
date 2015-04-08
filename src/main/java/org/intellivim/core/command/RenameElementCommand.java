@@ -2,7 +2,8 @@ package org.intellivim.core.command;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
@@ -90,10 +91,11 @@ public class RenameElementCommand extends ProjectCommand {
 
     @Override
     public Result execute() {
-        final Editor editor = new VimEditor(project, file, offset);
+        final EditorEx editor = new VimEditor(project, file, offset);
+        final RangeMarker marker = VimEditor.createRangeMarker(editor);
+
         final PsiElement element = TargetElementUtilBase.findTargetElement(editor,
                 TargetElementUtilBase.getInstance().getAllAccepted());
-
         if (element == null) {
             return SimpleResult.error("No element under the cursor");
         }
@@ -144,7 +146,8 @@ public class RenameElementCommand extends ProjectCommand {
         }
 
         FileUtil.commitChanges(editor);
-        return SimpleResult.success(result);
+        return SimpleResult.success(result)
+                           .withOffsetFrom(marker);
     }
 
     private UsageInfo[] gatherUsages(final Project project,
