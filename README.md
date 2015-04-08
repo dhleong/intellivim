@@ -62,6 +62,12 @@ of thing to locate:
  - `file` Search by file name/path (default)
  - `class` Search by class name
 
+`:Rename [newName]` Rename the element under the cursor. If a new name isn't passed
+to this command, a small buffer is opened so you can edit the name with all your
+usual vim bindings. Pressing `enter` in this buffer will commit the change; `ctrl-c`
+or `q` will cancel. When pressing `enter`, if the value has not changed, or if it is
+empty, nothing will happen.
+
 `:RunProject [config]` Builds and runs the current project, opening a split to contain
 the output. Closing the split will terminate the execution, as will calling 
 `:Terminate` from inside that window. Optionally pass `config` to specify which
