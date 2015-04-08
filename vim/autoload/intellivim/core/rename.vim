@@ -48,9 +48,6 @@ function! s:DoRename(command, newName) " {{{
         return
     endif
 
-    " go ahead and reload the current file
-    call intellivim#core#ReloadFile(result)
-
     let myWinNr = winnr()
 
     try
@@ -79,6 +76,11 @@ function! s:DoRename(command, newName) " {{{
     finally
         exe myWinNr . 'winc w'
     endtry
+
+    " go ahead and reload the current file
+    "  (may update cursor position)
+    call intellivim#core#ReloadFile(result)
+
 endfunction " }}}
 
 " vim:ft=vim:fdm=marker
