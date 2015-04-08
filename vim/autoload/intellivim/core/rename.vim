@@ -36,13 +36,20 @@ endfunction " }}}
 
 function! s:DoRename(command, newName) " {{{
 
+    " just remove ALL whitespace
+    let newName = substitute(a:newName, '\s', '', 'g')
+    if empty(newName)
+        " nop
+        return
+    endif
+
     " make sure everything's written
     "  so no work gets lost
     call intellivim#SilentUpdate()
     wall
 
     let command = a:command
-    let command.rename = a:newName
+    let command.rename = newName
     let result = intellivim#client#Execute(command)
     if intellivim#ShowErrorResult(result)
         return
