@@ -119,8 +119,7 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     /** Convenience to create a RangeMarker based on the current cursor offset */
     public RangeMarker createRangeMarker() {
-        final int offset = getCaretModel().getOffset();
-        return getDocument().createRangeMarker(offset, offset);
+        return createRangeMarker(this);
     }
 
     @NotNull
@@ -656,4 +655,8 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
         return indentsModel;
     }
 
+    public static RangeMarker createRangeMarker(EditorEx editor) {
+        final int offset = editor.getCaretModel().getOffset();
+        return editor.getDocument().createRangeMarker(offset, offset);
+    }
 }

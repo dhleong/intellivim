@@ -145,6 +145,11 @@ public abstract class FileEditingTestCase extends BaseTestCase {
         return ProjectUtil.getVirtualFile(proj, getFilePath());
     }
 
+    protected PsiFile getPsiFile() {
+        final Project proj = getProject();
+        return ProjectUtil.getPsiFile(proj, getFilePath());
+    }
+
     private String getCurrentFileContentsSafely() {
         try {
             return new String(getFile().contentsToByteArray());

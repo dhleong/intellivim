@@ -60,6 +60,11 @@ function! intellivim#core#Setup() " {{{
             \ call intellivim#core#impl#ShowImplementables()
     endif
 
+    if !exists(":Rename")
+        command -nargs=? Rename
+            \ call intellivim#core#rename#RenameElement('<args>')
+    endif
+
     if !exists(":RunProject")
         command -nargs=?
             \ -complete=customlist,intellivim#core#run#CompleteRunConfigs
@@ -90,7 +95,8 @@ function! intellivim#core#ReloadFile(...) " {{{
     "             the result if you don't have one but
     "             need to pass options.
     "   Options:
-    "     - "update" (0/1) If 0, we won't update after reloading
+    "     - "update" (0/1; default: 1) If 0, we won't Update()
+    "             after reloading the file
 
     let result = a:0 ? a:1 : {}
     let options = a:0 > 1 ? a:2 : {}

@@ -3,7 +3,6 @@ package org.intellivim.java.command;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaResolveResult;
@@ -99,8 +98,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
         if (optimizer.supports(psiFile)) {
             final Runnable action = optimizer.processFile(psiFile);
 
-            CommandProcessor.getInstance().runUndoTransparentAction(
-                    IntelliVimUtil.asWriteAction(action));
+            IntelliVimUtil.runWriteCommand(action);
 
             FileUtil.commitChanges(editor);
         }

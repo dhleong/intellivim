@@ -125,12 +125,7 @@ public class FindUsagesCommand extends ProjectCommand {
             return SimpleResult.error("No element at position");
         }
 
-        final Editor editor = new VimEditor(project, file, offset);
-        element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAccepted());
-
-        final List<Usage> rawResults = new ArrayList<Usage>();
-        final FindUsagesManager manager = new FindUsagesManager(project, new UsageCollectingViewManager(rawResults));
-        manager.findUsages(element, null, null, false, null);
+        List<Usage> rawResults = findUsages(project, file, offset);
         if (rawResults.isEmpty()) {
             return SimpleResult.error("No usages found");
         }
@@ -150,5 +145,17 @@ public class FindUsagesCommand extends ProjectCommand {
         });
 
         return SimpleResult.success(ContainerUtil.filter(results, Condition.NOT_NULL));
+    }
+
+    public static List<Usage> findUsages(Project project, PsiFile file, int offset) {
+        final Editor editor = new VimEditor(project, file, offset);
+        final PsiElement element = TargetElementUtilBase
+                .findTargetElement(editor,
+                        TargetElementUtilBase.getInstance().getAllAccepted());
+
+        final List<Usage> rawResults = new ArrayList<Usage>();
+        final FindUsagesManager manager = new FindUsagesManager(project, new UsageCollectingViewManager(rawResults));
+        manager.findUsages(element, null, null, false, null);
+        return rawResults;
     }
 }

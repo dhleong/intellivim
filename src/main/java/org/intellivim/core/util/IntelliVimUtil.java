@@ -33,7 +33,7 @@ public class IntelliVimUtil {
      * @param runnable
      */
     public static void runWriteCommand(final Runnable runnable) {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+        runUndoTransparentAction(new Runnable() {
             @Override
             public void run() {
                 ApplicationManager.getApplication().runWriteAction(runnable);
@@ -115,5 +115,9 @@ public class IntelliVimUtil {
                 dumbService.runWhenSmart(runWhenSmart);
             }
         };
+    }
+
+    public static void runUndoTransparentAction(final Runnable runnable) {
+        CommandProcessor.getInstance().runUndoTransparentAction(runnable);
     }
 }

@@ -15,11 +15,13 @@ import java.lang.reflect.Field;
  */
 public class PsiFileInjector implements Injector<PsiFile> {
 
+    static final int PRIORITY = 0;
+
     public static final String DEFAULT_FIELD_NAME = "file";
 
     @Override
     public int getPriority() {
-        return 0;
+        return PRIORITY;
     }
 
     @Override
