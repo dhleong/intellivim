@@ -15,8 +15,7 @@ function! intellivim#core#rename#RenameElement(...) " {{{
     let command = intellivim#NewCommand("rename_element")
     let command.offset = intellivim#GetOffset()
 
-    if !a:0
-        " TODO allow no arg and use fancy prompt for rename
+    if a:0 && !empty(a:1)
         call s:DoRename(command, a:1)
         return
     endif

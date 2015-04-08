@@ -56,10 +56,10 @@ function! intellivim#display#PromptInput(config) " {{{
     call intellivim#display#TempWindow("[" . title . "]", contents,
                 \ {'height': 1, 'readonly': 0})
     let b:prompt_config = config
-    nnoremap <buffer> <cr> :call <SID>InputPromptDone()<cr>
-    inoremap <buffer> <cr> <c-r>=<SID>InputPromptDone()<cr>
-    nnoremap <buffer> q :call <SID>InputPromptCancel()<cr>
-    nnoremap <buffer> <c-c> :call <SID>InputPromptCancel()<cr>
+    nnoremap <silent> <buffer> <cr> :call <SID>InputPromptDone()<cr>
+    inoremap <silent> <buffer> <cr> <c-r>=<SID>InputPromptDone()<cr>
+    nnoremap <silent> <buffer> q :call <SID>InputPromptCancel()<cr>
+    nnoremap <silent> <buffer> <c-c> :call <SID>InputPromptCancel()<cr>
 
     " TODO Done on write?
 
