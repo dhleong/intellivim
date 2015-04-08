@@ -1,9 +1,11 @@
 package org.intellivim.core.command;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -19,6 +21,7 @@ import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.command.find.FindUsagesCommand;
+import org.intellivim.core.model.VimDocument;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
@@ -60,12 +63,15 @@ public class RenameElementCommand extends ProjectCommand {
             original = element;
         }
 
-        void addUsage(final PsiElement element) {
+        boolean addUsage(final PsiElement element) {
             final PsiFile renamedFile = element.getContainingFile();
             final String renamedPath = pathOf(renamedFile);
             if (!renamed.containsValue(renamedPath)) {
                 changed.add(renamedPath);
+                return true;
             }
+
+            return false;
         }
     }
 
@@ -106,10 +112,16 @@ public class RenameElementCommand extends ProjectCommand {
 
         final RenameResult result = new RenameResult(element);
         IntelliVimUtil.runWriteCommand(new Runnable() {
-
             @Override
             public void run() {
-                processor.renameElement(element, rename, usages, RefactoringElementListener.DEAF);
+                final PsiDocumentManager man = PsiDocumentManager.getInstance(project);
+                final Document doc = VimDocument.getInstance(element.getContainingFile());
+                man.commitDocument(doc);
+
+                processor.renameElement(element, rename, usages,
+                        RefactoringElementListener.DEAF);
+
+                man.doPostponedOperationsAndUnblockDocument(doc);
             }
         });
 
@@ -119,10 +131,15 @@ public class RenameElementCommand extends ProjectCommand {
             result.renamed.put(elementPath, updatedElementPath);
         }
 
+        final Set<PsiFile> unwritten = new HashSet<PsiFile>();
         for (final UsageInfo usage : usages) {
             final PsiElement el = usage.getElement();
             if (el != null) {
-                result.addUsage(usage.getElement());
+                PsiFile container = el.getContainingFile();
+                if (result.addUsage(el) && !unwritten.contains(container)) {
+                    FileUtil.writeToDisk(container);
+                    unwritten.add(container);
+                }
             }
         }
 

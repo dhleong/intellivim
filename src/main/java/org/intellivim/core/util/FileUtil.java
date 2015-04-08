@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,5 +133,15 @@ public class FileUtil {
         // in which case PSI-document sync may stop working
         PsiFile current = PsiDocumentManager.getInstance(file.getProject()).getPsiFile(document);
         return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
+    }
+
+    public static void writeToDisk(final PsiFile file) {
+        final Project project = file.getProject();
+        final Document doc = VimDocument.getInstance(file);
+        final PsiDocumentManager man = PsiDocumentManager.getInstance(project);
+
+        man.doPostponedOperationsAndUnblockDocument(doc);
+
+        commitChanges(doc);
     }
 }

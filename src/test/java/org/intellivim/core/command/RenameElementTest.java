@@ -56,9 +56,12 @@ public class RenameElementTest extends FileEditingTestCase {
     public void testRenameClassInternally() throws IOException {
         final int offset = 147; // class [D]ummy
         final PsiFile file = getPsiFile();
+        final PsiFile subClass = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
 //        final PsiElement element = file.findElementAt(offset);
+        final String subclassFile = pathOf(subClass);
         final String originalFile = pathOf(file);
         byte[] originalBytes = file.getVirtualFile().contentsToByteArray();
+        byte[] subclassBytes = subClass.getVirtualFile().contentsToByteArray();
 
         assertFileContains("class Dummy");
 
@@ -69,7 +72,6 @@ public class RenameElementTest extends FileEditingTestCase {
 //        assertFileDoesNotContain("class Dummy");
 //        assertFileNowContains("class Dummer");
 
-        PsiFile subClass = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
         RenameResult info = result.getResult();
 
         // special restore
@@ -82,6 +84,14 @@ public class RenameElementTest extends FileEditingTestCase {
         FileOutputStream out = new FileOutputStream(new File(originalFile));
         out.write(originalBytes);
         out.close();
+        out = new FileOutputStream(new File(subclassFile));
+        out.write(subclassBytes);
+        out.close();
+
+        // make sure the file on disk was updated
+        assertThat(new String(subClass.getVirtualFile().contentsToByteArray(false)))
+                .isEqualTo(subClass.getText())
+                .contains("Dummer");
 
         assertThat(info.changed)
                 .hasSize(1)
