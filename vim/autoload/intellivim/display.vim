@@ -33,6 +33,38 @@ function! intellivim#display#PreviewWindowFromCommand(name, command) " {{{
 
 endfunction " }}}
 
+function! intellivim#display#PromptInput(config) " {{{
+    " Prompt the user to input some text. Currently supports
+    "  single-line input only, which means pressing enter
+    "  will call onDone
+    " The argument is a dict defined as follows:
+    " Arguments:
+    " - title Title of the window
+    " - onDone Function called when the user has finished
+    "            Will be called as `onDone([doneArgs...], input)`
+    "            where `doneArgs` is optionally those passed in this
+    "            dict, and `input` is the string input by the user
+    " - onCancel (optional) Function called when the user cancels
+    " - input (optional) Default value of input
+    " - cancelArgs (optional) Arguments to be passed to onCancel
+    " - doneArgs (optional) Arguments to be passed to onDone
+
+    let config = a:config
+    let title = config.title
+    let contents = get(config, 'input', '')
+
+    call intellivim#display#TempWindow("[" . title . "]", contents,
+                \ {'height': 1, 'readonly': 0})
+    let b:prompt_config = config
+    nnoremap <buffer> <cr> :call <SID>InputPromptDone()<cr>
+    inoremap <buffer> <cr> <c-r>=<SID>InputPromptDone()<cr>
+    nnoremap <buffer> q :call <SID>InputPromptCancel()<cr>
+    nnoremap <buffer> <c-c> :call <SID>InputPromptCancel()<cr>
+
+    " TODO Done on write?
+
+endfunction " }}}
+
 function! intellivim#display#PromptList(config) " {{{
     " Prompt the user to pick from a list of choices.
     " The argument is a dict defined as follows:
@@ -203,6 +235,48 @@ endfunction " }}}
 " Calbacks
 "
 
+function s:InputPromptCancel() " {{{
+    let config = b:prompt_config
+
+    norm! ZZ
+
+    if has_key(config, 'onCancel')
+        if type(get(config, 'cancelArgs')) == type([])
+            call call(config.onCancel, config.cancelArgs)
+        else
+            call config.onCancel()
+        endif
+    endif
+
+    return ''
+endfunction " }}}
+
+function s:InputPromptDone() " {{{
+    let config = b:prompt_config
+    let input = getline('.')
+
+    " exist insert mode, if in it
+    stopinsert
+
+    if input == get(config, 'input', '')
+        " no change
+        call s:InputPromptCancel()
+        return ''
+    endif
+
+    " close now, because onDone might pop
+    "  back to a specific place
+    norm! ZZ
+
+    if type(get(config, 'doneArgs')) == type([])
+        call call(config.onDone, config.doneArgs + [input])
+    else
+        call config.onDone(input)
+    endif
+
+    return ''
+endfunction " }}}
+
 function s:ListPromptCancel(alwaysCancel) " {{{
     let config = b:prompt_config
     let selects = b:prompt_selects
@@ -210,7 +284,7 @@ function s:ListPromptCancel(alwaysCancel) " {{{
     norm! ZZ
 
     if !a:alwaysCancel && selects > 0
-        " actual, we're done
+        " actually, we're done
         call s:ListPromptDone(config)
         return
     endif

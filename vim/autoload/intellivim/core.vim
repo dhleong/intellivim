@@ -61,7 +61,7 @@ function! intellivim#core#Setup() " {{{
     endif
 
     if !exists(":Rename")
-        command -nargs=1 Rename
+        command -nargs=? Rename
             \ call intellivim#core#rename#RenameElement('<args>')
     endif
 

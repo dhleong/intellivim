@@ -1,16 +1,34 @@
 " Author: Daniel Leong
 "
 
-function! intellivim#core#rename#RenameElement(newName) " {{{
+function! intellivim#core#rename#RenameElement(...) " {{{
+    " Rename the element under the cursor.
+    " Arguments:
+    "  - name: (optional) The new name of the element. If
+    "          not provided, the user will be prompted for one
+     
     if !intellivim#InProject()
         call intellivim#ShowErrorResult("No project found")
         return 
     endif
 
-    " TODO allow no arg and use fancy prompt for rename
     let command = intellivim#NewCommand("rename_element")
     let command.offset = intellivim#GetOffset()
-    call s:DoRename(command, a:newName)
+
+    if !a:0
+        " TODO allow no arg and use fancy prompt for rename
+        call s:DoRename(command, a:1)
+        return
+    endif
+
+    let original = expand("<cword>")
+    call intellivim#display#PromptInput({
+        \ 'title': "Rename " . original,
+        \ 'input': original,
+        \ 'onDone': function("s:DoRename"),
+        \ 'doneArgs': [command]
+        \ })
+
 endfunction " }}}
 
 "
