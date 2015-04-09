@@ -1,7 +1,9 @@
 package org.intellivim.core.command.find;
 
+import com.intellij.openapi.project.Project;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
 
 import java.io.File;
 import java.util.List;
@@ -36,9 +38,11 @@ public class FindImplementationsTest extends BaseTestCase {
     }
 
     SimpleResult locateAt(int offset) {
-
-        return (SimpleResult) new FindImplementationsCommand(getProject(),
-                filePath, offset).execute();
+        final Project project = getProject();
+        return execute(new FindImplementationsCommand(
+                project,
+                ProjectUtil.getPsiFile(project, filePath),
+                offset));
     }
 }
 

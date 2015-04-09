@@ -4,17 +4,19 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.intellivim.core.model.VimEditor;
+import org.intellivim.core.model.VimDocument;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,18 +91,19 @@ public class Problems extends ArrayList<Problem> {
 
         final Problems problems = new Problems();
 
-        final VimEditor editor = new VimEditor(project, psiFile, 0);
-        final DocumentEx doc = editor.getDocument();
+        final DocumentEx doc = VimDocument.getInstance(psiFile);
 
-//        final ProgressIndicator progress = new ProgressIndicatorBase();
-        final ProgressIndicator progress = new DaemonProgressIndicator();
+        final Disposable disposable = Disposer.newDisposable();
+        final DaemonProgressIndicator progress = new DaemonProgressIndicator();
+        Disposer.register(disposable, progress);
+
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
 
             @Override
             public void run() {
                 final List<HighlightInfo> results =
                         DaemonCodeAnalyzerEx.getInstanceEx(project)
-                                .runMainPasses(psiFile, doc, progress);
+                                    .runMainPasses(psiFile, doc, progress);
                 for (HighlightInfo info : results) {
                     Problem problem = Problem.from(problems.size(), doc, info);
                     if (problem != null)
@@ -110,6 +113,7 @@ public class Problems extends ArrayList<Problem> {
             }
         }, progress);
 
+        Disposer.dispose(disposable);
         return problems;
     }
 

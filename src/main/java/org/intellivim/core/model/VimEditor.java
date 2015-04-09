@@ -8,7 +8,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -77,15 +76,6 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     public VimEditor(Project project, PsiFile originalFile, int offset) {
         this(project, originalFile, VimDocument.getInstance(originalFile), offset);
-    }
-
-    /** For TESTING only */
-    public VimEditor(DocumentEx doc, int offset) {
-        this(null, null, doc, offset);
-
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            throw new IllegalStateException("This constructor is for TESTING only");
-        }
     }
 
     private VimEditor(Project project, PsiFile originalFile, DocumentEx document, int offset) {

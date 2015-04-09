@@ -1,6 +1,7 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.intellivim.Command;
@@ -44,8 +45,8 @@ public class FixProblemCommand extends ProjectCommand {
     public Result execute() {
 
         final QuickFixDescriptor fix = selectFix();
-        final VimEditor editor = new VimEditor(project, file, offset);
-        RangeMarker marker = editor.createRangeMarker();
+        final EditorEx editor = createEditor(file, offset);
+        RangeMarker marker = VimEditor.createRangeMarker(editor);
 
         try {
             return SimpleResult.success(
