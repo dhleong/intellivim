@@ -1,7 +1,10 @@
 package org.intellivim.core.command.impl;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
 
 /**
  * @author dhleong
@@ -60,8 +63,10 @@ public class ImplementTest extends FileEditingTestCase {
             assertFileDoesNotContain(signature);
         }
 
-        SimpleResult result = (SimpleResult) new ImplementCommand(
-                getProject(), filePath, offset, signatures).execute();
+        final Project project = getProject();
+        final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
+        SimpleResult result = execute(new ImplementCommand(
+                project, file, offset, signatures));
         assertSuccess(result);
 
         for (String signature : expected) {
@@ -106,7 +111,8 @@ public class ImplementTest extends FileEditingTestCase {
     }
 
     private SimpleResult implementAt(String signature, int offset) {
-        return (SimpleResult) new ImplementCommand(
-                getProject(), filePath, signature, offset).execute();
+        final Project project = getProject();
+        final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
+        return execute(new ImplementCommand(project, file, signature, offset));
     }
 }

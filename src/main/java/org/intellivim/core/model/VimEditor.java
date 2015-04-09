@@ -74,10 +74,6 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
 
     private JComponent component;
 
-    public VimEditor(Project project, PsiFile originalFile, int offset) {
-        this(project, originalFile, VimDocument.getInstance(originalFile), offset);
-    }
-
     private VimEditor(Project project, PsiFile originalFile, DocumentEx document, int offset) {
         this.project = project;
         this.originalFile = originalFile;
