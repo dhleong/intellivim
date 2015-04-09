@@ -3,7 +3,7 @@
 
 " Variables {{{
 " never run core Setup in these filetypes
-let s:alwaysIgnoredFiletypes = ["gitcommit"]
+let s:alwaysIgnoredFiletypes = ["gitcommit", "qf"]
 " }}}
 
 function! intellivim#core#Setup() " {{{
