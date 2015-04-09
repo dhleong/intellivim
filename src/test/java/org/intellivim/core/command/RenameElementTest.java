@@ -36,8 +36,7 @@ public class RenameElementTest extends FileEditingTestCase {
         assertFileContains("list = new ArrayList");
         assertFileContains("list.add(");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "list2").execute();
+        final SimpleResult result = rename(file, offset, "list2");
         assertSuccess(result);
 
         assertFileDoesNotContain("list = new ArrayList");
@@ -65,8 +64,7 @@ public class RenameElementTest extends FileEditingTestCase {
 
         assertFileContains("class Dummy");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "Dummer").execute();
+        final SimpleResult result = rename(file, offset, "Dummer");
         assertSuccess(result);
 
 //        assertFileDoesNotContain("class Dummy");
@@ -78,7 +76,7 @@ public class RenameElementTest extends FileEditingTestCase {
         PsiFile dummerClass = ProjectUtil.getPsiFile(getProject(),
                 DUMMY_FILE_PATH.replace("mmy", "mmer"));
         String dummerPath = pathOf(dummerClass);
-        new File(dummerPath).delete();
+        delete(dummerClass);
 
         // manual restore, because the test env will be confused otherwise
         FileOutputStream out = new FileOutputStream(new File(originalFile));
@@ -111,21 +109,20 @@ public class RenameElementTest extends FileEditingTestCase {
 
         assertFileContains("class Dummy");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "Dummer").execute();
+        final SimpleResult result = rename(file, offset, "Dummer");
         assertSuccess(result);
 
 //        assertFileDoesNotContain("class Dummy");
 //        assertFileNowContains("class Dummer");
 
         final PsiFile subClass = file;
-        RenameResult info = result.getResult();
+        final RenameResult info = result.getResult();
 
         // special restore
         PsiFile dummerClass = ProjectUtil.getPsiFile(getProject(),
                 DUMMY_FILE_PATH.replace("mmy", "mmer"));
         String dummerPath = pathOf(dummerClass);
-        new File(dummerPath).delete();
+        delete(dummerClass);
 
         // manual restore, because the test env will be confused otherwise
         FileOutputStream out = new FileOutputStream(new File(originalFile));
@@ -134,12 +131,12 @@ public class RenameElementTest extends FileEditingTestCase {
 
         ApplicationManager.getApplication().runWriteAction(
                 new ThrowableComputable<Void, IOException>() {
-            @Override
-            public Void compute() throws IOException {
-                subClass.getVirtualFile().setBinaryContent(subclassBytes);
-                return null;
-            }
-        });
+                    @Override
+                    public Void compute() throws IOException {
+                        subClass.getVirtualFile().setBinaryContent(subclassBytes);
+                        return null;
+                    }
+                });
 
         assertThat(info.changed)
                 .hasSize(1)
@@ -147,6 +144,20 @@ public class RenameElementTest extends FileEditingTestCase {
         assertThat(info.renamed)
                 .hasSize(1)
                 .containsValue(dummerPath);
+    }
+
+    private void delete(final PsiFile file) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+                file.delete();
+            }
+        });
+    }
+
+    private SimpleResult rename(final PsiFile file,
+            final int offset, final String rename) {
+        return execute(new RenameElementCommand(getProject(), file, offset, rename));
     }
 
     private static String pathOf(final PsiFile psiFile) {

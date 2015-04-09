@@ -1,6 +1,5 @@
 package org.intellivim.core.command;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -55,13 +54,9 @@ public class RenameElementCommand extends ProjectCommand {
         public final Set<String> changed;
         public final Map<String, String> renamed;
 
-        private final transient PsiElement original;
-
-        private RenameResult(final PsiElement element) {
+        private RenameResult() {
             this.changed = new HashSet<String>();
             this.renamed = new HashMap<String, String>();
-
-            original = element;
         }
 
         boolean addUsage(final PsiElement element) {
@@ -91,18 +86,13 @@ public class RenameElementCommand extends ProjectCommand {
 
     @Override
     public Result execute() {
-        final EditorEx editor = new VimEditor(project, file, offset);
+        final EditorEx editor = createEditor(file, offset);
         final RangeMarker marker = VimEditor.createRangeMarker(editor);
-
-        final PsiElement element = TargetElementUtilBase.findTargetElement(editor,
-                TargetElementUtilBase.getInstance().getAllAccepted());
-        if (element == null) {
-            return SimpleResult.error("No element under the cursor");
-        }
+        final PsiElement element = VimEditor.findTargetElement(editor);
 
         final RenamePsiElementProcessor processor =
                 RenamePsiElementProcessor.forElement(element);
-        final UsageInfo[] usages = gatherUsages(project, file, offset);
+        final UsageInfo[] usages = gatherUsages(editor);
 
         final String elementPath = pathOf(element.getContainingFile());
 
@@ -112,7 +102,7 @@ public class RenameElementCommand extends ProjectCommand {
             .getVirtualFile()
             .refresh(false, true);
 
-        final RenameResult result = new RenameResult(element);
+        final RenameResult result = new RenameResult();
         IntelliVimUtil.runWriteCommand(new Runnable() {
             @Override
             public void run() {
@@ -150,9 +140,8 @@ public class RenameElementCommand extends ProjectCommand {
                            .withOffsetFrom(marker);
     }
 
-    private UsageInfo[] gatherUsages(final Project project,
-            final PsiFile file, final int offset) {
-        List<Usage> usages = FindUsagesCommand.findUsages(project, file, offset);
+    private UsageInfo[] gatherUsages(final EditorEx editor) {
+        List<Usage> usages = FindUsagesCommand.findUsages(editor);
 
         List<UsageInfo> results = ContainerUtil.map(usages, new Function<Usage, UsageInfo>() {
             @Override

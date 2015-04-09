@@ -1,6 +1,7 @@
 
 package org.intellivim.core.model;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
@@ -9,6 +10,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.IndentsModel;
@@ -35,8 +38,10 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
@@ -658,5 +663,69 @@ public class VimEditor extends UserDataHolderBase implements EditorEx {
     public static RangeMarker createRangeMarker(EditorEx editor) {
         final int offset = editor.getCaretModel().getOffset();
         return editor.getDocument().createRangeMarker(offset, offset);
+    }
+
+    /**
+     * Convenience. Sometimes <code>PsiFile.findElementAt()</code>
+     *  isn't enough. This will never return null.
+     * @throws IllegalArgumentException if it couldn't find an element
+     */
+    public static @NotNull PsiElement findTargetElement(final Editor editor) {
+        final PsiElement found = TargetElementUtilBase
+                .findTargetElement(editor,
+                        TargetElementUtilBase.getInstance().getAllAccepted());
+
+        if (found == null) {
+            throw new IllegalArgumentException("No element under the cursor");
+        }
+
+        return found;
+    }
+
+    /**
+     * Create a new EditorEx. It will be disposed whenever
+     *  context is disposed
+     *
+     * @param context The context during which the EditorEx
+     *                will be valid.
+     * @param file The file
+     * @param offset The offset at which the cursor in the
+     *               Editor should be placed
+     */
+    public static EditorEx from(final Disposable context,
+            final PsiFile file, final int offset) {
+
+////        return new VimEditor(project, file, offset);
+//        final Editor editor = Service.getInstance().findEditorByPsiElement(file);
+//        if (editor instanceof EditorEx) {
+//            System.out.println("EditorByElement");
+//            editor.getCaretModel().moveToOffset(offset);
+//            return (EditorEx) editor;
+//        }
+//
+//        final DocumentEx doc = VimDocument.getInstance(file);
+//        final EditorFactory editorFactory = EditorFactory.getInstance();
+//        final Editor[] editors = editorFactory.getEditors(doc);
+//        for (final Editor e : editors) {
+//            if (e instanceof EditorEx) {
+//                System.out.println("EditorByFactory");
+//                e.getCaretModel().moveToOffset(offset);
+//                return (EditorEx) e;
+//            }
+//        }
+
+        final DocumentEx doc = VimDocument.getInstance(file);
+        final EditorFactory editorFactory = EditorFactory.getInstance();
+        final EditorEx created = (EditorEx) editorFactory.createEditor(doc, file.getProject());
+        created.getCaretModel().moveToOffset(offset);
+
+        Disposer.register(context, new Disposable() {
+            @Override
+            public void dispose() {
+                editorFactory.releaseEditor(created);
+            }
+        });
+
+        return created;
     }
 }

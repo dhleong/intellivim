@@ -1,6 +1,5 @@
 package org.intellivim.core.command.find;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -125,7 +124,8 @@ public class FindUsagesCommand extends ProjectCommand {
             return SimpleResult.error("No element at position");
         }
 
-        List<Usage> rawResults = findUsages(project, file, offset);
+        final Editor editor = VimEditor.from(this, file, offset);
+        List<Usage> rawResults = findUsages(editor);
         if (rawResults.isEmpty()) {
             return SimpleResult.error("No usages found");
         }
@@ -147,14 +147,12 @@ public class FindUsagesCommand extends ProjectCommand {
         return SimpleResult.success(ContainerUtil.filter(results, Condition.NOT_NULL));
     }
 
-    public static List<Usage> findUsages(Project project, PsiFile file, int offset) {
-        final Editor editor = new VimEditor(project, file, offset);
-        final PsiElement element = TargetElementUtilBase
-                .findTargetElement(editor,
-                        TargetElementUtilBase.getInstance().getAllAccepted());
+    public static List<Usage> findUsages(final Editor editor) {
+        final PsiElement element = VimEditor.findTargetElement(editor);
 
         final List<Usage> rawResults = new ArrayList<Usage>();
-        final FindUsagesManager manager = new FindUsagesManager(project, new UsageCollectingViewManager(rawResults));
+        final FindUsagesManager manager = new FindUsagesManager(editor.getProject(),
+                new UsageCollectingViewManager(rawResults));
         manager.findUsages(element, null, null, false, null);
         return rawResults;
     }
