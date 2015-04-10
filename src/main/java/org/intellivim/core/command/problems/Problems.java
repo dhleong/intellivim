@@ -97,7 +97,7 @@ public class Problems extends ArrayList<Problem> {
         final DaemonProgressIndicator progress = new DaemonProgressIndicator();
         Disposer.register(disposable, progress);
 
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+        ProgressManager.getInstance().runProcess(new Runnable() {
 
             @Override
             public void run() {

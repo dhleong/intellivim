@@ -47,7 +47,7 @@ public class CommandExecutor {
 
         @Override
         public boolean isDone() {
-            return false;
+            return result != null;
         }
 
         @Override
@@ -174,11 +174,22 @@ public class CommandExecutor {
             @Override
             public void run() {
                 final Profiler profiler = Profiler.with(command);
-                profiler.mark("preProjectExecute");
-                result.setResult(command.execute());
-                profiler.finish("projectExecute");
+                try {
+                    profiler.mark("preProjectExecute");
+                    result.setResult(command.execute());
+                    profiler.finish("projectExecute");
+                } catch (Throwable e) {
+                    logger.log(Level.WARNING,
+                            "Unexpected error executing "
+                                    + command.getClass().getSimpleName(),
+                            e.fillInStackTrace());
 
-                dispose(command);
+                    if (!result.isDone()) {
+                        result.setResult(SimpleResult.error(e));
+                    }
+                } finally {
+                    dispose(command);
+                }
             }
         }, "intellivim-command", "org.intellivim");
     }
