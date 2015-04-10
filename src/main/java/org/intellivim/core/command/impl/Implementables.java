@@ -3,6 +3,7 @@ package org.intellivim.core.command.impl;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnnotation;
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 
@@ -27,10 +27,10 @@ import java.util.List;
 public class Implementables extends ArrayList<Implementable> {
 
     final Project project;
-    final VimEditor editor;
+    final EditorEx editor;
     final PsiClass targetClass;
 
-    Implementables(Project project, VimEditor editor, PsiClass targetClass) {
+    Implementables(Project project, EditorEx editor, PsiClass targetClass) {
         this.project = project;
         this.editor = editor;
         this.targetClass = targetClass;
@@ -134,7 +134,7 @@ public class Implementables extends ArrayList<Implementable> {
         }
     }
 
-    void reformatMethod(VimEditor editor, PsiMethodMember member) {
+    void reformatMethod(EditorEx editor, PsiMethodMember member) {
 
         final PsiMethod[] ms = targetClass.findMethodsBySignature(
                 member.getElement(), false);
@@ -177,10 +177,10 @@ public class Implementables extends ArrayList<Implementable> {
         }
     }
 
-    public static Implementables collectFrom(Project project, PsiFile file, int offset)
+    public static Implementables collectFrom(EditorEx editor, PsiFile file)
             throws IllegalArgumentException {
-        final VimEditor editor = new VimEditor(project, file, offset);
 
+        final Project project = editor.getProject();
         final PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
         if (aClass == null) {
             throw new IllegalArgumentException("No context for implement");

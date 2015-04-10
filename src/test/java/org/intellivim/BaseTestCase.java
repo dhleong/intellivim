@@ -1,7 +1,9 @@
 package org.intellivim;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -134,5 +136,18 @@ public abstract class BaseTestCase extends UsefulTestCase {
             return ProjectUtil.ensureProject(path);
 
         return myFixture.getProject();
+    }
+
+    /**
+     * Convenience to execute a Command and call dispose()
+     *  on it like it would be if executed normally. Also
+     *  casts the result for you, since it's the usual case
+     */
+    public static SimpleResult execute(ICommand command) {
+        SimpleResult result = (SimpleResult) command.execute();
+        if (command instanceof Disposable) {
+            Disposer.dispose((Disposable) command);
+        }
+        return result;
     }
 }

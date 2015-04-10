@@ -37,7 +37,7 @@ public class FixProblemTest extends FileEditingTestCase {
         assertFileDoesNotContain(IMPORT_STATEMENT);
 
         Project project = getProject();
-        SimpleResult result = (SimpleResult) new GetProblemsCommand(project, filePath).execute();
+        SimpleResult result = execute(new GetProblemsCommand(project, filePath));
         assertSuccess(result);
 
         final Problems problems = result.getResult();
@@ -49,7 +49,7 @@ public class FixProblemTest extends FileEditingTestCase {
 
         FixProblemCommand command = new FixProblemCommand(project, filePath, quickFix.id);
         command.offset = OFFSET_BEFORE;
-        SimpleResult fixResult = (SimpleResult) command.execute();
+        SimpleResult fixResult = execute(command);
         assertSuccess(fixResult);
         assertFileNowContains(IMPORT_STATEMENT);
 

@@ -40,7 +40,7 @@ public class AmbiguousImportTest extends FileEditingTestCase {
 
         Project project = getProject();
         GetProblemsCommand command = new GetProblemsCommand(project, filePath);
-        SimpleResult result = (SimpleResult) command.execute();
+        SimpleResult result = execute(command);
         assertSuccess(result);
 
         final Problems problems = result.getResult();
@@ -59,7 +59,8 @@ public class AmbiguousImportTest extends FileEditingTestCase {
                 .contains(IMPORT_CHOICE, ALT_IMPORT_CHOICE);
 
         // Attempting to fix without an arg will return the list
-        SimpleResult fixResult = (SimpleResult) new FixProblemCommand(project, filePath, quickFix.id).execute();
+        SimpleResult fixResult = execute(
+                new FixProblemCommand(project, filePath, quickFix.id));
         assertSuccess(fixResult);
 
         // still no imports yet...
@@ -76,8 +77,8 @@ public class AmbiguousImportTest extends FileEditingTestCase {
                 .contains(IMPORT_CHOICE, ALT_IMPORT_CHOICE);
 
         // now, let's do the RIGHT thing
-        SimpleResult fixed = (SimpleResult) new FixProblemCommand(project, filePath, quickFix.id,
-                IMPORT_CHOICE).execute();
+        final SimpleResult fixed = execute(
+                new FixProblemCommand(project, filePath, quickFix.id, IMPORT_CHOICE));
         assertSuccess(fixed);
 
         // no choices prompt...

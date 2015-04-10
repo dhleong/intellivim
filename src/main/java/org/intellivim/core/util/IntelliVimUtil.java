@@ -120,4 +120,5 @@ public class IntelliVimUtil {
     public static void runUndoTransparentAction(final Runnable runnable) {
         CommandProcessor.getInstance().runUndoTransparentAction(runnable);
     }
+
 }

@@ -46,8 +46,6 @@ public class FindUsagesTest extends BaseTestCase {
     }
 
     SimpleResult locateAt(int offset) {
-
-        return (SimpleResult) new FindUsagesCommand(getProject(),
-                filePath, offset).execute();
+        return execute(new FindUsagesCommand(getProject(), filePath, offset));
     }
 }

@@ -3,6 +3,7 @@ package org.intellivim.core.command;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.intellivim.FileEditingTestCase;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.command.RenameElementCommand.RenameResult;
@@ -36,8 +37,7 @@ public class RenameElementTest extends FileEditingTestCase {
         assertFileContains("list = new ArrayList");
         assertFileContains("list.add(");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "list2").execute();
+        final SimpleResult result = rename(file, offset, "list2");
         assertSuccess(result);
 
         assertFileDoesNotContain("list = new ArrayList");
@@ -58,39 +58,41 @@ public class RenameElementTest extends FileEditingTestCase {
         final PsiFile file = getPsiFile();
         final PsiFile subClass = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
 //        final PsiElement element = file.findElementAt(offset);
-        final String subclassFile = pathOf(subClass);
         final String originalFile = pathOf(file);
-        byte[] originalBytes = file.getVirtualFile().contentsToByteArray();
-        byte[] subclassBytes = subClass.getVirtualFile().contentsToByteArray();
+        final byte[] originalBytes = file.getVirtualFile().contentsToByteArray();
+        final byte[] subclassBytes = subClass.getVirtualFile().contentsToByteArray();
 
         assertFileContains("class Dummy");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "Dummer").execute();
+        final SimpleResult result = rename(file, offset, "Dummer");
         assertSuccess(result);
 
-//        assertFileDoesNotContain("class Dummy");
-//        assertFileNowContains("class Dummer");
-
-        RenameResult info = result.getResult();
+        // fetch these NOW so we can do restoration
+        //  before our tests, in case they failed.
+        //  It may make more sense to do this stuff in
+        //  setUp/tearDown, but I don't really want
+        //  to make a separate Test class....
+        final RenameResult info = result.getResult();
+        final String newSubclassDiskText =
+                new String(subClass.getVirtualFile().contentsToByteArray(false));
+        final String newSubclassPsiText = subClass.getText();
 
         // special restore
         PsiFile dummerClass = ProjectUtil.getPsiFile(getProject(),
                 DUMMY_FILE_PATH.replace("mmy", "mmer"));
         String dummerPath = pathOf(dummerClass);
-        new File(dummerPath).delete();
+        delete(dummerClass);
 
         // manual restore, because the test env will be confused otherwise
         FileOutputStream out = new FileOutputStream(new File(originalFile));
         out.write(originalBytes);
         out.close();
-        out = new FileOutputStream(new File(subclassFile));
-        out.write(subclassBytes);
-        out.close();
+
+        setFileBytes(subClass, subclassBytes);
 
         // make sure the file on disk was updated
-        assertThat(new String(subClass.getVirtualFile().contentsToByteArray(false)))
-                .isEqualTo(subClass.getText())
+        assertThat(newSubclassDiskText)
+                .isEqualTo(newSubclassPsiText)
                 .contains("Dummer");
 
         assertThat(info.changed)
@@ -104,53 +106,71 @@ public class RenameElementTest extends FileEditingTestCase {
     /** rename a class from a reference in another file */
     public void testRenameClassExternally() throws IOException {
         final int offset = 145; // extends [D]ummy
-        final PsiFile file = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
-        final byte[] subclassBytes = file.getVirtualFile().contentsToByteArray();
+        final PsiFile subclass = ProjectUtil.getPsiFile(getProject(), SUBCLASS_FILE_PATH);
+        final byte[] subclassBytes = subclass.getVirtualFile().contentsToByteArray();
         byte[] originalBytes = getPsiFile().getVirtualFile().contentsToByteArray();
         final String originalFile = pathOf(getPsiFile());
 
         assertFileContains("class Dummy");
 
-        final SimpleResult result = (SimpleResult)
-                new RenameElementCommand(getProject(), file, offset, "Dummer").execute();
+        final SimpleResult result = rename(subclass, offset, "Dummer");
         assertSuccess(result);
 
 //        assertFileDoesNotContain("class Dummy");
 //        assertFileNowContains("class Dummer");
 
-        final PsiFile subClass = file;
-        RenameResult info = result.getResult();
+        final RenameResult info = result.getResult();
 
         // special restore
         PsiFile dummerClass = ProjectUtil.getPsiFile(getProject(),
                 DUMMY_FILE_PATH.replace("mmy", "mmer"));
         String dummerPath = pathOf(dummerClass);
-        new File(dummerPath).delete();
+        delete(dummerClass);
 
         // manual restore, because the test env will be confused otherwise
         FileOutputStream out = new FileOutputStream(new File(originalFile));
         out.write(originalBytes);
         out.close();
 
-        ApplicationManager.getApplication().runWriteAction(
-                new ThrowableComputable<Void, IOException>() {
-            @Override
-            public Void compute() throws IOException {
-                subClass.getVirtualFile().setBinaryContent(subclassBytes);
-                return null;
-            }
-        });
+        setFileBytes(subclass, subclassBytes);
 
         assertThat(info.changed)
                 .hasSize(1)
-                .contains(pathOf(subClass));
+                .contains(pathOf(subclass));
         assertThat(info.renamed)
                 .hasSize(1)
                 .containsValue(dummerPath);
     }
 
+    private void delete(final PsiFile file) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+                file.delete();
+            }
+        });
+    }
+
+    private SimpleResult rename(final PsiFile file,
+            final int offset, final String rename) {
+        return execute(new RenameElementCommand(getProject(), file, offset, rename));
+    }
+
     private static String pathOf(final PsiFile psiFile) {
         return psiFile.getVirtualFile().getCanonicalPath();
+    }
+
+    private static void setFileBytes(final PsiFile file, final byte[] bytes) throws IOException {
+        ApplicationManager.getApplication().runWriteAction(
+                new ThrowableComputable<Void, IOException>() {
+                    @Override
+                    public Void compute() throws IOException {
+                        file.getVirtualFile().setBinaryContent(bytes);
+
+                        PsiManager.getInstance(file.getProject()).reloadFromDisk(file);
+                        return null;
+                    }
+                });
     }
 
 }

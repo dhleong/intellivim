@@ -8,13 +8,11 @@ import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
-import org.intellivim.core.model.VimEditor;
 import org.intellivim.core.util.FileUtil;
 import org.intellivim.core.util.IntelliVimUtil;
 
@@ -56,7 +54,7 @@ public class CompletionParametersUtil {
         return null;
     }
 
-    static CompletionParameters from(Project project, PsiFile psiFile, int offset) {
+    static CompletionParameters from(Editor editor, PsiFile psiFile, int offset) {
 
         final PsiElement position = psiFile.findElementAt(offset);
         final CompletionType completionType = CompletionType.BASIC;
@@ -71,7 +69,6 @@ public class CompletionParametersUtil {
             }
         }
 
-        final Editor editor = new VimEditor(project, psiFile, offset);
 //        final Lookup lookup = new VimLookup(project, editor);
 
         final int invocationCount = 0;
@@ -83,7 +80,7 @@ public class CompletionParametersUtil {
         // we need to insert a dummy identifier so there's something there.
         //  this is what intellij does typically
         final PsiElement completionPosition = insertDummyIdentifier(
-                psiFile, position, editor);
+                psiFile, position);
 
         return newInstance(completionPosition, psiFile,
                 completionType, offset, invocationCount, editor);
@@ -91,7 +88,7 @@ public class CompletionParametersUtil {
 
     /** based on CodeCompletionHandlerBase */
     private static PsiElement insertDummyIdentifier(final PsiFile originalFile,
-            final PsiElement position, final Editor editor) {
+            final PsiElement position) {
         final InjectedLanguageManager manager = InjectedLanguageManager
                 .getInstance(originalFile.getProject());
         final PsiFile hostFile = manager.getTopLevelFile(originalFile);

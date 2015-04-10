@@ -1,9 +1,10 @@
 package org.intellivim.core.command.problems;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.BaseTestCase;
-import org.intellivim.CommandExecutor;
-import org.intellivim.IVGson;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
 
 import java.util.List;
 
@@ -22,17 +23,17 @@ public class GetFixesTest extends BaseTestCase {
     }
 
     public void testNoProblemReturnsNull() {
-        SimpleResult result = (SimpleResult) new GetFixesCommand(getProject(), filePath, 0).execute();
+        SimpleResult result = fixAt(0);
         assertSuccess(result);
         assertThat(result.result).isNull();
     }
 
     public void testProblematic() {
-        Problems problems = ((SimpleResult) new GetProblemsCommand(getProject(), filePath).execute()).getResult();
+        Problems problems = loadProblems();
         Problem problem = problems.get(0);
         QuickFixDescriptor fix = problem.getFixes().get(0);
 
-        SimpleResult result = (SimpleResult) new GetFixesCommand(getProject(), filePath, fix.start).execute();
+        SimpleResult result = fixAt(fix.start);
         assertSuccess(result);
 
         List<QuickFixDescriptor> fixes = result.getResult();
@@ -42,16 +43,26 @@ public class GetFixesTest extends BaseTestCase {
     }
 
     public void testClosestOnLine() {
-        Problems problems = ((SimpleResult) new GetProblemsCommand(getProject(), filePath).execute()).getResult();
+        Problems problems = loadProblems();
         Problem problem = problems.get(0);
         QuickFixDescriptor fix = problem.getFixes().get(0);
 
-        SimpleResult result = (SimpleResult) new GetFixesCommand(getProject(), filePath, fix.start - 2).execute();
+        SimpleResult result = fixAt(fix.start - 2);
         assertSuccess(result);
 
         List<QuickFixDescriptor> fixes = result.getResult();
         assertThat(fixes)
                 .isNotNull()
                 .isNotEmpty();
+    }
+
+    Problems loadProblems() {
+        return execute(new GetProblemsCommand(getProject(), filePath)).getResult();
+    }
+
+    SimpleResult fixAt(int offset) {
+        final Project project = getProject();
+        final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
+        return execute(new GetFixesCommand(project, file, offset));
     }
 }

@@ -1,9 +1,11 @@
 package org.intellivim.core.command.complete;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.assertj.core.api.Condition;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,8 +27,8 @@ public class CompletionTest extends BaseTestCase {
         String filePath = "src/org/intellivim/javaproject/Dummy.java";
         int offset = 269; // new Dummy().
 
-        SimpleResult result = (SimpleResult) new CompleteCommand(
-                project, filePath, offset).execute();
+        final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
+        SimpleResult result = execute(new CompleteCommand(project, file, offset));
         assertSuccess(result);
 
         CompleteCommand.CompletionResultInfo completion = result.getResult();

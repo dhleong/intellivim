@@ -1,9 +1,11 @@
 package org.intellivim;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -189,7 +191,9 @@ public abstract class FileEditingTestCase extends BaseTestCase {
 
         assertThat(psi.getText()).isEqualTo(originalString);
 
-        FileUtil.commitChanges(new VimEditor(project, psi, 0));
+        final Disposable disposable = Disposer.newDisposable();
+        FileUtil.commitChanges(VimEditor.from(disposable, psi, 0));
+        Disposer.dispose(disposable);
     }
 
 

@@ -2,10 +2,13 @@ package org.intellivim;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import org.intellivim.IVGson.RawCommand;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.Profiler;
 
@@ -18,11 +21,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author dhleong
  */
 public class CommandExecutor {
+    private static Logger logger = Logger.getLogger("IntelliVim:CommandExecutor");
 
     static class CommandResult implements Future<Result> {
 
@@ -107,9 +113,9 @@ public class CommandExecutor {
                 } catch (JsonSyntaxException e) {
                     Throwable cause = e.getCause();
                     final Throwable actual = cause == null ? cause : e;
-                    result.setResult(handleError(actual));
+                    result.setResult(handleError(rawCommand, actual));
                 } catch (Throwable e) {
-                    result.setResult(handleError(e));
+                    result.setResult(handleError(rawCommand, e));
                 }
             }
         };
@@ -157,6 +163,7 @@ public class CommandExecutor {
             // just invoke via the application
             result.setResult(command.execute());
             profiler.finish("normalExecute");
+            dispose(command);
         }
     }
 
@@ -170,12 +177,20 @@ public class CommandExecutor {
                 profiler.mark("preProjectExecute");
                 result.setResult(command.execute());
                 profiler.finish("projectExecute");
+
+                dispose(command);
             }
         }, "intellivim-command", "org.intellivim");
     }
 
-    private static Result handleError(Throwable e) {
-        e.printStackTrace();
+    static void dispose(final ICommand command) {
+        if (command instanceof Disposable) {
+            Disposer.dispose((Disposable) command);
+        }
+    }
+
+    private static Result handleError(final RawCommand rawCommand, Throwable e) {
+        logger.log(Level.WARNING, "Error parsing: " + rawCommand.obj, e);
         return SimpleResult.error(e);
     }
 

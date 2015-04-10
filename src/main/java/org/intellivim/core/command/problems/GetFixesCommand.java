@@ -8,14 +8,10 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
-import org.intellivim.core.model.VimEditor;
-import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
-import java.util.Collections;
-
 /**
- * Created by dhleong on 11/8/14.
+ * @author dhleong
  */
 @Command("get_fixes")
 public class GetFixesCommand extends ProjectCommand {
@@ -23,9 +19,10 @@ public class GetFixesCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required int offset;
 
-    public GetFixesCommand(Project project, String filePath, int offset) {
+    public GetFixesCommand(Project project, PsiFile file, int offset) {
         super(project);
-        file = ProjectUtil.getPsiFile(project, filePath);
+
+        this.file = file;
         this.offset = offset;
     }
 
@@ -39,7 +36,7 @@ public class GetFixesCommand extends ProjectCommand {
         }
 
         // no exact match; try line-wise
-        final Editor editor = new VimEditor(project, file, offset);
+        final Editor editor = createEditor(file, offset);
         final int line = editor.getCaretModel().getLogicalPosition().line + 1; // NB 0-based to 1-based line
         for (Problem p : problems) {
             if (p.isOnLine(line)) {
