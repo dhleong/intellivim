@@ -167,7 +167,7 @@ public class CommandExecutor {
         }
     }
 
-    private void executeProjectCommand(final Project project,
+    void executeProjectCommand(final Project project,
             final ICommand command, final CommandResult result) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
 
@@ -182,7 +182,7 @@ public class CommandExecutor {
                     logger.log(Level.WARNING,
                             "Unexpected error executing "
                                     + command.getClass().getSimpleName(),
-                            e.fillInStackTrace());
+                            e);
 
                     if (!result.isDone()) {
                         result.setResult(SimpleResult.error(e));
