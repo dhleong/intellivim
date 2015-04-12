@@ -1,19 +1,27 @@
 package org.intellivim.core.command.complete;
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionResult;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionSorter;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Consumer;
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
@@ -27,6 +35,7 @@ import org.intellivim.core.command.problems.QuickFixDescriptor;
 import org.intellivim.core.command.problems.QuickFixException;
 import org.intellivim.core.model.VimEditor;
 import org.intellivim.inject.Inject;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +53,7 @@ import java.util.List;
 @Command("complete")
 public class CompleteCommand extends ProjectCommand {
 
+
     public static class CompletionResultInfo {
         public final List<CompletionInfo<?>> completions;
         public final Problems problems;
@@ -59,6 +69,9 @@ public class CompleteCommand extends ProjectCommand {
 
     /* optional */String prefix;
 
+    private boolean myEmptyLookup;
+    private transient Editor myEditor;
+
     public CompleteCommand(Project project, PsiFile file, int offset) {
         super(project);
 
@@ -69,6 +82,7 @@ public class CompleteCommand extends ProjectCommand {
     @Override
     public Result execute() {
         final EditorEx editor = createEditor(file, offset);
+        myEditor = editor;
         final CompletionParameters params = CompletionParametersUtil.from(editor, file, offset);
         final ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>();
 
@@ -110,7 +124,7 @@ public class CompleteCommand extends ProjectCommand {
         // NB: We can take a shortcut here. If returnedProblems is an empty list,
         //  we're going to restart completion anyway, so don't bother now
         if (returnedProblems == null || !returnedProblems.isEmpty()) {
-            performCompletion(params, prefix, new Consumer<CompletionResult>() {
+            performCompletion2(params, prefix, new Consumer<CompletionResult>() {
                 @Override
                 public void consume(CompletionResult completionResult) {
                     final LookupElement el = completionResult.getLookupElement();
@@ -123,6 +137,57 @@ public class CompleteCommand extends ProjectCommand {
 
         return SimpleResult.success(new CompletionResultInfo(infos, returnedProblems))
                 .withOffsetFrom(marker);
+    }
+
+    public LookupElement[] performCompletion2(Object ignore,
+            final String prefix, final Consumer<CompletionResult> consumer) {
+        final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(
+                CompletionType.SMART
+        ) {
+
+            @Override
+            protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
+                myEmptyLookup = indicator.getLookup().getItems().isEmpty();
+                super.completionFinished(indicator, hasModifiers);
+            }
+        };
+        Editor editor = getCompletionEditor();
+//        editor.getCaretModel().moveCaretRelatively(prefix.length(), 0, false, false, false);
+        handler.invokeCompletion(getProject(), editor, 1);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
+
+        LookupElement[] results = getLookupElements();
+
+//        final String prefix = userPrefix != null ? userPrefix : findPrefix(position, parameters.getOffset());
+        final CamelHumpMatcher matcher = new CamelHumpMatcher("", false);
+        final CompletionSorter sorter = CompletionService.getCompletionService()
+                                                         .defaultSorter(null, matcher);
+        for (LookupElement e : results) {
+            consumer.consume(CompletionResult.wrap(e, matcher, sorter));
+        }
+
+        return results;
+    }
+
+    private Editor getCompletionEditor() {
+        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(
+                myEditor, file);
+    }
+
+    @Nullable
+    public LookupElement[] getLookupElements() {
+        LookupImpl lookup = getLookup();
+        if (lookup == null) {
+            return myEmptyLookup ? LookupElement.EMPTY_ARRAY : null;
+        }
+        else {
+            final List<LookupElement> list = lookup.getItems();
+            return list.toArray(new LookupElement[list.size()]);
+        }
+    }
+
+    public LookupImpl getLookup() {
+        return (LookupImpl) LookupManager.getActiveLookup(myEditor);
     }
 
     /*
