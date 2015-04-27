@@ -14,6 +14,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -139,24 +140,38 @@ public class CompleteCommand extends ProjectCommand {
                 .withOffsetFrom(marker);
     }
 
-    public LookupElement[] performCompletion2(Object ignore,
+    public Iterable<LookupElement> performCompletion2(Object ignore,
             final String prefix, final Consumer<CompletionResult> consumer) {
+        final List<LookupElement> results = new ArrayList<LookupElement>();
         final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(
                 CompletionType.SMART
         ) {
 
             @Override
             protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
-                myEmptyLookup = indicator.getLookup().getItems().isEmpty();
-                super.completionFinished(indicator, hasModifiers);
+                final List<LookupElement> found = indicator.getLookup().getItems();
+                results.addAll(found);
+                System.out.println(results);
+                myEmptyLookup = found.isEmpty();
+                try {
+                    super.completionFinished(indicator, hasModifiers);
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
             }
         };
-        Editor editor = getCompletionEditor();
+        final Editor editor = getCompletionEditor();
 //        editor.getCaretModel().moveCaretRelatively(prefix.length(), 0, false, false, false);
-        handler.invokeCompletion(getProject(), editor, 1);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+                // not supposed to invoke completion with write access
+                handler.invokeCompletion(getProject(), editor, 1);
+            }
+        });
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
 
-        LookupElement[] results = getLookupElements();
+//        LookupElement[] results = getLookupElements();
 
 //        final String prefix = userPrefix != null ? userPrefix : findPrefix(position, parameters.getOffset());
         final CamelHumpMatcher matcher = new CamelHumpMatcher("", false);
