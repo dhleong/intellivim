@@ -47,6 +47,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
         // for whatever reason, the project is trying to load
         //  charsets.jar from here. Make it happy
         VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home/jre");
+        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.7.0_60.jdk/Contents/Home/jre");
     }
 
     /** Which project does this test reference? */
