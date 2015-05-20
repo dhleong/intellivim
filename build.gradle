@@ -106,3 +106,8 @@ task setup {
         project.delete "${project.name}.ipr"
     }
 }
+
+task wrapper(type: Wrapper) {
+   gradleVersion = '2.4'
+}
+
