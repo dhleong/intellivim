@@ -1,7 +1,9 @@
 package org.intellivim;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -28,6 +30,8 @@ public abstract class BaseTestCase extends UsefulTestCase {
     protected static final String LOOPING_PROJECT = "looping-project";
     protected static final String RUNNABLE_PROJECT = "runnable-project";
     protected static final String TESTABLE_PROJECT = "testable-project";
+    protected static final String DUMMY_FILE_PATH = "src/org/intellivim/javaproject/Dummy.java";
+    protected static final String SUBCLASS_FILE_PATH = "src/org/intellivim/javaproject/SubClass.java";
     protected static final String PROBLEMATIC_FILE_PATH = "src/org/intellivim/javaproject/Problematic.java";
     protected static final String PROBLEMATIC_TWICE_FILE_PATH = "src/org/intellivim/javaproject/ProblematicTwice.java";
 
@@ -132,5 +136,18 @@ public abstract class BaseTestCase extends UsefulTestCase {
             return ProjectUtil.ensureProject(path);
 
         return myFixture.getProject();
+    }
+
+    /**
+     * Convenience to execute a Command and call dispose()
+     *  on it like it would be if executed normally. Also
+     *  casts the result for you, since it's the usual case
+     */
+    public static SimpleResult execute(ICommand command) {
+        SimpleResult result = (SimpleResult) command.execute();
+        if (command instanceof Disposable) {
+            Disposer.dispose((Disposable) command);
+        }
+        return result;
     }
 }

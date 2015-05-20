@@ -1,6 +1,7 @@
 package org.intellivim;
 
 import org.assertj.core.api.Assertions;
+import org.intellivim.core.command.RenameElementCommand;
 import org.intellivim.core.command.problems.GetProblemsCommand;
 import org.intellivim.core.command.run.AsyncRunner;
 import org.intellivim.core.command.run.DummyRunner;
@@ -58,6 +59,17 @@ public class IVGsonTest extends BaseTestCase {
                 + projectPath + "', file: 'src/org/intellivim/javaproject/SubClass.java'}";
         ICommand command = inflateAndInject(json);
         assertThat(command).isInstanceOf(GetProblemsCommand.class);
+    }
+
+    public void testInjectPsiElement() {
+        String projectPath = getProjectPath(JAVA_PROJECT);
+        String json = "{command: 'rename_element'," +
+                "project: '" + projectPath + "'," +
+                "file: 'src/org/intellivim/javaproject/Dummy.java'," +
+                "offset: 314," + // [list].whatever
+                "rename: 'list2'}";
+        ICommand command = inflateAndInject(json);
+        assertThat(command).isInstanceOf(RenameElementCommand.class);
     }
 
     public void testInjectRunner() {

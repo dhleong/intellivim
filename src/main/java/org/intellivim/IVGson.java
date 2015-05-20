@@ -15,6 +15,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.intellivim.core.util.Profiler;
 import org.intellivim.core.util.ProjectUtil;
@@ -355,6 +356,7 @@ public class IVGson {
         //  an annotation on the Injector
         HashSet<Class<?>> types = new HashSet<Class<?>>(Arrays.asList(
             PsiFile.class,
+            PsiElement.class,
             Project.class
         ));
 

@@ -30,4 +30,9 @@ function! intellivim#util#Pad(string, length, ...) " {{{
 
 endfunction " }}}
 
+function! intellivim#util#Strip(string) " {{{
+    " Strip whitespace from the ends of the string
+    return substitute(a:string, '^\s*\(.\{-}\)\s*$', '\1', '')
+endfunction " }}}
+
 " vim:ft=vim:fdm=marker

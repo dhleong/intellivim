@@ -1,8 +1,10 @@
 package org.intellivim.core.command.params;
 
+import com.intellij.psi.PsiFile;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.command.params.GetParamHintsCommand.ParamHints;
+import org.intellivim.core.util.ProjectUtil;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,7 +81,8 @@ public class GetParamHintsTest extends BaseTestCase {
     }
 
     ParamHints getParamsAt(int offset) {
-        SimpleResult result = (SimpleResult) new GetParamHintsCommand(getProject(), filePath, offset).execute();
+        final PsiFile file = ProjectUtil.getPsiFile(getProject(), filePath);
+        SimpleResult result = execute(new GetParamHintsCommand(getProject(), file, offset));
         assertSuccess(result);
 
         return result.getResult();

@@ -36,7 +36,7 @@ public class OptimizeImportsTest extends FileEditingTestCase {
      */
     public void testCommand() throws IOException {
 
-        SimpleResult result = (SimpleResult) new OptimizeImportsCommand(getProject(), filePath).execute();
+        SimpleResult result = execute(new OptimizeImportsCommand(getProject(), filePath));
         assertSuccess(result);
         assertFileNowContains(FixProblemTest.IMPORT_STATEMENT);
         assertFileNowContains("import org.intellivim.javaproject.subpackage.AlsoNotImported;");
@@ -58,7 +58,7 @@ public class OptimizeImportsTest extends FileEditingTestCase {
 
         assertThat(updated.locateQuickFix(original.locateQuickFix("0.0"))).isNotNull();
 
-        assertSuccess((SimpleResult) new FixProblemCommand(project, filePath, "0.0").execute());
+        assertSuccess(execute(new FixProblemCommand(project, filePath, "0.0")));
         assertFileNowContains(FixProblemTest.IMPORT_STATEMENT);
 
         final QuickFixDescriptor secondImportFix = original.locateQuickFix("1.0");

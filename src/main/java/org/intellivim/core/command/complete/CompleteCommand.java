@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,6 @@ import org.intellivim.core.command.problems.Problems;
 import org.intellivim.core.command.problems.QuickFixDescriptor;
 import org.intellivim.core.command.problems.QuickFixException;
 import org.intellivim.core.model.VimEditor;
-import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
@@ -59,15 +59,17 @@ public class CompleteCommand extends ProjectCommand {
 
     /* optional */String prefix;
 
-    public CompleteCommand(Project project, String filePath, int offset) {
+    public CompleteCommand(Project project, PsiFile file, int offset) {
         super(project);
-        file = ProjectUtil.getPsiFile(project, filePath);
+
+        this.file = file;
         this.offset = offset;
     }
 
     @Override
     public Result execute() {
-        final CompletionParameters params = CompletionParametersUtil.from(project, file, offset);
+        final EditorEx editor = createEditor(file, offset);
+        final CompletionParameters params = CompletionParametersUtil.from(editor, file, offset);
         final ArrayList<CompletionInfo<?>> infos = new ArrayList<CompletionInfo<?>>();
 
         // we must first gather problems; this will let us
@@ -82,8 +84,7 @@ public class CompleteCommand extends ProjectCommand {
             returnedProblems = null;
         } else if (problems.size() == 1) {
             // let's attempt to resolve it right now
-            final VimEditor editor = (VimEditor) params.getEditor();
-            marker = editor.createRangeMarker();
+            marker = VimEditor.createRangeMarker(editor);
             returnedProblems = problems;
 
             try {

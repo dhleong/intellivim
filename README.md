@@ -47,6 +47,11 @@ in a preview window.
 Press `enter` on a method to implement it, and `q` to quit. 
 Visual selection to implement multiple at a time is supported.
 
+`:JavaNew <type> <name>`  Create a new Java type (`class`, `@interface`, etc.)
+with the given name. If provided eg `org.intellivim.Test` the class will be
+created in that package. Otherwise, IntelliVim will attempt to creat it in
+the same package as the current file (if any).
+
 `:JavaOptimizeImports`  Attempts to automatically add imports and organize them.
 Prompts for disambiguation if necessary. As the name implies, this one is currently
 Java only. Future work could let this pick the right implementation based on filetype
@@ -56,6 +61,12 @@ Java only. Future work could let this pick the right implementation based on fil
 of thing to locate: 
  - `file` Search by file name/path (default)
  - `class` Search by class name
+
+`:Rename [newName]` Rename the element under the cursor. If a new name isn't passed
+to this command, a small buffer is opened so you can edit the name with all your
+usual vim bindings. Pressing `enter` in this buffer will commit the change; `ctrl-c`
+or `q` will cancel. When pressing `enter`, if the value has not changed, or if it is
+empty, nothing will happen.
 
 `:RunProject [config]` Builds and runs the current project, opening a split to contain
 the output. Closing the split will terminate the execution, as will calling 

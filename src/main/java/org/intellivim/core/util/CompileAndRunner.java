@@ -19,10 +19,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +42,7 @@ import java.util.List;
  *
  * @author dhleong
  */
-public class CompileAndRunner {
+public class CompileAndRunner implements Disposable {
 
     public static class Builder {
         private final Project project;
@@ -137,10 +139,14 @@ public class CompileAndRunner {
 
     /**
      * Allocate a launch id for use with the selected settings
-     * @return
      */
     public String allocateLaunchId() {
         return LaunchManager.allocateId(project, getSettings());
+    }
+
+    @Override
+    public void dispose() {
+        // any cleanup?
     }
 
     /**
@@ -190,6 +196,7 @@ public class CompileAndRunner {
                             for (Listener listener : listeners) {
                                 listener.onCompileFailed();
                             }
+                            Disposer.dispose(CompileAndRunner.this);
                             return;
                         }
 
@@ -233,7 +240,7 @@ public class CompileAndRunner {
 
                 System.out.println("Process: " + handler);
                 if (handler.isProcessTerminated() || handler.isProcessTerminating()) {
-                    descriptor.dispose();
+                    Disposer.dispose(descriptor);
                     System.err.println("Process was already terminated");
                     return;
                 }
@@ -251,7 +258,9 @@ public class CompileAndRunner {
                             @Override
                             public void run() {
                                 // everybody do your share
-                                descriptor.dispose();
+//                                descriptor.dispose();
+                                Disposer.dispose(descriptor);
+                                Disposer.dispose(CompileAndRunner.this);
                             }
                         });
                     }
@@ -317,13 +326,17 @@ public class CompileAndRunner {
         ExecutionEnvironmentBuilder builder =
                 new ExecutionEnvironmentBuilder(project, executor);
         if (configuration != null) {
-            builder.setRunnerAndSettings(runner, configuration);
+//            builder.setRunnerAndSettings(runner, configuration);
+            builder.runnerAndSettings(runner, configuration);
+        } else {
+//            builder.setRunnerId(runner.getRunnerId());
+            builder.runner(runner);
         }
-        else {
-            builder.setRunnerId(runner.getRunnerId());
-        }
-        builder.setTarget(target).setContentToReuse(null).setDataContext(null);
-        builder.assignNewId();
+//        builder.setTarget(target).setContentToReuse(null).setDataContext(null);
+        builder.target(target)
+               .contentToReuse(null)
+               .dataContext(null)
+               .assignNewId();
         return builder.build();
     }
 

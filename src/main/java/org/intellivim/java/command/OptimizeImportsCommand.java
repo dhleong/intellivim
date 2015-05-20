@@ -3,8 +3,8 @@ package org.intellivim.java.command;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.java.JavaImportOptimizer;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -57,7 +57,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
     // NB: for multiple imports, we need to re-load these each time
     transient PsiFile psiFile;
-    transient VimEditor editor;
+    transient EditorEx editor;
 
     // created once, on first prepare()
     transient RangeMarker marker;
@@ -99,8 +99,7 @@ public class OptimizeImportsCommand extends ProjectCommand {
         if (optimizer.supports(psiFile)) {
             final Runnable action = optimizer.processFile(psiFile);
 
-            CommandProcessor.getInstance().runUndoTransparentAction(
-                    IntelliVimUtil.asWriteAction(action));
+            IntelliVimUtil.runWriteCommand(action);
 
             FileUtil.commitChanges(editor);
         }
@@ -115,13 +114,13 @@ public class OptimizeImportsCommand extends ProjectCommand {
 
     private void prepare() {
         psiFile = ProjectUtil.getPsiFile(project, file);
-        editor = new VimEditor(project, psiFile, offset);
+        editor = createEditor(psiFile, offset);
         if (!(psiFile instanceof PsiJavaFile)) {
             throw new IllegalArgumentException(file + " is not a Java file");
         }
 
         if (marker == null) {
-            marker = editor.createRangeMarker();
+            marker = VimEditor.createRangeMarker(editor);
         }
     }
 

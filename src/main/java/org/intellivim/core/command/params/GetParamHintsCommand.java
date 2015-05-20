@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,8 +17,6 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
-import org.intellivim.core.model.VimEditor;
-import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.inject.Inject;
 
 import java.util.ArrayList;
@@ -42,19 +41,19 @@ public class GetParamHintsCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required int offset;
 
-    private transient VimEditor editor;
+    private transient EditorEx editor;
 
-    public GetParamHintsCommand(Project project, final String filePath, final int offset) {
+    public GetParamHintsCommand(Project project, final PsiFile file, final int offset) {
         super(project);
 
-        file = ProjectUtil.getPsiFile(project, filePath);
+        this.file = file;
         this.offset = offset;
     }
 
     @Override
     public Result execute() {
 
-        editor = new VimEditor(project, file, offset);
+        editor = createEditor(file, offset);
 
         final PsiElement psiElement = file.findElementAt(offset);
         if (psiElement == null) return SimpleResult.error("No element at offset");

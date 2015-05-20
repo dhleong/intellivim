@@ -1,15 +1,18 @@
 package org.intellivim.core.command.problems;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
@@ -23,8 +26,6 @@ import java.util.List;
  * @author dhleong
  */
 public class Problems extends ArrayList<Problem> {
-
-    private static final int ATTEMPTS = 5;
 
     public Problems filterByFixType(final Class<? extends QuickFixDescriptor> fixType) {
         return filter(new Condition<Problem>() {
@@ -88,41 +89,54 @@ public class Problems extends ArrayList<Problem> {
     public static Problems collectFrom(final Project project, final PsiFile psiFile) {
 
         final Problems problems = new Problems();
-
-        final VimEditor editor = new VimEditor(project, psiFile, 0);
+        final Disposable disposable = Disposer.newDisposable();
+        final EditorEx editor = VimEditor.from(disposable, psiFile, 0);
         final DocumentEx doc = editor.getDocument();
 
-        final ProgressIndicator progress = new ProgressIndicatorBase();
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-
-            @Override
-            public void run() {
-                final List<HighlightInfo> results =
-                        DaemonCodeAnalyzerEx.getInstanceEx(project)
-                                .runMainPasses(psiFile, doc, progress);
-                for (HighlightInfo info : results) {
-                    Problem problem = Problem.from(problems.size(), doc, info);
-                    if (problem != null)
-                        problems.add(problem);
-                }
-
+        //noinspection CaughtExceptionImmediatelyRethrown
+        try {
+            final List<HighlightInfo> results =
+                    doHighlighting(disposable, editor, psiFile);
+            for (final HighlightInfo info : results) {
+                final Problem problem = Problem.from(problems.size(), doc, info);
+                if (problem != null)
+                    problems.add(problem);
             }
-        }, progress);
+        } catch (RuntimeException e) {
+            // we're not trying to suppress the error;
+            //  we just want to make sure we can clean up after ourselves
+            throw e;
+        } finally {
+            Disposer.dispose(disposable);
+        }
 
         return problems;
     }
 
-    private static void attemptHighlightingPass(final List<TextEditorHighlightingPass> passes, final ProgressIndicator indicator) {
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
+    static List<HighlightInfo> doHighlighting(final Disposable context,
+            final EditorEx editor, final PsiFile psiFile) {
+
+        final DaemonProgressIndicator progress = new DaemonProgressIndicator();
+        Disposer.register(context, progress);
+
+        return ProgressManager.getInstance().runProcess(new Computable<List<HighlightInfo>>() {
 
             @Override
-            public void run() {
-                for (TextEditorHighlightingPass pass : passes) {
-                    pass.doCollectInformation(indicator);
-                }
+            public List<HighlightInfo> compute() {
+                final Project project = psiFile.getProject();
+                final DaemonCodeAnalyzerEx analyzer =
+                        DaemonCodeAnalyzerEx.getInstanceEx(project);
 
+                // ensure we get fresh results; the restart also seems to
+                //  prevent the "process canceled" issue (see #30)
+                PsiDocumentManager.getInstance(project).commitAllDocuments();
+                analyzer.restart(psiFile);
+
+                // analyze!
+                return analyzer.runMainPasses(
+                        psiFile, editor.getDocument(), progress);
             }
-        }, indicator);
+        }, progress);
     }
 
     public static void ensureIndexesUpToDate(Project project) {

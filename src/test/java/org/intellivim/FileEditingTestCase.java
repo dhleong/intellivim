@@ -1,9 +1,12 @@
 package org.intellivim;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -144,6 +147,11 @@ public abstract class FileEditingTestCase extends BaseTestCase {
         return ProjectUtil.getVirtualFile(proj, getFilePath());
     }
 
+    protected PsiFile getPsiFile() {
+        final Project proj = getProject();
+        return ProjectUtil.getPsiFile(proj, getFilePath());
+    }
+
     private String getCurrentFileContentsSafely() {
         try {
             return new String(getFile().contentsToByteArray());
@@ -154,20 +162,22 @@ public abstract class FileEditingTestCase extends BaseTestCase {
     }
 
     private void restoreFile() throws IOException {
-        VirtualFile file = getFile();
-        file.setBinaryContent(originalContents);
+        final VirtualFile file = getFile();
 
         // NB: At this point, the file on disk is correct,
         //  but the PsiFile is still referencing the modified stuff
 
         final Project project = getProject();
-        final PsiFile psi = ProjectUtil.getPsiFile(project, file);
-
         final String originalString = new String(originalContents);
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+        final PsiFile psi =  ApplicationManager.getApplication().runWriteAction(
+                new ThrowableComputable<PsiFile, IOException>() {
 
             @Override
-            public void run() {
+            public PsiFile compute() throws IOException {
+                file.setBinaryContent(originalContents);
+
+                final PsiFile psi = ProjectUtil.getPsiFile(project, file);
                 final DocumentEx doc = VimDocument.getInstance(psi);
 
                 FileDocumentManager.getInstance().reloadFromDisk(doc);
@@ -175,12 +185,15 @@ public abstract class FileEditingTestCase extends BaseTestCase {
 
                 // now, commit changes so the PsiFile is updated
                 PsiDocumentManager.getInstance(project).commitDocument(doc);
+                return psi;
             }
         });
 
         assertThat(psi.getText()).isEqualTo(originalString);
 
-        FileUtil.commitChanges(new VimEditor(project, psi, 0));
+        final Disposable disposable = Disposer.newDisposable();
+        FileUtil.commitChanges(VimEditor.from(disposable, psi, 0));
+        Disposer.dispose(disposable);
     }
 
 

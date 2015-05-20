@@ -1,7 +1,10 @@
 package org.intellivim.core.command.impl;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
+import org.intellivim.core.util.ProjectUtil;
 
 import java.util.Comparator;
 
@@ -66,7 +69,8 @@ public class GetImplementablesTest extends BaseTestCase {
     }
 
     SimpleResult getImplementablesAt(int offset) {
-        return (SimpleResult) new GetImplementablesCommand(
-                getProject(), filePath, offset).execute();
+        final Project project = getProject();
+        final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
+        return execute(new GetImplementablesCommand(project, file, offset));
     }
 }

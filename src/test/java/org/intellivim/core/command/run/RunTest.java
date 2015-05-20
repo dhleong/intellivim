@@ -63,9 +63,8 @@ public class RunTest extends UsableSdkTestCase {
         softly.assertThat(runner.stderr).as("stderr").contains("Standard Error");
         softly.assertThat(runner.stdout).as("stdout").contains("Standard Output");
         softly.assertThat(runner.system).as("system")
-                .hasSize(1); // just the commandline as of IntelliJ 14
-//                .hasSize(2) // first one is the command line
-//                .contains("Process finished with exit code 0");
+                .hasSize(2) // first one is the command line
+                .contains("Process finished with exit code 0");
         softly.assertAll();
     }
 
@@ -127,9 +126,8 @@ public class RunTest extends UsableSdkTestCase {
             fail("LoopingProject did not finish execution in time");
 
         assertThat(runner.system).as("system")
-                .hasSize(1); // just command line as of IntelliJ 14
-//                .hasSize(2) // first one is the command line
-//                .haveExactly(1, containing("Process finished with exit code"));
+                .hasSize(2) // first one is the command line
+                .haveExactly(1, containing("Process finished with exit code"));
     }
 
     private static Condition<String> containing(final String substring) {
