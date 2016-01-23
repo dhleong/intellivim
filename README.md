@@ -98,6 +98,16 @@ nnoremap gd :GotoDeclaration<cr>
 nnoremap K :GetDocumentation<cr>
 ```
 
+## Building
+
+IntelliVim builds with [Gradle](https://gradle.org). It is probably not at a point
+yet where we could upload it to the IntelliJ plugin repository, but you can build
+it yourself to play around with by cloning or forking this repo to your local machine
+and running:
+
+    ./gradlew clean buildPlugin
+
+Gradle will assemble an installable .zip file in the `build/distributions/` directory.
 
 ## Other Editors
 
