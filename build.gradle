@@ -1,16 +1,11 @@
-//
-// With thanks to https://github.com/pbetkier/intellij-synonyms/
-//  for reference on how to get this to work
-//
+
+plugins {
+  id "org.jetbrains.intellij" version "0.0.39"
+}
 
 apply plugin: 'java'
-apply plugin: 'idea'
 
-def ideaPlatformVersion = '14.1.3'
-def ideaPlatformZip = "ideaIC-${ideaPlatformVersion}.tar.gz"
-def ideaPlatformUrl = "http://download.jetbrains.com/idea/${ideaPlatformZip}"
 def ideaPlatformDir = "./intellij-platform"
-def ideaPlatformLibsDir = "${ideaPlatformDir}/lib"
 def junitLibDir = "plugins/junit/lib"
 
 repositories {
@@ -19,32 +14,6 @@ repositories {
 
 configurations {
     provided
-}
-
-task preparePlatformDependency {
-    def platformDir = new File(ideaPlatformDir)
-    if (platformDir.exists() && platformDir.listFiles().length > 1) {
-        // already set up (2 = zip + original extracted dir)
-        println "Platform already setup"
-    } else {
-        println "Fetching IDEA platform (this may take a while)"
-        platformDir.mkdirs()
-        ant.get(src: ideaPlatformUrl, dest: platformDir, skipexisting: 'true')
-
-        println "Extracting IDEA platform (this may take a minute or so)"
-        ant.untar(src: "${platformDir}/${ideaPlatformZip}", dest: platformDir, compression: "gzip", overwrite: false)
-    }
-
-    println "Locating libs dir"
-    def unzipDir = files(platformDir.listFiles()).filter {
-        it.isDirectory()
-    }
-
-    ideaPlatformDir = unzipDir.getSingleFile().getAbsolutePath()
-    ideaPlatformLibsDir = new File(ideaPlatformDir, "lib").getAbsolutePath()
-    println "Using " + ideaPlatformLibsDir
-
-    println "Done!"
 }
 
 dependencies {
@@ -58,52 +27,23 @@ dependencies {
     testCompile 'org.assertj:assertj-core:1.7.0'
     testCompile 'org.mockito:mockito-all:1.9.5'
 
-    // platform stuff
-    testRuntime fileTree(dir: "${System.properties['java.home']}/../lib/", include: "tools.jar")
-    provided fileTree(dir: ideaPlatformLibsDir, include: '*.jar')
-
-    // junit support
-    def junitLib = new File(ideaPlatformDir, junitLibDir)
-    testRuntime fileTree(dir: junitLib, include: '*.jar')
-    provided fileTree(dir: junitLib, include: '*.jar')
 }
 
 test {
     jvmArgs '-XX:MaxPermSize=256m'
 }
 
-sourceSets {
-    main {
-        compileClasspath += configurations.provided
-    }
-    test {
-        compileClasspath += configurations.provided
-        runtimeClasspath += configurations.provided
-    }
+intellij {
+    version ideaVersion
+    pluginName 'IntelliVim'
+    updateSinceUntilBuild false
+    downloadSources Boolean.valueOf(downloadIdeaSources)
+    plugins 'junit'
 }
 
-idea.project.ipr {
-    beforeMerged { project ->
-        project.modulePaths.clear()
-    }
-}
-
-idea.module.iml {
-    withXml {
-        it.node.@type = "PLUGIN_MODULE"
-    }
-}
-
-task setup {
-    dependsOn ideaModule, ideaProject
-    doLast {
-        copy {
-            from '.'
-            into '.idea/'
-            include '*.ipr'
-            rename { "modules.xml" }
-        }
-        project.delete "${project.name}.ipr"
+afterEvaluate {
+    tasks.getByName('buildPlugin') {
+        archiveName = "$intellij.pluginName-$version-${buildNumber}.zip"
     }
 }
 
