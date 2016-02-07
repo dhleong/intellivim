@@ -58,6 +58,12 @@ function! s:Find(command, type) " {{{
         return
     endif
 
+    if !has_key(result, 'result')
+        redraw " prevent 'press enter to continue'
+        call intellivim#util#EchoError("No definition found")
+        return
+    endif
+
     let found = result.result
     let type = type(found)
     let isList = type == type([])

@@ -76,7 +76,6 @@ function! intellivim#ShowErrorResult(result, ...) " {{{
     "  reject_empty If truthy, a missing "result" key
     "               WILL be treated as an error
     if has_key(a:result, 'error')
-        " TODO intellivim#util#EchoError
         redraw " prevent 'press enter to continue'
         call intellivim#util#EchoError(a:result.error)
         return 1

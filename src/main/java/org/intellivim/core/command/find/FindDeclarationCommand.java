@@ -10,6 +10,7 @@ import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.inject.Inject;
 
 /**
  * @author dhleong
@@ -17,7 +18,7 @@ import org.intellivim.core.util.ProjectUtil;
 @Command("find_declaration")
 public class FindDeclarationCommand extends ProjectCommand {
 
-    @Required PsiFile file;
+    @Required @Inject PsiFile file;
     @Required int offset;
 
     public FindDeclarationCommand(Project project, String file, int offset) {
