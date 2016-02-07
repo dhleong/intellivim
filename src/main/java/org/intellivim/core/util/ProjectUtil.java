@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -35,7 +34,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -127,20 +126,22 @@ public class ProjectUtil {
     }
 
     public static PsiFile getPsiFile(@NotNull final Project project, @NotNull final VirtualFile virtual) {
-        return UIUtil.invokeAndWaitIfNeeded(IntelliVimUtil.asWriteAction(
+        return IntelliVimUtil.invokeAndWaitIfNeeded(IntelliVimUtil.asWriteAction(
                 new Computable<PsiFile>() {
                     @Override
                     public PsiFile compute() {
                         final PsiManager mgr = PsiManager.getInstance(project);
-                        // NB: ensure we're not eating stale cache
-                        ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
+//                        // NB: ensure we're not eating stale cache
+//                        ((PsiManagerImpl) mgr).getFileManager().cleanupForNextTest();
                         final PsiFile file = mgr.findFile(virtual);
-                        mgr.reloadFromDisk(file);
+                        if (file == null) return null;
 
                         // ensure the doc is up to date as well
                         final DocumentEx doc = VimDocument.getInstance(file);
                         FileDocumentManager.getInstance().reloadFromDisk(doc);
                         PsiDocumentManager.getInstance(project).commitDocument(doc);
+
+                        mgr.reloadFromDisk(file);
 
                         PsiUtilCore.ensureValid(file);
                         return file;
@@ -160,15 +161,16 @@ public class ProjectUtil {
         if (virtual == null || !virtual.exists()) {
             throw new IllegalArgumentException("Couldn't locate virtual file @" + file);
         }
-        LocalFileSystem.getInstance().refreshFiles(Arrays.asList(virtual));
+        LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtual));
         final PsiFile psiFile = getPsiFile(project, virtual);
         if (psiFile == null) {
             throw new IllegalArgumentException("Couldn't locate psi file for " + virtual);
         }
 
-        // we do this eagerly so FileDocumentManger#getCachedDocument will
-        //  return the exact same instance that we want to use
-        VimDocument.getInstance(psiFile);
+        // NB: Since we try to never create Documents ourselves
+        //  anymore, this is no longer needed (and indeed causes
+        //  errors, since it requires read permission)
+//        VimDocument.getInstance(psiFile);
         return virtual;
     }
 
@@ -310,6 +312,6 @@ public class ProjectUtil {
 //            }
 //        });
 
-        sProjectCache.clear();
+//        sProjectCache.clear();
     }
 }

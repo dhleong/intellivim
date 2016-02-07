@@ -76,18 +76,17 @@ public class VimDocument extends DocumentImpl implements DocumentEx {
     public static DocumentEx getInstance(@NotNull PsiFile originalFile) {
         VirtualFile file = originalFile.getVirtualFile();
         final Document doc = FileDocumentManager.getInstance()
-                .getCachedDocument(file);
-//        if (doc instanceof VimDocument) {
-//            return (VimDocument) doc;
-//        }
+                .getDocument(file);
         if (doc instanceof DocumentEx) {
             return (DocumentEx) doc;
         }
 
+        // this is a last-ditch effort; we strongly prefer
+        //  the above, as it can prevent psi inconsistency
+        //  errors in write actions...
+
         // create and cache
         final VimDocument newDoc = new VimDocument(originalFile);
-//        file.putUserData(FileDocumentManagerImpl.DOCUMENT_KEY,
-//                new SoftReference<Document>(newDoc));
         FileDocumentManagerImpl.registerDocument(newDoc, file);
 
         return newDoc;

@@ -1,7 +1,7 @@
 
 package org.intellivim.core.model;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,9 +30,9 @@ public class VimEditor {
      * @throws IllegalArgumentException if it couldn't find an element
      */
     public static @NotNull PsiElement findTargetElement(final Editor editor) {
-        final PsiElement found = TargetElementUtilBase
+        final PsiElement found = TargetElementUtil
                 .findTargetElement(editor,
-                        TargetElementUtilBase.getInstance().getAllAccepted());
+                        TargetElementUtil.getInstance().getAllAccepted());
 
         if (found == null) {
             throw new IllegalArgumentException("No element under the cursor");
@@ -50,7 +51,7 @@ public class VimEditor {
      * @param offset The offset at which the cursor in the
      *               Editor should be placed
      */
-    public static EditorEx from(final Disposable context,
+    public static @NotNull EditorEx from(final Disposable context,
             final PsiFile file, final int offset) {
 
 ////        return new VimEditor(project, file, offset);

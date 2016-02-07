@@ -335,8 +335,7 @@ public class CompileAndRunner implements Disposable {
 //        builder.setTarget(target).setContentToReuse(null).setDataContext(null);
         builder.target(target)
                .contentToReuse(null)
-               .dataContext(null)
-               .assignNewId();
+               .dataContext(null);
         return builder.build();
     }
 

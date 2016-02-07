@@ -1,11 +1,14 @@
 package org.intellivim.core.util;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ui.UIUtil;
 
 /**
@@ -121,4 +124,20 @@ public class IntelliVimUtil {
         CommandProcessor.getInstance().runUndoTransparentAction(runnable);
     }
 
+    /**
+     * Like {@link UIUtil#invokeAndWaitIfNeeded(Computable)}, but
+     *  uses {@link Application#invokeAndWait(Runnable, ModalityState)},
+     *  so you can safely access PSI stuff
+     */
+    public static <T> T invokeAndWaitIfNeeded(final Computable<T> computable) {
+        final Ref<T> ref = Ref.create();
+        final Application app = ApplicationManager.getApplication();
+        app.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                ref.set(computable.compute());
+            }
+        }, app.getDefaultModalityState());
+        return ref.get();
+    }
 }
