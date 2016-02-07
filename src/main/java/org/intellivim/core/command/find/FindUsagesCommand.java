@@ -18,6 +18,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -147,11 +149,14 @@ public class FindUsagesCommand extends ProjectCommand {
         return SimpleResult.success(ContainerUtil.filter(results, Condition.NOT_NULL));
     }
 
-    public static List<Usage> findUsages(final Editor editor) {
+    public static List<Usage> findUsages(final @NotNull Editor editor) {
+        final Project project = editor.getProject();
+        if (project == null) return Collections.emptyList();
+
         final PsiElement element = VimEditor.findTargetElement(editor);
 
         final List<Usage> rawResults = new ArrayList<Usage>();
-        final FindUsagesManager manager = new FindUsagesManager(editor.getProject(),
+        final FindUsagesManager manager = new FindUsagesManager(project,
                 new UsageCollectingViewManager(rawResults));
         manager.findUsages(element, null, null, false, null);
         return rawResults;

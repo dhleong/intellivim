@@ -5,12 +5,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.Function;
@@ -23,7 +25,6 @@ import org.intellivim.SimpleResult;
 import org.intellivim.core.command.find.LocationResult;
 import org.intellivim.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -104,13 +105,27 @@ public class JavaNewCommand extends ProjectCommand {
 
         // be up to date, please
         // (if we delete outside of IntelliJ, it gets confused)
-        dir.getVirtualFile().refresh(false, true);
+        VirtualFile virtual = dir.getVirtualFile();
+        virtual.refresh(false, true);
 
+        final PsiDirectory dest = ensureDirExists(dir);
         final String templateName = resolveTemplateName();
         final String className = resolveClassName();
         final PsiClass created = JavaDirectoryService.getInstance()
-                .createClass(dir, className, templateName, false);
+                .createClass(dest, className, templateName, false);
         return SimpleResult.success(new LocationResult(created));
+    }
+
+    private PsiDirectory ensureDirExists(PsiDirectory dir) {
+        if (dir.getVirtualFile().exists()) {
+            // nothing to do
+            return dir;
+        }
+
+        return DirectoryUtil.mkdirs(
+                PsiManager.getInstance(project),
+                dir.getVirtualFile().getPath()
+        );
     }
 
     protected PsiDirectory resolveChosenDirectory(PsiDirectory[] choices) {
@@ -169,17 +184,16 @@ public class JavaNewCommand extends ProjectCommand {
             throw new IllegalArgumentException(packageName + " is not a valid package name");
         }
 
-        final List<PsiDirectory> packageDirs =
-                new ArrayList<PsiDirectory>(sourceDirectories.length);
-
+        int i = 0;
+        PsiDirectory[] packageDirs = new PsiDirectory[sourceDirectories.length];
         for (final PsiDirectory srcRoot : sourceDirectories) {
             // TODO If we created a directory here but don't use it, we should clean up after
             final PsiDirectory dir = DirectoryUtil
                     .createSubdirectories(packageName, srcRoot, ".");
-            packageDirs.add(dir);
+            packageDirs[i++] = dir;
         }
 
-        return packageDirs.toArray(sourceDirectories);
+        return packageDirs;
     }
 
     protected String resolveTemplateName() {

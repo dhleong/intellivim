@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.TestProxyPrinterProvider;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
@@ -27,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.testIntegration.TestLocationProvider;
+
 import org.intellivim.Command;
 import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
@@ -57,7 +58,6 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
     @Required @Inject protected PsiFile file;
     @Required protected int offset;
-
 
     public AbstractRunTestCommand(final Project project, AsyncTestRunner asyncRunner,
             PsiFile file, int offset) {
@@ -184,7 +184,9 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
             final TestConsoleProperties properties,
             final AsyncTestRunner asyncRunner) {
 
-        final ProcessorDelegate processor = new ProcessorDelegate(asyncRunner);
+        final ProcessorDelegate processor = new ProcessorDelegate(
+                project, getTestFrameworkName(),
+                asyncRunner);
         final OutputToGeneralTestEventsConverter outputConsumer =
                 new OutputToGeneralTestEventsConverter(
                         getTestFrameworkName(),
@@ -227,7 +229,11 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
 
         final AsyncTestRunner runner;
 
-        public ProcessorDelegate(final AsyncTestRunner runner) {
+        public ProcessorDelegate(
+                Project project, String testFrameworkName,
+                final AsyncTestRunner runner) {
+            super(project, testFrameworkName);
+
             this.runner = runner;
         }
 
@@ -319,7 +325,8 @@ public abstract class AbstractRunTestCommand extends ProjectCommand {
         }
 
         @Override
-        public void setLocator(@NotNull final TestLocationProvider locator) {
+        public void setLocator(@NotNull SMTestLocator locator) {
+
         }
 
         @Override

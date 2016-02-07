@@ -4,9 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -15,6 +13,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+
 import org.intellivim.core.util.ProjectUtil;
 
 import java.io.File;
@@ -24,7 +23,7 @@ import java.io.File;
  * @author dhleong
  */
 public abstract class BaseTestCase extends UsefulTestCase {
-    private static final String ULTIMATE_MARKER_CLASS = "com.intellij.psi.css.CssFile";
+//    private static final String ULTIMATE_MARKER_CLASS = "com.intellij.psi.css.CssFile";
 
     protected static final String JAVA_PROJECT = "java-project";
     protected static final String LOOPING_PROJECT = "looping-project";
@@ -41,13 +40,13 @@ public abstract class BaseTestCase extends UsefulTestCase {
         // Only in IntelliJ IDEA Ultimate Edition
 //        PlatformTestCase.initPlatformLangPrefix();
         // XXX: IntelliJ IDEA Community and Ultimate 12+
-        PlatformTestCase.initPlatformPrefix(ULTIMATE_MARKER_CLASS, "Idea");
+//        PlatformTestCase.initPlatformPrefix(ULTIMATE_MARKER_CLASS, "Idea");
         System.setProperty(PathManager.PROPERTY_HOME_PATH, "./");
 
-        // for whatever reason, the project is trying to load
-        //  charsets.jar from here. Make it happy
-        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home/jre");
-        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.7.0_60.jdk/Contents/Home/jre");
+//        // for whatever reason, the project is trying to load
+//        //  charsets.jar from here. Make it happy
+//        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home/jre");
+//        VfsRootAccess.allowRootAccess("/Library/Java/JavaVirtualMachines/jdk1.7.0_60.jdk/Contents/Home/jre");
     }
 
     /** Which project does this test reference? */
@@ -56,6 +55,7 @@ public abstract class BaseTestCase extends UsefulTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
         final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
 //        final LightProjectDescriptor projectDescriptor = LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
         final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor();
@@ -145,10 +145,14 @@ public abstract class BaseTestCase extends UsefulTestCase {
      *  casts the result for you, since it's the usual case
      */
     public static SimpleResult execute(ICommand command) {
-        SimpleResult result = (SimpleResult) command.execute();
-        if (command instanceof Disposable) {
-            Disposer.dispose((Disposable) command);
+        try {
+            return (SimpleResult) command.execute();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (command instanceof Disposable) {
+                Disposer.dispose((Disposable) command);
+            }
         }
-        return result;
     }
 }

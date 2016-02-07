@@ -35,6 +35,7 @@ import org.intellivim.core.util.BuildUtil;
 import org.intellivim.core.util.ProjectUtil;
 import org.intellivim.java.command.junit.JUnitRunTestCommand;
 import org.mockito.Mockito;
+import org.mockito.internal.util.MockUtil;
 
 import java.lang.reflect.Field;
 
@@ -326,7 +327,9 @@ public class TestTest extends UsableSdkTestCase {
         )).thenReturn(new PsiMethod[0]);
 
         JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        JavaPsiFacade spy = Mockito.spy(facade);
+        JavaPsiFacade spy = isMocked(facade)
+            ? facade
+            : Mockito.spy(facade);
         doReturn(mockClass).when(spy).findClass(
                 argThat(equalTo(qName)),
                 any(GlobalSearchScope.class));
@@ -362,6 +365,11 @@ public class TestTest extends UsableSdkTestCase {
         softly.assertAll();
 
         return element;
+    }
+
+    static boolean isMocked(JavaPsiFacade facade) {
+        MockUtil util = new MockUtil();
+        return util.isSpy(facade) || util.isMock(facade);
     }
 
     static boolean hasJunitExtensionPoint() {
