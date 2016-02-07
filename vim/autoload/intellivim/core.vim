@@ -147,7 +147,12 @@ function! intellivim#core#GetDocumentation() " {{{
     let command.offset = intellivim#GetOffset()
 
     " show documentation window
-    if !intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
+    if intellivim#display#PreviewWindowFromCommand("[Documentation]", command)
+        let myType = &ft
+        winc p
+        exe 'set ft=' . myType
+        winc p
+    else
         call intellivim#util#EchoError("No documentation found")
     endif
 

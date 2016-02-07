@@ -1,10 +1,14 @@
 package org.intellivim.core.command.problems;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,11 +78,17 @@ public class Problem {
                 description );
     }
 
-    public static Problem from(int id, Document doc, HighlightInfo info) {
+    public static Problem from(int id, EditorEx editor, PsiFile file, HighlightInfo info) {
         if (info.getDescription() == null)
             return null;
 
+        final Project project = editor.getProject();
+        if (project == null) {
+            throw new IllegalArgumentException(); // shouldn't happen
+        }
+
         final String description = info.getDescription();
+        final Document doc = editor.getDocument();
         final int line = doc.getLineNumber(info.getStartOffset());
         final int col = info.getStartOffset() - doc.getLineStartOffset(line);
 
@@ -91,7 +101,11 @@ public class Problem {
                 final String quickFixId = "" + id + FIX_ID_SEPARATOR + quickFixNumber++;
                 final HighlightInfo.IntentionActionDescriptor desc = pair.getFirst();
                 final TextRange range = pair.getSecond();
-                quickFixes.add(QuickFixDescriptor.from(description, quickFixId, desc, range));
+
+                final IntentionAction action = desc.getAction();
+                if (action.isAvailable(project, editor, file)) {
+                    quickFixes.add(QuickFixDescriptor.from(description, quickFixId, desc, range));
+                }
             }
         }
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-
 import org.jetbrains.annotations.NotNull;
 
 /**

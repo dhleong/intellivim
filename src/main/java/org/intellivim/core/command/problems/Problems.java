@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -91,14 +90,13 @@ public class Problems extends ArrayList<Problem> {
         final Problems problems = new Problems();
         final Disposable disposable = Disposer.newDisposable();
         final EditorEx editor = VimEditor.from(disposable, psiFile, 0);
-        final DocumentEx doc = editor.getDocument();
 
         //noinspection CaughtExceptionImmediatelyRethrown
         try {
             final List<HighlightInfo> results =
                     doHighlighting(disposable, editor, psiFile);
             for (final HighlightInfo info : results) {
-                final Problem problem = Problem.from(problems.size(), doc, info);
+                final Problem problem = Problem.from(problems.size(), editor, psiFile, info);
                 if (problem != null)
                     problems.add(problem);
             }

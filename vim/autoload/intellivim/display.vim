@@ -357,8 +357,13 @@ function! s:FillWindow(result) " {{{
 
     " prepare contents
     let contents = a:result
+    let b:foo = type(contents)
+
     if type(contents) == type("")
-        let contents = split(contents, '\n')
+        " convert to an array, safely
+        let asStr = contents
+        unlet contents
+        let contents = split(asStr, '\n')
     endif
     call append(0, contents)
     retab

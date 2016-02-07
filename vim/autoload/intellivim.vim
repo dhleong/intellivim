@@ -33,6 +33,13 @@ function! intellivim#GetCurrentProject() " {{{
         let iml = glob(fileDir . '/*.iml')
     endwhile
 
+    let imls = split(iml, '\n')
+    if len(imls) == 0
+        " no project found
+        return ""
+    endif
+
+    let iml = imls[0]
     let b:intellivim_project = iml
     return iml
 endfunction " }}}

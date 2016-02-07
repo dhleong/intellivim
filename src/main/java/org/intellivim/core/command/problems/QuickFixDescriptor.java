@@ -130,9 +130,9 @@ public class QuickFixDescriptor {
         try {
             if (!StringUtil.isEmpty(descriptor.getDisplayName())) {
                 return descriptor.getDisplayName();
-            } else if (!StringUtil.isEmpty(descriptor.getAction().getText())) {
+            } else if (!StringUtil.isEmpty(safelyGetActionText(descriptor))) {
                 return descriptor.getAction().getText();
-            } else if (!StringUtil.isEmpty(descriptor.getAction().getFamilyName())) {
+            } else if (!StringUtil.isEmpty(safelyGetFamilyName(descriptor))) {
                 return descriptor.getAction().getFamilyName();
             } else {
                 return descriptor.getAction().getClass().getSimpleName();
@@ -140,6 +140,22 @@ public class QuickFixDescriptor {
         } catch (Exception e) {
             Logger.getInstance(QuickFixDescriptor.class).warn("Problem extracting description", e);
             return "";
+        }
+    }
+
+    private static String safelyGetFamilyName(HighlightInfo.IntentionActionDescriptor descriptor) {
+        try {
+            return descriptor.getAction().getFamilyName();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
+    private static String safelyGetActionText(HighlightInfo.IntentionActionDescriptor descriptor) {
+        try {
+            return descriptor.getAction().getText();
+        } catch (NullPointerException e) {
+            return null;
         }
     }
 }
