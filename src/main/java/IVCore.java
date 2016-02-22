@@ -1,5 +1,9 @@
 import com.google.gson.Gson;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
@@ -14,8 +18,13 @@ import org.intellivim.SimpleResult;
 import org.jetbrains.annotations.NotNull;
 import org.reflections.ReflectionUtils;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -27,10 +36,12 @@ import java.util.logging.Logger;
  * @author dhleong
  */
 public class IVCore implements ApplicationComponent {
-    private Logger logger = Logger.getLogger("IntelliVim:IVCore");
+    private static final String INTELLIVIM_PLUGIN_ID = "org.intellivim";
 
-    private static final int PORT = 4846;
+    static Logger logger = Logger.getLogger("IntelliVim:IVCore");
+
     private HttpServer server;
+    private InstanceInfo instance;
 
     public IVCore() {
     }
@@ -41,24 +52,35 @@ public class IVCore implements ApplicationComponent {
         wrapAppIcon();
 
         try {
-            // TODO bind on any port, save to a file?
-            server = HttpServer.create(new InetSocketAddress(PORT), 0);
+            server = HttpServer.create(new InetSocketAddress(0), 0);
             server.setExecutor(Executors.newCachedThreadPool());
             server.createContext("/command", new CommandHandler());
             server.start();
 
-            logger.info("IntelliVim server listening on port " + server.getAddress().getPort());
+            final int port = server.getAddress().getPort();
+            instance = InstanceInfo.create(port);
+            instance.write();
+
+            logger.info("IntelliVim server listening on port " + port);
         } catch (IOException e) {
             e.printStackTrace();
+            logger.warning("Unable to start IntelliVim server");
         }
     }
 
 
     @Override
     public void disposeComponent() {
+        HttpServer server = this.server;
         if (server != null) {
             server.stop(0);
-            server = null;
+            this.server = null;
+        }
+
+        InstanceInfo info = instance;
+        if (info != null) {
+            info.delete();
+            instance = null;
         }
     }
 
@@ -66,6 +88,27 @@ public class IVCore implements ApplicationComponent {
     @Override
     public String getComponentName() {
         return "IVCore";
+    }
+
+    @NotNull
+    static File getIvHome() {
+        return new File(System.getProperty("user.home"), ".intellivim");
+    }
+
+    @NotNull
+    public static PluginId getPluginId() {
+        return PluginId.getId(INTELLIVIM_PLUGIN_ID);
+    }
+
+    @NotNull
+    public static String getVersion() {
+        if (!ApplicationManager.getApplication().isInternal()) {
+            final IdeaPluginDescriptor plugin = PluginManager.getPlugin(getPluginId());
+            return plugin != null ? plugin.getVersion() : "SNAPSHOT";
+        }
+        else {
+            return "INTERNAL";
+        }
     }
 
     static class CommandHandler implements HttpHandler {
@@ -166,6 +209,67 @@ public class IVCore implements ApplicationComponent {
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static class InstanceInfo {
+        private final long created = System.currentTimeMillis();
+
+        public int port;
+        public String version;
+
+        public static @NotNull InstanceInfo create(int port) {
+            final InstanceInfo info = new InstanceInfo();
+            info.port = port;
+            info.version = getVersion();
+            return info;
+        }
+
+        /**
+         * Writes this instance info to disk so clients can find it.
+         * See: https://github.com/dhleong/intellivim/issues/33
+         */
+        public void write() {
+            File file = getFile();
+            try {
+                final OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+                final Writer writer = new OutputStreamWriter(os);
+                IVGson.newInstance().toJson(this, writer);
+                writer.close();
+                os.close();
+                logger.info("Created instance file: " + file.getAbsolutePath());
+
+                // try to ensure it doesn't stick around, in case our
+                //  disposeComponent() method isn't called for whatever reason;
+                //  this is NOT reliable---unexpected JVM termination will NOT
+                //  respect this request!
+                file.deleteOnExit();
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.warning("Unable to write .instances/ file: " + file.getAbsolutePath());
+            }
+        }
+
+        public void delete() {
+            final File file = getFile();
+            if (file.delete()) {
+                logger.info("Removed instance file: " + file.getAbsolutePath());
+            } else {
+                logger.warning("Could not delete " + file.getAbsolutePath());
+            }
+        }
+
+        private File getFile() {
+            return new File(getInstancesDir(), String.valueOf(created));
+        }
+
+        private static @NotNull File getInstancesDir() {
+            File dir = new File(getIvHome(), ".instances");
+            if (!dir.mkdirs()) {
+                // shouldn't happen...
+                logger.warning("Couldn't create .instances dir!");
+            }
+            return dir;
         }
     }
 }
