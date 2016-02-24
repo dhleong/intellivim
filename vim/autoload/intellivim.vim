@@ -1,13 +1,30 @@
 " Author: Daniel Leong
 "
 
+let s:ivroot = expand("<sfile>:p:h:h:h")
+
 function! s:getVersion() " {{{
     let existing = get(g:, 'intellivim#version', '')
     if existing != ''
         return existing
     endif
 
-    return '' " TODO load the version
+    let path = s:ivroot . '/src/main/resources/META-INF/plugin.xml'
+    try
+        let contents = readfile(path)
+    catch /E484/
+        " couldn't find the file (for whatever reason)
+        return '(nofile)'
+    endtry
+
+    let versionLine = matchlist(contents, '.*<version>\(.*\)</version>.*')
+    if len(versionLine) == 0
+        return '(noversion)'
+    endif
+
+    " cache for later
+    let g:intellivim#version = versionLine[1]
+    return versionLine[1]
 endfunction
 
 function! intellivim#GetOffset() " {{{
