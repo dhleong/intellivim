@@ -15,7 +15,9 @@ class IVClient(object):
     ERROR_SERVER_CONNECTION = "{'error': 'Could not connect to IntelliVim Server'}"
     ERROR_TIMEOUT = "{'error': 'Timeout contacting IntelliVim Server'}"
 
-    TIMEOUT = 1.5
+    # we now only execute when we know there's
+    #  a server, so longer timeouts are safe
+    TIMEOUT = 5.0
 
     _instance = None
 
@@ -28,11 +30,11 @@ class IVClient(object):
     def _detectPort(self):
         """First checks the buffer, then a global var,
         then our last-used port, then finally looks on disk
-        :returns: The port number to use, or 0 if none found
+        :returns: The port number to use, or <= 0 if none found
 
         """
         if vim.current.buffer.vars.has_key('intellivim_port'):
-            return vim.current.buffers.vars['intellivim_port']
+            return vim.current.buffer.vars['intellivim_port']
 
         if vim.vars.has_key('intellivim_port'):
             return vim.vars['intellivim_port']
@@ -40,8 +42,7 @@ class IVClient(object):
         if self.port != 0:
             return self.port
 
-        # TODO look on disk
-        return 4846 #  TODO return 0
+        return 0
 
     def _makeRequest(self, type, doc, timeout=None):
         
@@ -49,7 +50,7 @@ class IVClient(object):
             timeout = self.TIMEOUT
 
         port = self._detectPort()
-        if port == 0:
+        if port <= 0:
             return IVClient.ERROR_NO_SERVER
             
         try:
