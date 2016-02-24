@@ -3,6 +3,41 @@
 
 let s:ivroot = expand("<sfile>:p:h:h:h")
 
+"
+" Internal util
+"
+
+function! s:detectServer() " {{{
+    let path = $HOME . "/.intellivim/.instances/"
+    let instances = glob(path . '*', 1, 1)
+    call sort(instances, 'n')
+    for i in instances
+        let raw = join(readfile(i), '')
+        if raw !~ '^{'
+            continue
+        endif
+
+        if exists('*json_decode')
+            let data = json_decode(raw)
+        else
+            let data = eval(raw)
+        endif
+
+        if '' == get(data, 'port', '')
+            continue
+        endif
+
+        if s:getVersion() != get(data, 'version', '')
+            continue
+        endif
+
+        " NB: for now, the first-matched is fine
+        return data
+    endfor
+
+    return {'port': -1}
+endfunction " }}}
+
 function! s:getVersion() " {{{
     let existing = get(g:, 'intellivim#version', '')
     if existing != ''
@@ -25,7 +60,11 @@ function! s:getVersion() " {{{
     " cache for later
     let g:intellivim#version = versionLine[1]
     return versionLine[1]
-endfunction
+endfunction " }}}
+
+"
+" Public commands
+"
 
 function! intellivim#GetOffset() " {{{
     let line = line('.')
@@ -74,10 +113,19 @@ function! intellivim#InProject() " {{{
     return !empty(intellivim#GetCurrentProject())
 endfunction " }}}
 
+function! intellivim#IsRunning() " {{{
+    " TODO cache the server info?
+    return s:detectServer().port > 0
+endfunction " }}}
+
 function! intellivim#NewCommand(commandName) " {{{
     " Convenience to prepare basic command object
     "  of given command name, filled with the
     "  current file and project info
+
+    " detect the right port (if any)
+    " TODO cache this?
+    let b:intellivim_port = s:detectServer().port
 
     let project = intellivim#GetCurrentProject()
     let projectDir = fnamemodify(project, ':h') " does not contain trailing slash
