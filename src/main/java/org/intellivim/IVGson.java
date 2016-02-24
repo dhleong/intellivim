@@ -23,6 +23,7 @@ import org.intellivim.inject.Inject;
 import org.intellivim.inject.Injector;
 import org.intellivim.morph.PolymorphManager;
 import org.intellivim.morph.Polymorpher;
+import org.jetbrains.annotations.Nullable;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -59,6 +60,8 @@ public class IVGson {
     @SuppressWarnings("unchecked")
     public static class RawCommand {
 
+        private static final String VERSION_FIELD = "v";
+
         private static Map<Field, Injector<?>> sFieldInjectors = new HashMap<Field, Injector<?>>();
 
         private Class<?> commandClass;
@@ -89,6 +92,13 @@ public class IVGson {
 
         RawCommand(Gson gson, final Class<?> commandClass, JsonObject obj, final Object o) {
             this(gson, commandClass, obj, (ICommand) o);
+        }
+
+        @Nullable
+        public String getVersion() {
+            JsonElement el = obj.get(VERSION_FIELD);
+            if (el == null) return null;
+            return el.getAsString();
         }
 
         public boolean needsInitOnDispatch() {
@@ -179,6 +189,7 @@ public class IVGson {
                 }
             }
         }
+
     }
 
     static Map<String, Class<?>> commandMap;

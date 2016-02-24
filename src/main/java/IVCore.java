@@ -1,7 +1,6 @@
 import com.google.gson.Gson;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -102,21 +101,22 @@ public class IVCore implements ApplicationComponent {
 
     @NotNull
     public static String getVersion() {
-        if (!ApplicationManager.getApplication().isInternal()) {
+//        if (!ApplicationManager.getApplication().isInternal()) {
             final IdeaPluginDescriptor plugin = PluginManager.getPlugin(getPluginId());
             return plugin != null ? plugin.getVersion() : "SNAPSHOT";
-        }
-        else {
-            return "INTERNAL";
-        }
+//        }
+//        else {
+//            return "INTERNAL";
+//        }
     }
 
     static class CommandHandler implements HttpHandler {
         final Gson gson = IVGson.newInstance();
-        final CommandExecutor executor = new CommandExecutor(gson);
+        final CommandExecutor executor = new CommandExecutor(gson, getVersion());
 
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
+
             final Future<Result> future;
             try {
                 future = executor.execute(httpExchange.getRequestBody());
@@ -237,7 +237,8 @@ public class IVCore implements ApplicationComponent {
                 IVGson.newInstance().toJson(this, writer);
                 writer.close();
                 os.close();
-                logger.info("Created instance file: " + file.getAbsolutePath());
+                logger.info("Created instance file: " + file.getAbsolutePath()
+                    + "; port=" + port + "; version=" + version);
 
                 // try to ensure it doesn't stick around, in case our
                 //  disposeComponent() method isn't called for whatever reason;
@@ -265,7 +266,7 @@ public class IVCore implements ApplicationComponent {
 
         private static @NotNull File getInstancesDir() {
             File dir = new File(getIvHome(), ".instances");
-            if (!dir.mkdirs()) {
+            if (!dir.exists() && !dir.mkdirs()) {
                 // shouldn't happen...
                 logger.warning("Couldn't create .instances dir!");
             }

@@ -1,6 +1,15 @@
 " Author: Daniel Leong
 "
 
+function! s:getVersion() " {{{
+    let existing = get(g:, 'intellivim#version', '')
+    if existing != ''
+        return existing
+    endif
+
+    return '' " TODO load the version
+endfunction
+
 function! intellivim#GetOffset() " {{{
     let line = line('.')
     let col = col('.')
@@ -59,6 +68,7 @@ function! intellivim#NewCommand(commandName) " {{{
     let file = strpart(fileFull, len(projectDir) + 1)
     return {
         \ 'client': 'vim',
+        \ 'v': s:getVersion(),
         \ 'exe': exepath(v:progpath),
         \ 'instance': v:servername,
         \ 'project': project,

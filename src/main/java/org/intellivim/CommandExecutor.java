@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import org.intellivim.IVGson.RawCommand;
 import org.intellivim.core.util.IntelliVimUtil;
 import org.intellivim.core.util.Profiler;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,7 +63,7 @@ public class CommandExecutor {
         }
 
         @Override
-        public Result get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        public Result get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             if (result != null)
                 return result;
 
@@ -77,9 +78,11 @@ public class CommandExecutor {
     }
 
     final Gson gson;
+    final String version;
 
-    public CommandExecutor(Gson gson) {
+    public CommandExecutor(Gson gson, String version) {
         this.gson = gson;
+        this.version = version;
     }
 
     public Future<Result> execute(InputStream json) {
@@ -92,6 +95,17 @@ public class CommandExecutor {
         final Profiler profiler = Profiler.start(IVGson.RawCommand.class);
         final IVGson.RawCommand rawCommand = gson.fromJson(json, IVGson.RawCommand.class);
         profiler.mark("Gson Parsed");
+
+        final String commandVersion = rawCommand.getVersion();
+        if (!version.equals(commandVersion)) {
+            result.setResult(
+                new SimpleResult(
+                    String.format("Server is v%s but client is v%s; versions must match",
+                        version, commandVersion),
+                    null));
+            profiler.finish("Invalid version");
+            return result;
+        }
 
         final Runnable execution = new Runnable() {
 
@@ -112,7 +126,7 @@ public class CommandExecutor {
 
                 } catch (JsonSyntaxException e) {
                     Throwable cause = e.getCause();
-                    final Throwable actual = cause == null ? cause : e;
+                    final Throwable actual = cause != null ? cause : e;
                     result.setResult(handleError(rawCommand, actual));
                 } catch (Throwable e) {
                     result.setResult(handleError(rawCommand, e));

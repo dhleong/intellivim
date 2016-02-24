@@ -29,9 +29,10 @@ public class GetProblemsTest extends BaseTestCase {
     public void testProblematicFromExecutor() {
         String command = "{'command':'get_problems'," +
                 "'project': '" + getProjectPath() + "'," +
-                "'file': '" + filePath + "'}";
+                "'file': '" + filePath + "'," +
+                "'v': '42.0'}";
 
-        CommandExecutor ex = new CommandExecutor(IVGson.newInstance());
+        CommandExecutor ex = new CommandExecutor(IVGson.newInstance(), "42.0");
 
         SimpleResult result = (SimpleResult) ex.execute(command);
         assertSuccess(result);

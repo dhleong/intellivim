@@ -17,4 +17,9 @@ public class IVAssertions {
     public static TestNodeAssert assertThat(TestNode actual) {
         return new TestNodeAssert(actual);
     }
+
+    public static ResultAssert assertThat(Result result) {
+        return new ResultAssert(result);
+    }
+
 }
