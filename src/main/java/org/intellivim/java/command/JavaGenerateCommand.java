@@ -5,6 +5,7 @@ import com.intellij.codeInsight.generation.actions.BaseGenerateActionUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
@@ -15,7 +16,6 @@ import org.intellivim.ProjectCommand;
 import org.intellivim.Required;
 import org.intellivim.Result;
 import org.intellivim.SimpleResult;
-import org.intellivim.core.model.VimEditor;
 import org.intellivim.inject.Inject;
 
 import java.util.List;
@@ -29,14 +29,17 @@ public class JavaGenerateCommand extends ProjectCommand {
     @Required @Inject PsiFile file;
     @Required int offset;
 
-    public JavaGenerateCommand(Project project) {
+    public JavaGenerateCommand(Project project, PsiFile file, int offset) {
         super(project);
+
+        this.file = file;
+        this.offset = offset;
     }
 
     @Override
     public Result execute() {
 
-        Editor editor = VimEditor.from(this, file, offset);
+        final EditorEx editor = createEditor(file, offset);
         List<AnAction> actions = generateActionsForFile(editor, file);
         if (actions.isEmpty()) {
             return SimpleResult.error("No generate actions available here");
