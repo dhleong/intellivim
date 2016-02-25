@@ -18,6 +18,28 @@ function! intellivim#java#Setup() " {{{
 
 endfunction " }}}
 
+function! intellivim#java#Generate() " {{{
+
+    let command = intellivim#NewCommand("java_generate")
+    let command.offset = intellivim#GetOffset()
+    let result = intellivim#client#Execute(command)
+
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    if !has_key(result, 'result') || !type(result.result) == type([])
+        " Nothing to do
+        call intellivim#util#Echo("Nothing to generate here")
+        return
+    endif
+
+    let generateActions = result.result
+
+    call intellivim#display#TempWindow('[Generate...]', generateActions)
+    nnoremap <buffer> <cr> :call <SID>DoGenerate()<cr>
+endfunction " }}}
+
 function! intellivim#java#OptimizeImports() " {{{
 
     let command = intellivim#NewCommand("java_import_optimize")
@@ -53,6 +75,17 @@ endfunction " }}}
 "
 " Callbacks
 "
+
+function! s:DoGenerate() " {{{
+    let action = getline(line('.'))
+
+    " close the temp window
+    norm! ZZ
+
+    " TODO perform; also, we probably will
+    "  need to provide input somehow...
+    call intellivim#util#Echo("TODO: generate " . action)
+endfunction " }}}
 
 function! s:OnContinueImportResolution() " {{{
     let fixes = b:intellivim_pending_fixes
