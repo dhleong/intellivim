@@ -1,4 +1,4 @@
-package org.intellivim.java.command;
+package org.intellivim.java.command.gen;
 
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.generation.actions.BaseGenerateActionUtil;
@@ -23,13 +23,13 @@ import java.util.List;
 /**
  * @author dhleong
  */
-@Command("java_generate")
-public class JavaGenerateCommand extends ProjectCommand {
+@Command("java_generate_opts")
+public class JavaGenerateOptionsCommand extends ProjectCommand {
 
     @Required @Inject PsiFile file;
     @Required int offset;
 
-    public JavaGenerateCommand(Project project, PsiFile file, int offset) {
+    public JavaGenerateOptionsCommand(Project project, PsiFile file, int offset) {
         super(project);
 
         this.file = file;

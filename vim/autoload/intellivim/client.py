@@ -17,7 +17,7 @@ class IVClient(object):
 
     # we now only execute when we know there's
     #  a server, so longer timeouts are safe
-    TIMEOUT = 5.0
+    TIMEOUT = 10.0
 
     _instance = None
 

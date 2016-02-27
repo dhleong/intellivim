@@ -20,7 +20,7 @@ endfunction " }}}
 
 function! intellivim#java#Generate() " {{{
 
-    let command = intellivim#NewCommand("java_generate")
+    let command = intellivim#NewCommand("java_generate_opts")
     let command.offset = intellivim#GetOffset()
     let result = intellivim#client#Execute(command)
 
@@ -82,9 +82,18 @@ function! s:DoGenerate() " {{{
     " close the temp window
     norm! ZZ
 
-    " TODO perform; also, we probably will
-    "  need to provide input somehow...
-    call intellivim#util#Echo("TODO: generate " . action)
+    " perform the action
+    let command = intellivim#NewCommand("java_generate")
+    let command.offset = intellivim#GetOffset()
+    let command.action = action
+    let result = intellivim#client#Execute(command)
+
+    if intellivim#ShowErrorResult(result)
+        return
+    endif
+
+    echo result
+    
 endfunction " }}}
 
 function! s:OnContinueImportResolution() " {{{

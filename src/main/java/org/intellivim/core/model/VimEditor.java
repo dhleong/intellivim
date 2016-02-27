@@ -8,10 +8,15 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dhleong
@@ -85,5 +90,18 @@ public class VimEditor {
         });
 
         return created;
+    }
+
+    @Nullable
+    public static VirtualFile getVirtualFile(@NotNull Editor editor) {
+        return FileDocumentManager.getInstance().getFile(editor.getDocument());
+    }
+
+    @Nullable
+    public static PsiFile getPsiFile(@NotNull Editor editor) {
+        Project project = editor.getProject();
+        if (project == null) return null;
+
+        return PsiUtilBase.getPsiFileInEditor(editor, project);
     }
 }

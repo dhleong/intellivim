@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile;
 import org.intellivim.BaseTestCase;
 import org.intellivim.SimpleResult;
 import org.intellivim.core.util.ProjectUtil;
+import org.intellivim.java.command.gen.JavaGenerateOptionsCommand;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class JavaGenerateTest extends BaseTestCase {
         int offset = 269; // new Dummy().
 
         final PsiFile file = ProjectUtil.getPsiFile(project, filePath);
-        final SimpleResult result = execute(new JavaGenerateCommand(
+        final SimpleResult result = execute(new JavaGenerateOptionsCommand(
                 project, file, offset));
         assertSuccess(result);
 
